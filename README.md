@@ -2,7 +2,7 @@
 
 <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/public/demo.png" width="280" />
 
-A simple way to share Taiwan Railway arrival times with friends and family in one tap.
+Check Taiwan Railway arrival times with zero taps.
 
 ## Features
 
