@@ -21,7 +21,7 @@
 
 - **Frontend:** React 19 + TypeScript + Vite
 - **Styling:** Custom CSS
-- **API:** Serverless functions (Vercel)
+- **API:** Cloudflare Worker fetch and scheduled handlers
 - **Data Source:** TDX Taiwan Railway API
 - **PWA:** Vite Plugin PWA (service worker, offline support)
 
@@ -44,7 +44,7 @@
 └─────────────────────────────────────────┘
                     ↕ HTTP
 ┌─────────────────────────────────────────┐
-│       Serverless API Functions          │
+│       Cloudflare Worker API             │
 │  ┌─────────────┐   ┌───────────────┐   │
 │  │ /api/       │   │ /api/         │   │
 │  │ stations    │   │ schedule      │   │
@@ -63,11 +63,15 @@
 
 ```
 OnTrack/
-├── 📂 api/                    # Serverless API functions (Vercel)
-│   ├── _utils/
-│   │   └── tdx.ts            # TDX API client with OAuth2
-│   ├── schedule.ts           # Train schedule endpoint
-│   └── stations.ts           # Station list endpoint
+├── 📂 worker/                 # Cloudflare Worker API and cron handlers
+│   ├── index.ts              # Fetch and scheduled handlers
+│   ├── refresh.ts            # Supabase snapshot refresh jobs
+│   ├── supabase.ts           # Supabase REST helpers
+│   ├── tdx.ts                # TDX API client with OAuth2
+│   └── types.ts              # Worker-side types
+│
+├── 📂 supabase/
+│   └── migrations/           # Supabase schema migrations
 │
 ├── 📂 src/                    # React application source
 │   ├── 📂 api/
@@ -110,7 +114,7 @@ OnTrack/
 │   └── generate-pwa-assets.js # PWA asset generator
 │
 ├── vite.config.ts            # Vite + PWA configuration
-├── vercel.json               # Vercel deployment config
+├── wrangler.jsonc            # Cloudflare Worker config and cron triggers
 ├── tsconfig.json             # TypeScript configuration
 ├── eslint.config.js          # ESLint rules
 ├── package.json              # Dependencies & scripts
@@ -345,15 +349,15 @@ export const api = {
 
 ---
 
-### Backend API Functions
+### Backend Worker API
 
-#### 1. **stations.ts** (`/api/stations`)
+#### 1. **/api/stations**
 
 **Endpoint:** `GET /api/stations`
 
 **Purpose:** Returns list of all TRA stations with coordinates
 
-**Data Source:** TDX API → `/v3/Rail/TRA/Station`
+**Data Source:** Supabase `tdx_snapshots` key `stations`, refreshed from TDX
 
 **Response:**
 
@@ -367,12 +371,12 @@ Station[] = [
 
 **Caching:**
 
-- In-memory: 1 hour
-- CDN: `s-maxage=3600, stale-while-revalidate=86400`
+- Supabase snapshot: daily refresh
+- CDN: `s-maxage=86400, stale-while-revalidate=604800`
 
 ---
 
-#### 2. **schedule.ts** (`/api/schedule`)
+#### 2. **/api/schedule**
 
 **Endpoint:** `GET /api/schedule?origin={id}&dest={id}&date={yyyy-MM-dd}`
 
@@ -386,8 +390,8 @@ Station[] = [
 
 **Data Flow:**
 
-1. Fetch full daily timetable from TDX (cached 5 min)
-2. Fetch live delay data (always fresh)
+1. Read full daily timetable from Supabase snapshot
+2. Read live delay data snapshot for today's date
 3. Filter trains stopping at both stations
 4. Merge delay info into timetable
 5. Return enriched train list
@@ -404,12 +408,13 @@ const delayUrl = 'v3/Rail/TRA/TrainLiveBoard';
 
 **Caching:**
 
-- In-memory timetable: 5 minutes
+- Supabase timetable snapshot: daily refresh, lazy-filled for arbitrary dates
+- Supabase live-board snapshot: 5-minute cron refresh
 - CDN: `s-maxage=60, stale-while-revalidate=300`
 
 ---
 
-### TDX API Client (`api/_utils/tdx.ts`)
+### TDX API Client (`worker/tdx.ts`)
 
 **Core Utility:** Handles OAuth2 authentication and API requests to TDX
 
@@ -424,6 +429,8 @@ const delayUrl = 'v3/Rail/TRA/TrainLiveBoard';
 ```bash
 TDX_CLIENT_ID=your_client_id
 TDX_CLIENT_SECRET=your_client_secret
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 ```
 
 **Visitor Mode:**
@@ -537,21 +544,22 @@ export const STRINGS = {
 ### Development
 
 ```bash
-vercel dev         # Start dev server with API functions
+bun run dev:worker # Start Cloudflare Worker on localhost:8787
+bun run dev        # Start Vite; /api proxies to the Worker
 ```
 
 ### Production Build
 
 ```bash
-npm run build      # TypeScript compile + Vite build
-npm run preview    # Preview production build locally
+bun run build      # TypeScript compile + Vite build
+bun run preview    # Preview production build locally
 ```
 
 ### Code Quality
 
 ```bash
-npm run lint       # ESLint check
-npm run format     # Prettier format
+bun run lint       # ESLint check
+bun run format     # Prettier format
 ```
 
 ---
@@ -605,19 +613,19 @@ interface TrainInfo {
 
 ---
 
-## 🚀 Deployment (Vercel)
+## 🚀 Deployment (Cloudflare Workers)
 
-The project is configured for Vercel deployment:
+The project is configured for Cloudflare Workers:
 
-1. **API Routes:** `/api/*` automatically deployed as serverless functions
-2. **Frontend:** Static SPA served from `dist/`
-3. **Environment:** Set `TDX_CLIENT_ID` and `TDX_CLIENT_SECRET` in Vercel dashboard
-4. **Auto-Deploy:** Push to `main` branch triggers deployment
+1. **API Routes:** `/api/*` served by `worker/index.ts`
+2. **Frontend:** Static SPA served from `dist/` through Worker assets
+3. **Cron:** `wrangler.jsonc` refreshes live and daily TDX snapshots
+4. **Environment:** Set TDX and Supabase secrets in Cloudflare
 
-**Vercel Config (`vercel.json`):**
+**Cloudflare Config (`wrangler.jsonc`):**
 
 - Framework: Vite
-- Build Command: `npm run build`
+- Build Command: `bun run build`
 - Output Directory: `dist`
 
 ---
@@ -646,7 +654,7 @@ The project is configured for Vercel deployment:
 4. TrainList detects origin/dest change
    → Shows TrainListSkeleton
    → Calls api.getSchedule('1000', '1008')
-   → Backend fetches from TDX + merges delays
+   → Worker reads Supabase snapshots + merges delays
    → Returns 3 relevant trains
    → Auto-selects next departure
 
@@ -674,7 +682,8 @@ The project is configured for Vercel deployment:
 - [TDX Rail API Documentation](./TDX_RAIL_API.json)
 - [Vite Documentation](https://vite.dev/)
 - [React 19 Docs](https://react.dev/)
-- [Vercel Serverless Functions](https://vercel.com/docs/functions)
+- [Cloudflare Workers](https://developers.cloudflare.com/workers/)
+- [Supabase](https://supabase.com/docs)
 - [Web Share API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Share_API)
 
 ---

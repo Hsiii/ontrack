@@ -5,7 +5,9 @@
     "type": "module",
     "scripts": {
         "dev": "vite",
+        "dev:worker": "wrangler dev --test-scheduled",
         "build": "tsc -b && vite build",
+        "deploy": "bun run build && wrangler deploy",
         "lint": "eslint .",
         "format": "prettier --write .",
         "preview": "vite preview",
@@ -22,19 +24,18 @@
         ]
     },
     "dependencies": {
-        "@vercel/analytics": "^1.6.1",
         "flag-icons": "^7.5.0",
         "lucide-react": "^0.563.0",
         "react": "^19.2.0",
         "react-dom": "^19.2.0"
     },
     "devDependencies": {
+        "@cloudflare/workers-types": "^4.20260607.1",
         "@eslint/js": "^9.39.1",
         "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
         "@types/node": "^24.10.1",
         "@types/react": "^19.2.5",
         "@types/react-dom": "^19.2.3",
-        "@vercel/node": "^5.5.28",
         "@vitejs/plugin-react": "^5.1.1",
         "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "^9.39.1",
@@ -49,7 +50,8 @@
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.46.4",
         "vite": "^7.2.4",
-        "vite-plugin-pwa": "^1.2.0"
+        "vite-plugin-pwa": "^1.2.0",
+        "wrangler": "^4.98.0"
     },
     "overrides": {
         "path-to-regexp": "^8.2.0",
