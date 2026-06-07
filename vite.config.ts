@@ -59,13 +59,25 @@ export default defineConfig({
                 // Runtime caching strategies
                 runtimeCaching: [
                     {
-                        urlPattern: /^https:\/\/api\./i,
+                        urlPattern: /\/api\/stations(?:\?.*)?$/i,
+                        handler: 'StaleWhileRevalidate',
+                        options: {
+                            cacheName: 'api-stations-cache',
+                            expiration: {
+                                maxEntries: 4,
+                                maxAgeSeconds: 24 * 60 * 60, // 24 hours
+                            },
+                        },
+                    },
+                    {
+                        urlPattern: /\/api\/schedule(?:\?.*)?$/i,
                         handler: 'NetworkFirst',
                         options: {
-                            cacheName: 'api-cache',
+                            cacheName: 'api-schedule-cache',
+                            networkTimeoutSeconds: 3,
                             expiration: {
-                                maxEntries: 50,
-                                maxAgeSeconds: 60 * 60, // 1 hour
+                                maxEntries: 32,
+                                maxAgeSeconds: 10 * 60, // 10 minutes
                             },
                         },
                     },
