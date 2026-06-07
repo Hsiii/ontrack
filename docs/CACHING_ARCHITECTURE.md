@@ -25,7 +25,7 @@ Supabase table: `public.tdx_snapshots`
 | `train-live-board`           | Train number to delay-minute map | Every 5 minutes                                                          |
 
 The table is RLS-enabled. The public browser never reads it directly; the Worker
-uses `SUPABASE_SERVICE_ROLE_KEY` server-side.
+uses `SUPABASE_SECRET_KEY` server-side.
 
 ## Worker Cron
 
@@ -87,6 +87,6 @@ Set these in Cloudflare Worker secrets or local `.dev.vars`:
 TDX_CLIENT_ID=your_tdx_client_id
 TDX_CLIENT_SECRET=your_tdx_client_secret
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SECRET_KEY=your_sb_secret_key
 REFRESH_SECRET=optional_manual_refresh_secret
 ```

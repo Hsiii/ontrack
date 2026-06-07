@@ -6,8 +6,8 @@ function restUrl(env: Env, path: string) {
 
 function headers(env: Env, extra: HeadersInit = {}) {
     return {
-        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
-        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        apikey: env.SUPABASE_SECRET_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SECRET_KEY}`,
         ...extra,
     };
 }

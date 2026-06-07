@@ -6,7 +6,7 @@ export interface Env {
     TDX_CLIENT_ID?: string;
     TDX_CLIENT_SECRET?: string;
     SUPABASE_URL: string;
-    SUPABASE_SERVICE_ROLE_KEY: string;
+    SUPABASE_SECRET_KEY: string;
     REFRESH_SECRET?: string;
 }
 

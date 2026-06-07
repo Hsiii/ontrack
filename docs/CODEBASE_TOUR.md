@@ -430,7 +430,7 @@ const delayUrl = 'v3/Rail/TRA/TrainLiveBoard';
 TDX_CLIENT_ID=your_client_id
 TDX_CLIENT_SECRET=your_client_secret
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+SUPABASE_SECRET_KEY=your_sb_secret_key
 ```
 
 **Visitor Mode:**

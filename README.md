@@ -25,7 +25,7 @@ instead of fetching from TDX on Worker startup.
 wrangler secret put TDX_CLIENT_ID
 wrangler secret put TDX_CLIENT_SECRET
 wrangler secret put SUPABASE_URL
-wrangler secret put SUPABASE_SERVICE_ROLE_KEY
+wrangler secret put SUPABASE_SECRET_KEY
 wrangler secret put REFRESH_SECRET # optional, enables /api/refresh
 ```
 
