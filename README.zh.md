@@ -1,7 +1,7 @@
 <h1 align="center">OnTrack</h1>
 
 <p align="center">
-  <a href="https://ontrack.hsichen.dev">ontrack.hsichen.dev</a> — 全台最速台鐵App | <a href="./README.md">English</a>
+  <a href="https://ontrack.hsichen.dev">ontrack.hsichen.dev</a> — 追求速度與自動化的台鐵App | <a href="./README.md">English</a>
 </p>
 
 <p align="center">
