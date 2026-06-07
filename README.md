@@ -1,8 +1,12 @@
-# OnTrack
+<h1 align="center">OnTrack</h1>
 
-<img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/public/demo.png" width="280" />
+<p align="center">
+  A simple way to share Taiwan Railway arrival times with friends and family in one tap.
+</p>
 
-Check Taiwan Railway arrival times with zero taps.
+<p align="center">
+  <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/public/demo.png" width="280" />
+</p>
 
 Live app: [ontrack.hsichen.dev](https://ontrack.hsichen.dev)
 
