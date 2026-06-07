@@ -22,44 +22,6 @@ function formatEnglishStationName(name?: string) {
     return name?.replace(/_/g, ' ');
 }
 
-function SeoContent() {
-    const { language } = useI18n();
-
-    if (language === 'en') {
-        return (
-            <section className='card-panel app-seo' aria-labelledby='app-seo'>
-                <h2 id='app-seo' className='app-seo-title'>
-                    Taiwan Railway schedule and live arrivals
-                </h2>
-                <p className='app-seo-text'>
-                    OnTrack is a mobile-first Taiwan Railway schedule app for
-                    checking stations, the next departure, and live train
-                    arrival information without extra steps.
-                </p>
-                <p className='app-seo-text'>
-                    It works well for daily TRA commutes, quick timetable
-                    lookups, and sharing an arrival time with family or friends.
-                </p>
-            </section>
-        );
-    }
-
-    return (
-        <section className='card-panel app-seo' aria-labelledby='app-seo'>
-            <h2 id='app-seo' className='app-seo-title'>
-                台鐵時刻表與即時到站查詢
-            </h2>
-            <p className='app-seo-text'>
-                OnTrack
-                提供台鐵時刻表、台鐵即時到站查詢與下一班列車資訊，適合通勤時快速查看出發站、抵達站與可搭乘班次。
-            </p>
-            <p className='app-seo-text'>
-                你可以用它查台鐵列車時刻、火車到站時間、常用目的地，並把班次結果快速分享給家人或朋友。
-            </p>
-        </section>
-    );
-}
-
 const STATION_DEBUG_MIN_DELAY_MS = 900;
 
 function getStationDebugFlags() {
@@ -241,7 +203,6 @@ function App() {
                         originName={originName}
                         destName={destName}
                     />
-                    <SeoContent />
                 </main>
             </div>
         </>
