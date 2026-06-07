@@ -87,6 +87,45 @@ function formatDuration(minutes: number): string {
     return m === 0 ? `${h}h` : `${h}h${m}m`;
 }
 
+function buildDisplayState(trains: TrainInfo[]) {
+    const now = new Date();
+    const currentTimeStr = now.toLocaleTimeString('en-CA', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Asia/Taipei',
+    });
+    const currentTimeMinutes = timeToMinutes(currentTimeStr);
+
+    const nextScheduledTrainIndex = trains.findIndex(
+        (train) => timeToMinutes(train.departureTime) >= currentTimeMinutes
+    );
+    const nextCatchableTrainIndex = trains.findIndex(
+        (train) => getEffectiveDepartureMinutes(train) >= currentTimeMinutes
+    );
+
+    let displayTrains: TrainInfo[] = [];
+    let recommendedTrain: TrainInfo | null = null;
+
+    if (nextCatchableTrainIndex === -1) {
+        displayTrains = trains.slice(-3);
+        recommendedTrain = displayTrains[displayTrains.length - 1] ?? null;
+    } else {
+        const start = Math.max(0, nextCatchableTrainIndex - 1);
+        const minimumEnd = start + 3;
+        const scheduledContextEnd =
+            nextScheduledTrainIndex === -1
+                ? minimumEnd
+                : nextScheduledTrainIndex + 2;
+        const end = Math.max(minimumEnd, scheduledContextEnd);
+
+        displayTrains = trains.slice(start, end);
+        recommendedTrain = trains[nextCatchableTrainIndex] ?? null;
+    }
+
+    return { displayTrains, recommendedTrain };
+}
+
 interface TrainListProps {
     originId: string;
     destId: string;
@@ -103,7 +142,7 @@ export function TrainList({
     const { t, language } = useI18n();
     const scheduleDebugFlags = getScheduleDebugFlags();
     const [trains, setTrains] = useState<TrainInfo[]>([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const lastFetchTimeRef = useRef<number | null>(null);
     const lastFetchParamsRef = useRef<string>('');
@@ -126,9 +165,8 @@ export function TrainList({
         const requestId = requestIdRef.current + 1;
         requestIdRef.current = requestId;
         lastFetchParamsRef.current = currentParams;
-        setLoading(true);
+        setLoading(trains.length === 0);
         setError(null);
-        setTrains([]);
 
         api.getSchedule(originId, destId, undefined, {
             minDelayMs:
@@ -146,41 +184,9 @@ export function TrainList({
                     return;
                 }
 
-                const now = new Date();
-                const currentTimeStr = now.toLocaleTimeString('en-CA', {
-                    hour12: false,
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: 'Asia/Taipei',
-                });
-                const currentTimeMinutes = timeToMinutes(currentTimeStr);
-
-                const nextScheduledTrainIndex = res.trains.findIndex(
-                    (t) => timeToMinutes(t.departureTime) >= currentTimeMinutes
+                const { displayTrains, recommendedTrain } = buildDisplayState(
+                    res.trains
                 );
-                const nextCatchableTrainIndex = res.trains.findIndex(
-                    (t) => getEffectiveDepartureMinutes(t) >= currentTimeMinutes
-                );
-
-                let displayTrains: TrainInfo[] = [];
-                let recommendedTrain: TrainInfo | null = null;
-
-                if (nextCatchableTrainIndex === -1) {
-                    displayTrains = res.trains.slice(-3);
-                    recommendedTrain = displayTrains[displayTrains.length - 1];
-                } else {
-                    const start = Math.max(0, nextCatchableTrainIndex - 1);
-                    const minimumEnd = start + 3;
-                    const scheduledContextEnd =
-                        nextScheduledTrainIndex === -1
-                            ? minimumEnd
-                            : nextScheduledTrainIndex + 2;
-                    const end = Math.max(minimumEnd, scheduledContextEnd);
-
-                    displayTrains = res.trains.slice(start, end);
-                    recommendedTrain =
-                        res.trains[nextCatchableTrainIndex] || null;
-                }
 
                 setTrains(displayTrains);
                 setLoading(false);
@@ -203,6 +209,7 @@ export function TrainList({
         originId,
         destId,
         onSelect,
+        trains.length,
         scheduleDebugFlags.showSkeleton,
         scheduleDebugFlags.showFetchError,
         t,

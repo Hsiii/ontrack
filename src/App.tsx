@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import './App.css';
 
@@ -80,6 +80,7 @@ function getStationDebugFlags() {
 
 function App() {
     const { t, language } = useI18n();
+    const initialStations = useMemo(() => api.getCachedStations(), []);
     const {
         originId,
         setOriginId,
@@ -91,10 +92,13 @@ function App() {
         setAutoDetectOrigin,
     } = usePersistence();
 
-    const [stations, setStations] = useState<Station[]>([]);
+    const [stations, setStations] = useState<Station[]>(initialStations);
     const [selectedTrain, setSelectedTrain] = useState<TrainInfo | null>(null);
-    const [stationsLoading, setStationsLoading] = useState(true);
+    const [stationsLoading, setStationsLoading] = useState(
+        () => initialStations.length === 0
+    );
     const [stationsError, setStationsError] = useState<string | null>(null);
+    const hadCachedStationsRef = useRef(initialStations.length > 0);
 
     const stationDebugFlags = useMemo(() => getStationDebugFlags(), []);
 
@@ -116,8 +120,10 @@ function App() {
             .then(setStations)
             .catch((error) => {
                 console.error(error);
-                setStations([]);
-                setStationsError(t('error.failedToLoadStations'));
+                if (!hadCachedStationsRef.current) {
+                    setStations([]);
+                    setStationsError(t('error.failedToLoadStations'));
+                }
             })
             .finally(() => setStationsLoading(false));
     }, [stationDebugFlags.showFetchError, stationDebugFlags.showSkeleton, t]);
@@ -201,8 +207,9 @@ function App() {
                         </section>
                     ) : null}
 
-                    {!stationsLoading && originId && destId && (
+                    {originId && destId && (
                         <TrainList
+                            key={`${originId}-${destId}`}
                             originId={originId}
                             destId={destId}
                             onSelect={setSelectedTrain}
