@@ -36,15 +36,21 @@ function toStations(data: TDXStation[]): Station[] {
 }
 
 export async function refreshStations(env: Env) {
-    const data = await fetchTDX<TDXStation[]>(env, 'v3/Rail/TRA/Station', {
-        searchParams: {
-            $select: 'StationID,StationName,StationPosition',
-            $top: '999',
-        },
-        tier: 'basic',
-    });
+    const data = await fetchTDX<TDXStation[] | { Stations?: TDXStation[] }>(
+        env,
+        'v3/Rail/TRA/Station',
+        {
+            searchParams: {
+                $select: 'StationID,StationName,StationPosition',
+                $top: '999',
+            },
+            tier: 'basic',
+        }
+    );
 
-    const stations = toStations(Array.isArray(data) ? data : []);
+    const stations = toStations(
+        Array.isArray(data) ? data : (data.Stations ?? [])
+    );
     await upsertSnapshot(env, STATIONS_KEY, stations, null);
     return stations;
 }
