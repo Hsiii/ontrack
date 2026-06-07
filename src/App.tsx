@@ -133,6 +133,25 @@ function App() {
         void fetchStations();
     }, [fetchStations]);
 
+    useEffect(() => {
+        const nativeSplash = document.getElementById('native-splash');
+        if (!nativeSplash) {
+            return;
+        }
+
+        let secondFrame = 0;
+        const firstFrame = window.requestAnimationFrame(() => {
+            secondFrame = window.requestAnimationFrame(() => {
+                nativeSplash.style.display = 'none';
+            });
+        });
+
+        return () => {
+            window.cancelAnimationFrame(firstFrame);
+            window.cancelAnimationFrame(secondFrame);
+        };
+    }, []);
+
     const stationMap = useMemo(
         () =>
             new Map(
