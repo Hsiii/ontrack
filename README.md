@@ -1,7 +1,7 @@
 <h1 align="center">OnTrack</h1>
 
 <p align="center">
-  A simple way to share Taiwan Railway arrival times with friends and family in one tap.
+  A Taiwan Railway app for people who are tired of using train apps.
 </p>
 
 <p align="center">
@@ -12,10 +12,12 @@ Live app: [ontrack.hsichen.dev](https://ontrack.hsichen.dev)
 
 ## Features
 
+Check train status and arrival time with zero taps:
+
 - Real-time train schedules from [TDX](https://tdx.transportdata.tw/)
 - Auto-detect nearest start station
-- Auto-fill your favorite destination station
-- Auto-select the next departing train
+- Auto-fill the destination station by setting a favorite station
+- Auto-select the next departing train while taking delays into account
 - Quick destination and arrival time sharing
 
 ## Install as an App
