@@ -1,18 +1,12 @@
 <h1 align="center">OnTrack</h1>
 
 <p align="center">
-  <a href="./README.zh.md">繁體中文</a>
+  <a href="https://ontrack.hsichen.dev">ontrack.hsichen.dev</a> — a Taiwan Railway app for people who are tired of using train apps. | <a href="./README.zh.md">繁體中文</a>
 </p>
 
 <p align="center">
-  A Taiwan Railway app for people who are tired of using train apps.
+  <img alt="demo" src="public/demo.PNG" width="280" />
 </p>
-
-<p align="center">
-  <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/public/demo.PNG" width="280" />
-</p>
-
-Live app: [ontrack.hsichen.dev](https://ontrack.hsichen.dev)
 
 ## Features
 
