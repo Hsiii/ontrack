@@ -1,7 +1,7 @@
 <h1 align="center">OnTrack</h1>
 
 <p align="center">
-  <a href="https://ontrack.hsichen.dev">ontrack.hsichen.dev</a> — 一個專為台鐵通勤與日常查詢打造的台鐵時刻表與即時到站 PWA。 | <a href="./README.md">English</a>
+  <a href="https://ontrack.hsichen.dev">ontrack.hsichen.dev</a> — 全台最速台鐵App | <a href="./README.md">English</a>
 </p>
 
 <p align="center">
@@ -10,15 +10,12 @@
 
 ## 功能
 
-幾乎不用多點幾下，就能查到列車狀態與到站時間：
-
-- 台鐵時刻表查詢
-- 台鐵即時到站查詢
-- 下一班列車快速查看
-- 常用目的地設定
+- 自動偵測最近車站
+- 自動填入預設目的地
+- 自動計算延誤以顯示下一班列車
 - 班次與抵達時間快速分享
 
-## 安裝成 App
+## 從網頁安裝 App
 
 ### iOS（Safari）
 
