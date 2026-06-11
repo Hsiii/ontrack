@@ -1,4 +1,4 @@
-import { getSnapshot, upsertSnapshot } from './supabase';
+import { getSnapshot, upsertSnapshot } from './d1';
 import { fetchTDX, fetchTDXWithCache } from './tdx';
 import type {
     DelaySnapshot,

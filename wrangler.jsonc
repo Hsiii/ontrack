@@ -3,6 +3,14 @@
     "name": "ontrack",
     "main": "worker/index.ts",
     "compatibility_date": "2026-06-07",
+    "d1_databases": [
+        {
+            "binding": "DB",
+            "database_name": "ontrack",
+            "database_id": "4f20034f-9bf4-40f6-9122-31b0a151f574",
+            "migrations_dir": "d1/migrations",
+        },
+    ],
     "assets": {
         "directory": "./dist",
         "not_found_handling": "single-page-application",

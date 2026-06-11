@@ -3,10 +3,9 @@ export type TDXTier = 'basic' | 'advanced';
 
 export interface Env {
     ASSETS: Fetcher;
+    DB: D1Database;
     TDX_CLIENT_ID?: string;
     TDX_CLIENT_SECRET?: string;
-    SUPABASE_URL: string;
-    SUPABASE_SECRET_KEY: string;
     REFRESH_SECRET?: string;
 }
 
