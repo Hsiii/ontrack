@@ -3,7 +3,11 @@ import { MapPin, MapPinCheck, MapPinOff, Star } from 'lucide-react';
 
 import { useI18n } from '../i18n';
 import type { Station } from '../types';
-import { persistRecentDepartureStationId } from './recentDepartureStations';
+import { DestinationPromptSheet } from './DestinationPromptSheet';
+import {
+    getRecentDepartureStationIds,
+    persistRecentDepartureStationId,
+} from './recentDepartureStations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -40,6 +44,8 @@ export function StationSelector({
     const [destSearch, setDestSearch] = useState('');
     const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
     const [destDropdownOpen, setDestDropdownOpen] = useState(false);
+    const [destinationPromptOpen, setDestinationPromptOpen] = useState(false);
+    const [promptStationIds, setPromptStationIds] = useState<string[]>([]);
     const [toast, setToast] = useState<string | null>(null);
     const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     const hasAutoSelected = useRef(false);
@@ -198,10 +204,36 @@ export function StationSelector({
 
     const originStation = stations.find((s) => s.id === originId);
     const destStation = stations.find((s) => s.id === destId);
+    const promptStations = promptStationIds
+        .map((id) => stations.find((station) => station.id === id))
+        .filter((station): station is Station => Boolean(station));
+
+    const showDestinationPrompt = (currentOriginId: string) => {
+        const recentDestinations = getRecentDepartureStationIds()
+            .filter((id) => id !== currentOriginId)
+            .filter((id) => stations.some((station) => station.id === id))
+            .slice(0, 2);
+
+        if (recentDestinations.length === 0) return;
+
+        setPromptStationIds(recentDestinations);
+        setDestinationPromptOpen(true);
+    };
 
     const handleOriginSelect = (id: string) => {
         persistRecentDepartureStationId(id);
         setOriginWithSource(id, 'manual');
+        showDestinationPrompt(id);
+    };
+
+    const handlePromptSelect = (stationId: string) => {
+        setDestId(stationId);
+        setDestinationPromptOpen(false);
+    };
+
+    const handlePromptSearch = () => {
+        setDestinationPromptOpen(false);
+        handleDestDropdownOpen(true);
     };
 
     const geoToggleIcon = !autoDetectOrigin ? (
@@ -324,6 +356,14 @@ export function StationSelector({
                     />
                 </div>
             </div>
+
+            <DestinationPromptSheet
+                isOpen={destinationPromptOpen}
+                stations={promptStations}
+                onSelect={handlePromptSelect}
+                onSearch={handlePromptSearch}
+                onDismiss={() => setDestinationPromptOpen(false)}
+            />
         </div>
     );
 }
