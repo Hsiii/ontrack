@@ -30,8 +30,8 @@ export const translations = {
         'language.zhTW': '繁體中文',
         'language.en': 'English',
         'time.selectTime': '選擇時間',
-        'time.departure': '出發時間',
-        'time.arrival': '抵達時間',
+        'time.departure': '出發',
+        'time.arrival': '抵達',
         'time.date': '日期',
         'time.time': '時間',
 
