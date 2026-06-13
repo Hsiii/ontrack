@@ -48,7 +48,6 @@ function getStationDebugFlags() {
 
 function App() {
     const { t, language } = useI18n();
-    const initialStations = useMemo(() => api.getCachedStations(), []);
     const {
         originId,
         setOriginId,
@@ -60,13 +59,11 @@ function App() {
         setAutoDetectOrigin,
     } = usePersistence();
 
-    const [stations, setStations] = useState<Station[]>(initialStations);
+    const [stations, setStations] = useState<Station[]>([]);
     const [selectedTrain, setSelectedTrain] = useState<TrainInfo | null>(null);
-    const [stationsLoading, setStationsLoading] = useState(
-        () => initialStations.length === 0
-    );
+    const [stationsLoading, setStationsLoading] = useState(true);
     const [stationsError, setStationsError] = useState<string | null>(null);
-    const hadCachedStationsRef = useRef(initialStations.length > 0);
+    const hadCachedStationsRef = useRef(false);
 
     const stationDebugFlags = useMemo(() => getStationDebugFlags(), []);
 
