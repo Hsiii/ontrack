@@ -14,6 +14,7 @@ import {
     TrainList,
     TrainListSkeleton,
 } from './components';
+import { featureFlags } from './config/featureFlags';
 import { usePersistence } from './hooks/usePersistence';
 import { useI18n } from './i18n';
 import type { Station, TrainInfo } from './types';
@@ -198,11 +199,13 @@ function App() {
                         />
                     )}
 
-                    <ShareCard
-                        train={selectedTrain}
-                        originName={originName}
-                        destName={destName}
-                    />
+                    {featureFlags.showShareBar ? (
+                        <ShareCard
+                            train={selectedTrain}
+                            originName={originName}
+                            destName={destName}
+                        />
+                    ) : null}
                 </main>
             </div>
         </>
