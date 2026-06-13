@@ -9,4 +9,5 @@ export { LanguageDropdown } from './LanguageDropdown';
 export { LoadingSpinner } from './LoadingSpinner';
 export { StationDropdown } from './StationDropdown';
 export { StationSelectorSkeleton } from './StationSelectorSkeleton';
+export { TimeSelector } from './TimeSelector';
 export { TrainListSkeleton } from './TrainListSkeleton';

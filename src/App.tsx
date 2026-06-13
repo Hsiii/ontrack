@@ -13,6 +13,7 @@ import {
     ShareCard,
     StationSelector,
     StationSelectorSkeleton,
+    TimeSelector,
     TrainList,
     TrainListSkeleton,
 } from './components';
@@ -161,6 +162,8 @@ function App() {
             </header>
             <div className='app-container'>
                 <main className='app-main'>
+                    <TimeSelector />
+
                     <section aria-labelledby='station-selector-heading'>
                         <h2 id='station-selector-heading' className='label-dim'>
                             {t('app.selectRoute')}

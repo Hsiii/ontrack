@@ -1,0 +1,94 @@
+.time-selector {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-selector-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.time-selector-mode {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 160px;
+    min-width: 160px;
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: 22px;
+    background: var(--color-bg-light);
+}
+
+.time-selector-mode-blob {
+    position: absolute;
+    top: var(--space-1);
+    bottom: var(--space-1);
+    left: var(--space-1);
+    width: calc(50% - var(--space-1));
+    border-radius: 18px;
+    background: var(--color-primary-subtle);
+    transition: transform 0.18s ease;
+}
+
+.time-selector-mode.is-arrival .time-selector-mode-blob {
+    transform: translateX(100%);
+}
+
+.time-selector-mode-option {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    height: 34px;
+    padding: 0 var(--space-2);
+    border-radius: 18px;
+    color: var(--color-text-dim);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    white-space: nowrap;
+}
+
+.time-selector-mode-option[aria-pressed='true'] {
+    color: var(--color-primary);
+}
+
+.time-selector-fields {
+    display: grid;
+    grid-template-columns: minmax(64px, 1fr) minmax(64px, 1fr);
+    gap: var(--space-2);
+    flex: 1;
+    min-width: 0;
+}
+
+.time-selector-input {
+    width: 100%;
+    height: 44px;
+    padding: 0 var(--space-2);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-light);
+    color: var(--color-text);
+    font-family: inherit;
+    font-size: var(--text-base);
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    text-align: center;
+    outline: none;
+}
+
+.time-selector-input:focus {
+    border-color: var(--color-primary);
+}
+
+@media (max-width: 390px) {
+    .time-selector-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .time-selector-mode {
+        width: 100%;
+        min-width: 0;
+    }
+}

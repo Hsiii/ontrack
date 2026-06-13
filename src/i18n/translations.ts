@@ -29,6 +29,11 @@ export const translations = {
         'language.selectTitle': '選擇語言',
         'language.zhTW': '繁體中文',
         'language.en': 'English',
+        'time.selectTime': '選擇時間',
+        'time.departure': '出發時間',
+        'time.arrival': '抵達時間',
+        'time.date': '日期',
+        'time.time': '時間',
 
         'train.onTime': 'On Time',
         'train.delayMinutes': '+{minutes} min',
@@ -72,6 +77,11 @@ export const translations = {
         'language.selectTitle': 'Select language',
         'language.zhTW': 'Traditional Chinese',
         'language.en': 'English',
+        'time.selectTime': 'Select Time',
+        'time.departure': 'Depart',
+        'time.arrival': 'Arrive',
+        'time.date': 'Date',
+        'time.time': 'Time',
 
         'train.onTime': 'On Time',
         'train.delayMinutes': '+{minutes} min',
