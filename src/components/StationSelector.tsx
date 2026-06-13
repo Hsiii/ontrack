@@ -3,6 +3,7 @@ import { MapPin, MapPinCheck, MapPinOff, Star } from 'lucide-react';
 
 import { useI18n } from '../i18n';
 import type { Station } from '../types';
+import { persistRecentDepartureStationId } from './recentDepartureStations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -199,6 +200,7 @@ export function StationSelector({
     const destStation = stations.find((s) => s.id === destId);
 
     const handleOriginSelect = (id: string) => {
+        persistRecentDepartureStationId(id);
         setOriginWithSource(id, 'manual');
     };
 
