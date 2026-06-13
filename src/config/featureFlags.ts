@@ -1,3 +1,3 @@
 export const featureFlags = {
-    showShareBar: false,
+    showShareBar: true,
 } as const;

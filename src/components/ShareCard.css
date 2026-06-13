@@ -7,6 +7,11 @@
 .share-card-input-wrapper {
     position: relative;
     flex: 1;
+    min-width: 0;
+}
+
+.share-card-language {
+    flex-shrink: 0;
 }
 
 .share-card-input {

@@ -4,6 +4,7 @@ import { Share2 } from 'lucide-react';
 import { useI18n } from '../i18n';
 import type { TrainInfo } from '../types';
 import { IconButton } from './IconButton';
+import { LanguageDropdown } from './LanguageDropdown';
 
 import './ShareCard.css';
 
@@ -207,6 +208,10 @@ export function ShareCard({ train, destName }: ShareCardProps) {
 
     return (
         <div className='message-bar-fixed share-card-container'>
+            <div className='share-card-language'>
+                <LanguageDropdown />
+            </div>
+
             <div ref={inputWrapperRef} className='share-card-input-wrapper'>
                 <input
                     ref={inputRef}

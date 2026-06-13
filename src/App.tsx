@@ -4,12 +4,9 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import './App.css';
 
-import { TrainFront } from 'lucide-react';
-
 import { api } from './api/client';
 import {
     IOSInstallPrompt,
-    LanguageDropdown,
     ShareCard,
     StationSelector,
     StationSelectorSkeleton,
@@ -151,15 +148,6 @@ function App() {
     return (
         <>
             <IOSInstallPrompt />
-            <header className='app-header'>
-                <div className='app-header-left'>
-                    <TrainFront className='app-header-icon' strokeWidth={2} />
-                    <h1 className='app-header-title'>{t('app.title')}</h1>
-                </div>
-                <div className='app-header-actions'>
-                    <LanguageDropdown />
-                </div>
-            </header>
             <div className='app-container'>
                 <main className='app-main'>
                     <TimeSelector />
