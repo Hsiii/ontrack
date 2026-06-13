@@ -19,6 +19,10 @@ function formatMessage(template: string, params?: TranslationParams): string {
 }
 
 function detectLanguage(): LanguageCode {
+    if (typeof navigator === 'undefined') {
+        return FALLBACK_LANGUAGE;
+    }
+
     const candidates = navigator.languages?.length
         ? navigator.languages
         : [navigator.language];
@@ -31,6 +35,10 @@ function detectLanguage(): LanguageCode {
 }
 
 function getInitialLanguage(): LanguageCode {
+    if (typeof window === 'undefined') {
+        return FALLBACK_LANGUAGE;
+    }
+
     const stored = localStorage.getItem(STORAGE_LANGUAGE_KEY);
     if (stored === 'zh-TW' || stored === 'en') return stored;
 
@@ -50,7 +58,9 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
     const setLanguage = (next: LanguageCode) => {
         setLanguageState(next);
-        localStorage.setItem(STORAGE_LANGUAGE_KEY, next);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_LANGUAGE_KEY, next);
+        }
     };
 
     const value = useMemo(() => {

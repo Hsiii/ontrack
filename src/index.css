@@ -77,11 +77,25 @@ body {
     justify-content: center;
 }
 
-#root {
+.app-root {
     width: 100%;
     max-width: 480px; /* Mobile-first constraint */
     padding-top: env(safe-area-inset-top);
     box-sizing: border-box;
+}
+
+.native-splash {
+    position: fixed;
+    inset: 0;
+    background-color: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.native-splash svg {
+    color: var(--color-primary);
 }
 
 button {

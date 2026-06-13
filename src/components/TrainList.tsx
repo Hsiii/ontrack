@@ -24,7 +24,10 @@ const TRAIN_TYPE_EN: Record<string, string> = {
 const SCHEDULE_DEBUG_MIN_DELAY_MS = 900;
 
 function getScheduleDebugFlags() {
-    if (!import.meta.env.DEV || typeof window === 'undefined') {
+    if (
+        process.env.NODE_ENV !== 'development' ||
+        typeof window === 'undefined'
+    ) {
         return {
             showSkeleton: false,
             showFetchError: false,

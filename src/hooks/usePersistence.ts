@@ -15,10 +15,36 @@ function isValidStationId(id: string): boolean {
     return /^[A-Z0-9-]*$/i.test(id) && id.length <= 10;
 }
 
+function canUseLocalStorage(): boolean {
+    return typeof window !== 'undefined' && Boolean(window.localStorage);
+}
+
 // Safe localStorage getter with validation
 function getValidatedStationId(key: string): string {
+    if (!canUseLocalStorage()) {
+        return '';
+    }
+
     const value = localStorage.getItem(key) || '';
     return isValidStationId(value) ? value : '';
+}
+
+function getStorageItem(key: string, fallback = ''): string {
+    return canUseLocalStorage()
+        ? localStorage.getItem(key) || fallback
+        : fallback;
+}
+
+function setStorageItem(key: string, value: string) {
+    if (canUseLocalStorage()) {
+        localStorage.setItem(key, value);
+    }
+}
+
+function removeStorageItem(key: string) {
+    if (canUseLocalStorage()) {
+        localStorage.removeItem(key);
+    }
 }
 
 export function usePersistence() {
@@ -35,42 +61,42 @@ export function usePersistence() {
         if (defaultDest) return defaultDest;
         return '';
     });
-    const [template, setTemplate] = useState<string>(
-        () => localStorage.getItem(STORAGE_KEYS.TEMPLATE) || DEFAULT_TEMPLATE
+    const [template, setTemplate] = useState<string>(() =>
+        getStorageItem(STORAGE_KEYS.TEMPLATE, DEFAULT_TEMPLATE)
     );
     const [autoDetectOrigin, setAutoDetectOrigin] = useState<boolean>(
-        () => localStorage.getItem(STORAGE_KEYS.AUTO_DETECT_ORIGIN) === 'true'
+        () => getStorageItem(STORAGE_KEYS.AUTO_DETECT_ORIGIN) === 'true'
     );
 
     const saveOrigin = (id: string) => {
         if (!isValidStationId(id)) return;
         setOriginId(id);
-        localStorage.setItem(STORAGE_KEYS.ORIGIN, id);
+        setStorageItem(STORAGE_KEYS.ORIGIN, id);
     };
 
     const saveDest = (id: string) => {
         if (!isValidStationId(id)) return;
         setDestId(id);
-        localStorage.setItem(STORAGE_KEYS.DEST, id);
+        setStorageItem(STORAGE_KEYS.DEST, id);
     };
 
     const saveTemplate = (tpl: string) => {
         setTemplate(tpl);
-        localStorage.setItem(STORAGE_KEYS.TEMPLATE, tpl);
+        setStorageItem(STORAGE_KEYS.TEMPLATE, tpl);
     };
 
     const saveAutoDetectOrigin = (value: boolean) => {
         setAutoDetectOrigin(value);
-        localStorage.setItem(STORAGE_KEYS.AUTO_DETECT_ORIGIN, String(value));
+        setStorageItem(STORAGE_KEYS.AUTO_DETECT_ORIGIN, String(value));
     };
 
     const saveDefaultDest = (id: string) => {
         if (id && !isValidStationId(id)) return;
         setDefaultDestId(id);
         if (id) {
-            localStorage.setItem(STORAGE_KEYS.DEFAULT_DEST, id);
+            setStorageItem(STORAGE_KEYS.DEFAULT_DEST, id);
         } else {
-            localStorage.removeItem(STORAGE_KEYS.DEFAULT_DEST);
+            removeStorageItem(STORAGE_KEYS.DEFAULT_DEST);
         }
     };
 

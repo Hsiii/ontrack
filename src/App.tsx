@@ -1,3 +1,5 @@
+'use client';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import './App.css';
@@ -26,7 +28,10 @@ function formatEnglishStationName(name?: string) {
 const STATION_DEBUG_MIN_DELAY_MS = 900;
 
 function getStationDebugFlags() {
-    if (!import.meta.env.DEV || typeof window === 'undefined') {
+    if (
+        process.env.NODE_ENV !== 'development' ||
+        typeof window === 'undefined'
+    ) {
         return {
             showSkeleton: false,
             showFetchError: false,
@@ -95,6 +100,12 @@ function App() {
     useEffect(() => {
         void fetchStations();
     }, [fetchStations]);
+
+    useEffect(() => {
+        if ('serviceWorker' in navigator) {
+            void navigator.serviceWorker.register('/sw.js');
+        }
+    }, []);
 
     useEffect(() => {
         const nativeSplash = document.getElementById('native-splash');
