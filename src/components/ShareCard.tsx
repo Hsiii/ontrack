@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef } from 'react';
-import { Share2 } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 import { useI18n } from '../i18n';
 import type { TrainInfo } from '../types';
@@ -244,7 +244,7 @@ export function ShareCard({ train, destName }: ShareCardProps) {
                 onClick={handleShare}
                 className='share-card-button share-button'
             >
-                <Share2 />
+                <Send />
             </IconButton>
         </div>
     );
