@@ -34,6 +34,8 @@ export const translations = {
         'time.arrival': '抵達',
         'time.date': '日期',
         'time.time': '時間',
+        'destinationPrompt.title': '現在要去哪',
+        'destinationPrompt.notThese': '不是這些',
 
         'train.onTime': 'On Time',
         'train.delayMinutes': '+{minutes} min',
@@ -82,6 +84,8 @@ export const translations = {
         'time.arrival': 'Arrive',
         'time.date': 'Date',
         'time.time': 'Time',
+        'destinationPrompt.title': 'Where to go?',
+        'destinationPrompt.notThese': 'Not these',
 
         'train.onTime': 'On Time',
         'train.delayMinutes': '+{minutes} min',

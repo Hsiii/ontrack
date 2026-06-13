@@ -1,4 +1,5 @@
 export { ShareCard } from './ShareCard';
+export { DestinationPromptSheet } from './DestinationPromptSheet';
 export { StationSelector } from './StationSelector';
 export { TrainList } from './TrainList';
 export { Badge } from './Badge';
