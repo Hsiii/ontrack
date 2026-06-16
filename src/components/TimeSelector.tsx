@@ -29,6 +29,17 @@ function getTodayDigits() {
     return `${month}${date}`;
 }
 
+function getCurrentTimeDigits() {
+    return new Date()
+        .toLocaleTimeString('en-CA', {
+            hour12: false,
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Asia/Taipei',
+        })
+        .replace(':', '');
+}
+
 function appendDigits(value: string, input: string, maxLength: number) {
     const digits = input.replace(/\D/g, '');
 
@@ -87,7 +98,7 @@ export function TimeSelector() {
     const { t } = useI18n();
     const [mode, setMode] = useState<TimeMode>('departure');
     const [dateDigits, setDateDigits] = useState(() => getTodayDigits());
-    const [timeDigits, setTimeDigits] = useState('1730');
+    const [timeDigits, setTimeDigits] = useState(() => getCurrentTimeDigits());
 
     const isArrival = mode === 'arrival';
     const modeOptions = useMemo(
