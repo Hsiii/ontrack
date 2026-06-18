@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Send } from 'lucide-react';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '../i18n/useI18n';
 import type { TrainInfo } from '../types';
 import { IconButton } from './IconButton';
 import { LanguageDropdown } from './LanguageDropdown';

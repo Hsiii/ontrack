@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { Clock3, Search, X } from 'lucide-react';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
 import {
     filterStationsBySearch,

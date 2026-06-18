@@ -5,21 +5,19 @@ import { useEffect, useMemo, useState } from 'react';
 import './App.css';
 
 import { api } from './api/client';
-import {
-    IOSInstallPrompt,
-    ShareCard,
-    StationSelector,
-    StationSelectorSkeleton,
-    TimeSelector,
-    TrainList,
-} from './components';
+import { IOSInstallPrompt } from './components/IOSInstallPrompt';
+import { ShareCard } from './components/ShareCard';
+import { StationSelector } from './components/StationSelector';
+import { StationSelectorSkeleton } from './components/StationSelectorSkeleton';
 import {
     getInitialTimeSelection,
     getScheduleDate,
     getScheduleTime,
+    TimeSelector,
 } from './components/TimeSelector';
+import { TrainList } from './components/TrainList';
 import { usePersistence } from './hooks/usePersistence';
-import { useI18n } from './i18n';
+import { useI18n } from './i18n/useI18n';
 import type { Station, TrainInfo } from './types';
 
 function formatEnglishStationName(name?: string) {

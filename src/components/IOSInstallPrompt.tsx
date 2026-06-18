@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Plus, Share } from 'lucide-react';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '../i18n/useI18n';
 
 import './IOSInstallPrompt.css';
 

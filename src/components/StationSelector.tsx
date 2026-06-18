@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MapPin, MapPinCheck, MapPinOff, Star } from 'lucide-react';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
 import { DestinationPromptSheet } from './DestinationPromptSheet';
 import {

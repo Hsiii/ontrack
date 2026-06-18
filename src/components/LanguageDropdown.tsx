@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Check, Globe } from 'lucide-react';
 
-import { useI18n } from '../i18n';
-import type { LanguageCode } from '../i18n';
+import type { LanguageCode } from '../i18n/types';
+import { useI18n } from '../i18n/useI18n';
 
 import './LanguageDropdown.css';
 

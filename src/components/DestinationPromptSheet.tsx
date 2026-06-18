@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
 
-import { useI18n } from '../i18n';
+import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
 
 import './DestinationPromptSheet.css';
