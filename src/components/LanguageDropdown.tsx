@@ -1,6 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import twFlag from 'flag-icons/flags/4x3/tw.svg';
-import usFlag from 'flag-icons/flags/4x3/us.svg';
 import { Check, Globe } from 'lucide-react';
 
 import { useI18n } from '../i18n';
@@ -12,11 +10,11 @@ const DISMISS_THRESHOLD = 60;
 
 const options: {
     value: LanguageCode;
-    flag: string;
+    marker: string;
     labelKey: 'language.zhTW' | 'language.en';
 }[] = [
-    { value: 'zh-TW', flag: twFlag, labelKey: 'language.zhTW' },
-    { value: 'en', flag: usFlag, labelKey: 'language.en' },
+    { value: 'zh-TW', marker: '繁', labelKey: 'language.zhTW' },
+    { value: 'en', marker: 'EN', labelKey: 'language.en' },
 ];
 
 export function LanguageDropdown() {
@@ -119,12 +117,12 @@ export function LanguageDropdown() {
                                 className={`lang-sheet-option ${language === opt.value ? 'active' : ''}`}
                                 onClick={() => handleSelect(opt.value)}
                             >
-                                <img
-                                    className='lang-option-flag'
-                                    src={opt.flag}
-                                    alt=''
+                                <span
+                                    className='lang-option-marker'
                                     aria-hidden='true'
-                                />
+                                >
+                                    {opt.marker}
+                                </span>
                                 <span className='lang-option-label'>
                                     {t(opt.labelKey)}
                                 </span>

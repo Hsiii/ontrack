@@ -125,13 +125,19 @@
     color: var(--color-text);
 }
 
-/* ── Flag ── */
+/* ── Marker ── */
 
-.lang-option-flag {
+.lang-option-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    object-fit: cover;
+    background: var(--color-bg);
+    color: var(--color-text-dim);
+    font-size: var(--text-xs);
+    font-weight: var(--font-semibold);
     flex-shrink: 0;
 }
 
