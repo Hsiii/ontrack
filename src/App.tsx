@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import './App.css';
 
@@ -12,7 +12,6 @@ import {
     StationSelectorSkeleton,
     TimeSelector,
     TrainList,
-    TrainListSkeleton,
 } from './components';
 import {
     getInitialTimeSelection,
@@ -26,27 +25,6 @@ import type { Station, TrainInfo } from './types';
 
 function formatEnglishStationName(name?: string) {
     return name?.replace(/_/g, ' ');
-}
-
-const STATION_DEBUG_MIN_DELAY_MS = 900;
-
-function getStationDebugFlags() {
-    if (
-        process.env.NODE_ENV !== 'development' ||
-        typeof window === 'undefined'
-    ) {
-        return {
-            showSkeleton: false,
-            showFetchError: false,
-        };
-    }
-
-    const params = new URLSearchParams(window.location.search);
-
-    return {
-        showSkeleton: params.get('routeLoad') === '1',
-        showFetchError: params.get('routeError') === '1',
-    };
 }
 
 function App() {
@@ -67,40 +45,17 @@ function App() {
     const [timeSelection, setTimeSelection] = useState(getInitialTimeSelection);
     const [stationsLoading, setStationsLoading] = useState(true);
     const [stationsError, setStationsError] = useState<string | null>(null);
-    const hadCachedStationsRef = useRef(false);
 
-    const stationDebugFlags = useMemo(() => getStationDebugFlags(), []);
-
-    const fetchStations = useCallback(() => {
-        api.getStations({
-            bypassCache:
-                stationDebugFlags.showSkeleton ||
-                stationDebugFlags.showFetchError,
-            minDelayMs:
-                !stationDebugFlags.showSkeleton &&
-                stationDebugFlags.showFetchError
-                    ? STATION_DEBUG_MIN_DELAY_MS
-                    : 0,
-            forceError: stationDebugFlags.showFetchError,
-            holdForever:
-                stationDebugFlags.showSkeleton &&
-                !stationDebugFlags.showFetchError,
-        })
+    useEffect(() => {
+        api.getStations()
             .then(setStations)
             .catch((error) => {
                 console.error(error);
-                if (!hadCachedStationsRef.current) {
-                    setStations([]);
-                    setStationsError(t('error.failedToLoadStations'));
-                }
+                setStations([]);
+                setStationsError(t('error.failedToLoadStations'));
             })
             .finally(() => setStationsLoading(false));
-    }, [stationDebugFlags.showFetchError, stationDebugFlags.showSkeleton, t]);
-
-    // Fetch stations at App level to provide names to ShareCard
-    useEffect(() => {
-        void fetchStations();
-    }, [fetchStations]);
+    }, [t]);
 
     useEffect(() => {
         if ('serviceWorker' in navigator) {
@@ -189,15 +144,6 @@ function App() {
                             />
                         )}
                     </section>
-
-                    {stationsLoading && stationDebugFlags.showSkeleton ? (
-                        <section aria-labelledby='train-list-heading'>
-                            <h2 id='train-list-heading' className='label-dim'>
-                                {t('app.selectTrain')}
-                            </h2>
-                            <TrainListSkeleton showLabel={false} />
-                        </section>
-                    ) : null}
 
                     {originId && destId && (
                         <TrainList

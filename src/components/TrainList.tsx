@@ -22,27 +22,6 @@ const TRAIN_TYPE_EN: Record<string, string> = {
     新自強: 'N.TC', // New Tze-Chiang (EMU3000)
 };
 
-const SCHEDULE_DEBUG_MIN_DELAY_MS = 900;
-
-function getScheduleDebugFlags() {
-    if (
-        process.env.NODE_ENV !== 'development' ||
-        typeof window === 'undefined'
-    ) {
-        return {
-            showSkeleton: false,
-            showFetchError: false,
-        };
-    }
-
-    const params = new URLSearchParams(window.location.search);
-
-    return {
-        showSkeleton: params.get('trainLoad') === '1',
-        showFetchError: params.get('trainError') === '1',
-    };
-}
-
 /**
  * Parse train type to extract simple term, with optional English mapping.
  * Examples (zh-TW): "自強(商務專開列車)" → "自強"
@@ -151,7 +130,6 @@ export function TrainList({
     selectedTrainNo,
 }: TrainListProps) {
     const { t, language } = useI18n();
-    const scheduleDebugFlags = getScheduleDebugFlags();
     const [trains, setTrains] = useState<TrainInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -179,17 +157,7 @@ export function TrainList({
         setLoading(trains.length === 0);
         setError(null);
 
-        api.getSchedule(originId, destId, date, {
-            minDelayMs:
-                !scheduleDebugFlags.showSkeleton &&
-                scheduleDebugFlags.showFetchError
-                    ? SCHEDULE_DEBUG_MIN_DELAY_MS
-                    : 0,
-            forceError: scheduleDebugFlags.showFetchError,
-            holdForever:
-                scheduleDebugFlags.showSkeleton &&
-                !scheduleDebugFlags.showFetchError,
-        })
+        api.getSchedule(originId, destId, date)
             .then((res) => {
                 if (requestId !== requestIdRef.current) {
                     return;
@@ -218,18 +186,7 @@ export function TrainList({
                 setError(t('error.failedToLoadSchedule'));
                 setLoading(false);
             });
-    }, [
-        originId,
-        destId,
-        date,
-        time,
-        timeMode,
-        onSelect,
-        trains.length,
-        scheduleDebugFlags.showSkeleton,
-        scheduleDebugFlags.showFetchError,
-        t,
-    ]);
+    }, [originId, destId, date, time, timeMode, onSelect, trains.length, t]);
 
     useEffect(() => {
         const initialFetchTimer = window.setTimeout(() => {
