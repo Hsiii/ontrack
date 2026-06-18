@@ -14,6 +14,11 @@ import {
     TrainList,
     TrainListSkeleton,
 } from './components';
+import {
+    getInitialTimeSelection,
+    getScheduleDate,
+    getScheduleTime,
+} from './components/TimeSelector';
 import { featureFlags } from './config/featureFlags';
 import { usePersistence } from './hooks/usePersistence';
 import { useI18n } from './i18n';
@@ -59,6 +64,7 @@ function App() {
 
     const [stations, setStations] = useState<Station[]>([]);
     const [selectedTrain, setSelectedTrain] = useState<TrainInfo | null>(null);
+    const [timeSelection, setTimeSelection] = useState(getInitialTimeSelection);
     const [stationsLoading, setStationsLoading] = useState(true);
     const [stationsError, setStationsError] = useState<string | null>(null);
     const hadCachedStationsRef = useRef(false);
@@ -144,13 +150,18 @@ function App() {
         (isEn
             ? formatEnglishStationName(destStation?.nameEn)
             : destStation?.name) || destId;
+    const scheduleDate = getScheduleDate(timeSelection.dateDigits);
+    const scheduleTime = getScheduleTime(timeSelection.timeDigits);
 
     return (
         <>
             <IOSInstallPrompt />
             <div className='app-container'>
                 <main className='app-main'>
-                    <TimeSelector />
+                    <TimeSelector
+                        value={timeSelection}
+                        onChange={setTimeSelection}
+                    />
 
                     <section aria-labelledby='station-selector-heading'>
                         <h2 id='station-selector-heading' className='label-dim'>
@@ -193,6 +204,9 @@ function App() {
                             key={`${originId}-${destId}`}
                             originId={originId}
                             destId={destId}
+                            date={scheduleDate}
+                            time={scheduleTime}
+                            timeMode={timeSelection.mode}
                             onSelect={setSelectedTrain}
                             selectedTrainNo={selectedTrain?.trainNo || null}
                         />

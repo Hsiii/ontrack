@@ -1,10 +1,16 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 import { useI18n } from '../i18n';
 
 import './TimeSelector.css';
 
-type TimeMode = 'departure' | 'arrival';
+export type TimeMode = 'departure' | 'arrival';
+
+export interface TimeSelection {
+    mode: TimeMode;
+    dateDigits: string;
+    timeDigits: string;
+}
 
 const DATE_DIGIT_COUNT = 4;
 const TIME_DIGIT_COUNT = 4;
@@ -46,6 +52,44 @@ function appendDigits(value: string, input: string, maxLength: number) {
     if (!digits) return value;
 
     return `${value}${digits}`.slice(0, maxLength);
+}
+
+export function getInitialTimeSelection(): TimeSelection {
+    return {
+        mode: 'departure',
+        dateDigits: getTodayDigits(),
+        timeDigits: getCurrentTimeDigits(),
+    };
+}
+
+export function getScheduleDate(dateDigits: string) {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = Number(dateDigits.slice(0, 2));
+    const date = Number(dateDigits.slice(2, 4));
+    const selectedDate = new Date(year, month - 1, date);
+
+    if (
+        dateDigits.length !== DATE_DIGIT_COUNT ||
+        selectedDate.getFullYear() !== year ||
+        selectedDate.getMonth() !== month - 1 ||
+        selectedDate.getDate() !== date
+    ) {
+        return today.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+    }
+
+    return `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+}
+
+export function getScheduleTime(timeDigits: string) {
+    const hours = Number(timeDigits.slice(0, 2));
+    const minutes = Number(timeDigits.slice(2, 4));
+
+    if (timeDigits.length !== TIME_DIGIT_COUNT || hours > 23 || minutes > 59) {
+        return getCurrentTimeDigits().replace(/(\d{2})(\d{2})/, '$1:$2');
+    }
+
+    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
 
 interface DigitInputProps {
@@ -94,13 +138,15 @@ function DigitInput({
     );
 }
 
-export function TimeSelector() {
-    const { t } = useI18n();
-    const [mode, setMode] = useState<TimeMode>('departure');
-    const [dateDigits, setDateDigits] = useState(() => getTodayDigits());
-    const [timeDigits, setTimeDigits] = useState(() => getCurrentTimeDigits());
+interface TimeSelectorProps {
+    value: TimeSelection;
+    onChange: (value: TimeSelection) => void;
+}
 
-    const isArrival = mode === 'arrival';
+export function TimeSelector({ value, onChange }: TimeSelectorProps) {
+    const { t } = useI18n();
+
+    const isArrival = value.mode === 'arrival';
     const modeOptions = useMemo(
         () =>
             [
@@ -137,8 +183,10 @@ export function TimeSelector() {
                             key={option.value}
                             type='button'
                             className='time-selector-mode-option'
-                            aria-pressed={mode === option.value}
-                            onClick={() => setMode(option.value)}
+                            aria-pressed={value.mode === option.value}
+                            onClick={() =>
+                                onChange({ ...value, mode: option.value })
+                            }
                         >
                             {option.label}
                         </button>
@@ -148,17 +196,21 @@ export function TimeSelector() {
                 <div className='time-selector-fields'>
                     <DigitInput
                         ariaLabel={t('time.date')}
-                        value={dateDigits}
+                        value={value.dateDigits}
                         maxLength={DATE_DIGIT_COUNT}
                         formatValue={formatDateDigits}
-                        onChange={setDateDigits}
+                        onChange={(dateDigits) =>
+                            onChange({ ...value, dateDigits })
+                        }
                     />
                     <DigitInput
                         ariaLabel={t('time.time')}
-                        value={timeDigits}
+                        value={value.timeDigits}
                         maxLength={TIME_DIGIT_COUNT}
                         formatValue={formatTimeDigits}
-                        onChange={setTimeDigits}
+                        onChange={(timeDigits) =>
+                            onChange({ ...value, timeDigits })
+                        }
                     />
                 </div>
             </div>

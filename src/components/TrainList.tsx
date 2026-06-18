@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api } from '../api/client';
 import { useI18n } from '../i18n';
 import type { TrainInfo } from '../types';
+import type { TimeMode } from './TimeSelector';
 import { TrainListSkeleton } from './TrainListSkeleton';
 
 import './TrainList.css';
@@ -90,21 +91,22 @@ function formatDuration(minutes: number): string {
     return m === 0 ? `${h}h` : `${h}h${m}m`;
 }
 
-function buildDisplayState(trains: TrainInfo[]) {
-    const now = new Date();
-    const currentTimeStr = now.toLocaleTimeString('en-CA', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Asia/Taipei',
-    });
-    const currentTimeMinutes = timeToMinutes(currentTimeStr);
+function buildDisplayState(
+    trains: TrainInfo[],
+    targetTime: string,
+    timeMode: TimeMode
+) {
+    const targetTimeMinutes = timeToMinutes(targetTime);
+    const getComparisonMinutes =
+        timeMode === 'arrival'
+            ? (train: TrainInfo) => timeToMinutes(train.arrivalTime)
+            : getEffectiveDepartureMinutes;
 
     const nextScheduledTrainIndex = trains.findIndex(
-        (train) => timeToMinutes(train.departureTime) >= currentTimeMinutes
+        (train) => timeToMinutes(train.departureTime) >= targetTimeMinutes
     );
     const nextCatchableTrainIndex = trains.findIndex(
-        (train) => getEffectiveDepartureMinutes(train) >= currentTimeMinutes
+        (train) => getComparisonMinutes(train) >= targetTimeMinutes
     );
 
     let displayTrains: TrainInfo[] = [];
@@ -132,6 +134,9 @@ function buildDisplayState(trains: TrainInfo[]) {
 interface TrainListProps {
     originId: string;
     destId: string;
+    date: string;
+    time: string;
+    timeMode: TimeMode;
     onSelect: (train: TrainInfo) => void;
     selectedTrainNo: string | null;
 }
@@ -139,6 +144,9 @@ interface TrainListProps {
 export function TrainList({
     originId,
     destId,
+    date,
+    time,
+    timeMode,
     onSelect,
     selectedTrainNo,
 }: TrainListProps) {
@@ -155,7 +163,7 @@ export function TrainList({
         if (!originId || !destId) return;
 
         // Prevent duplicate requests
-        const currentParams = `${originId}-${destId}`;
+        const currentParams = `${originId}-${destId}-${date}-${time}-${timeMode}`;
         if (
             lastFetchParamsRef.current === currentParams &&
             lastFetchTimeRef.current &&
@@ -171,7 +179,7 @@ export function TrainList({
         setLoading(trains.length === 0);
         setError(null);
 
-        api.getSchedule(originId, destId, undefined, {
+        api.getSchedule(originId, destId, date, {
             minDelayMs:
                 !scheduleDebugFlags.showSkeleton &&
                 scheduleDebugFlags.showFetchError
@@ -188,7 +196,9 @@ export function TrainList({
                 }
 
                 const { displayTrains, recommendedTrain } = buildDisplayState(
-                    res.trains
+                    res.trains,
+                    time,
+                    timeMode
                 );
 
                 setTrains(displayTrains);
@@ -211,6 +221,9 @@ export function TrainList({
     }, [
         originId,
         destId,
+        date,
+        time,
+        timeMode,
         onSelect,
         trains.length,
         scheduleDebugFlags.showSkeleton,
