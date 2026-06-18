@@ -10,6 +10,7 @@ import { Clock3, Search, X } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
+import { getRecentStationIds, persistRecentStationId } from './recentStations';
 import {
     filterStationsBySearch,
     normalizeEnglishStationName,
@@ -34,9 +35,6 @@ interface StationDropdownProps {
     triggerAction?: ReactNode;
 }
 
-const RECENT_STATIONS_KEY = 'ontrack_recent_stations';
-const MAX_RECENT_STATIONS = 6;
-
 function shouldAutoFocusSearchInput() {
     if (typeof window === 'undefined') return false;
 
@@ -44,33 +42,6 @@ function shouldAutoFocusSearchInput() {
         navigator.maxTouchPoints > 0 ||
         window.matchMedia('(hover: none), (pointer: coarse)').matches
     );
-}
-
-function getRecentStationIds(): string[] {
-    try {
-        const storedValue = localStorage.getItem(RECENT_STATIONS_KEY);
-        if (!storedValue) return [];
-
-        const parsedValue = JSON.parse(storedValue);
-        return Array.isArray(parsedValue)
-            ? parsedValue.filter(
-                  (item): item is string => typeof item === 'string'
-              )
-            : [];
-    } catch {
-        return [];
-    }
-}
-
-function persistRecentStationId(stationId: string) {
-    const nextIds = [
-        stationId,
-        ...getRecentStationIds().filter((item) => item !== stationId),
-    ].slice(0, MAX_RECENT_STATIONS);
-
-    localStorage.setItem(RECENT_STATIONS_KEY, JSON.stringify(nextIds));
-
-    return nextIds;
 }
 
 export function StationDropdown({

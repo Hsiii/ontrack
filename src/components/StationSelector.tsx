@@ -4,10 +4,7 @@ import { MapPin, MapPinCheck, MapPinOff, Star } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
 import { DestinationPromptSheet } from './DestinationPromptSheet';
-import {
-    getRecentDepartureStationIds,
-    persistRecentDepartureStationId,
-} from './recentDepartureStations';
+import { getRecentStationIds } from './recentStations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -209,7 +206,7 @@ export function StationSelector({
         .filter((station): station is Station => Boolean(station));
 
     const showDestinationPrompt = (currentOriginId: string) => {
-        const recentDestinations = getRecentDepartureStationIds()
+        const recentDestinations = getRecentStationIds()
             .filter((id) => id !== currentOriginId)
             .filter((id) => stations.some((station) => station.id === id))
             .slice(0, 2);
@@ -221,7 +218,6 @@ export function StationSelector({
     };
 
     const handleOriginSelect = (id: string) => {
-        persistRecentDepartureStationId(id);
         setOriginWithSource(id, 'manual');
         showDestinationPrompt(id);
     };
