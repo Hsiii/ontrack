@@ -14,6 +14,7 @@ import {
     getScheduleDate,
     getScheduleTime,
     TimeSelector,
+    type TimeSelection,
 } from './components/TimeSelector';
 import { TrainList } from './components/TrainList';
 import { usePersistence } from './hooks/usePersistence';
@@ -22,6 +23,20 @@ import type { Station, TrainInfo } from './types';
 
 function formatEnglishStationName(name?: string) {
     return name?.replace(/_/g, ' ');
+}
+
+const EMPTY_TIME_SELECTION: TimeSelection = {
+    mode: 'departure',
+    dateDigits: '',
+    timeDigits: '',
+};
+
+function getLaunchTimeSelection() {
+    if (typeof window === 'undefined') {
+        return EMPTY_TIME_SELECTION;
+    }
+
+    return getInitialTimeSelection();
 }
 
 function App() {
@@ -39,7 +54,9 @@ function App() {
 
     const [stations, setStations] = useState<Station[]>([]);
     const [selectedTrain, setSelectedTrain] = useState<TrainInfo | null>(null);
-    const [timeSelection, setTimeSelection] = useState(getInitialTimeSelection);
+    const [timeSelection, setTimeSelection] = useState<TimeSelection>(
+        getLaunchTimeSelection
+    );
     const [stationsLoading, setStationsLoading] = useState(true);
     const [stationsError, setStationsError] = useState<string | null>(null);
 
@@ -104,6 +121,9 @@ function App() {
             : destStation?.name) || destId;
     const scheduleDate = getScheduleDate(timeSelection.dateDigits);
     const scheduleTime = getScheduleTime(timeSelection.timeDigits);
+    const isTimeInitialized =
+        timeSelection.dateDigits.length === 4 &&
+        timeSelection.timeDigits.length === 4;
 
     return (
         <>
@@ -142,7 +162,7 @@ function App() {
                         )}
                     </section>
 
-                    {originId && destId && (
+                    {isTimeInitialized && originId && destId && (
                         <TrainList
                             key={`${originId}-${destId}`}
                             originId={originId}
