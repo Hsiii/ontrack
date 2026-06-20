@@ -84,7 +84,7 @@
 }
 
 .station-swap-btn:disabled {
-    opacity: 0.4;
+    color: var(--color-border);
     cursor: default;
 }
 
