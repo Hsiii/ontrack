@@ -48,12 +48,16 @@
 }
 
 .station-swap-row {
+    position: absolute;
+    top: calc(4rem + var(--space-1));
+    left: 0;
+    right: 0;
+    z-index: 3;
     display: flex;
     justify-content: center;
-    height: 24px;
-    margin: calc(var(--space-1) * -1) 0;
-    position: relative;
-    z-index: 1;
+    height: 32px;
+    pointer-events: none;
+    transform: translateY(-50%);
 }
 
 .station-swap-btn {
@@ -67,6 +71,7 @@
     background: var(--color-bg);
     color: var(--color-text-dim);
     cursor: pointer;
+    pointer-events: auto;
     transition:
         background 0.2s ease,
         color 0.2s ease,
