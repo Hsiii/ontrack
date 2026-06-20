@@ -79,8 +79,9 @@
 }
 
 .station-swap-btn svg {
-    width: 16px;
-    height: 16px;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
 }
 
 .station-swap-btn:disabled {
