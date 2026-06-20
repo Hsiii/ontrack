@@ -3,7 +3,7 @@ import { MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
-import { getFrequentDestinationIds } from './frequentDestinations';
+import { getFrequentDestinationIdsForOrigin } from './frequentDestinations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -66,10 +66,16 @@ export function StationSelector({
     }, [originId]);
 
     useEffect(() => {
-        if (originSource !== 'geo' || !originId || destId !== originId) return;
+        if (
+            originSource !== 'geo' ||
+            !originId ||
+            (destId && destId !== originId)
+        ) {
+            return;
+        }
 
         const replacementDestinationId =
-            getFrequentDestinationIds(originId).find((id) =>
+            getFrequentDestinationIdsForOrigin(originId, originId).find((id) =>
                 stations.some((station) => station.id === id)
             ) ?? '';
 
@@ -296,6 +302,7 @@ export function StationSelector({
                         title={t('station.selectDestination')}
                         selectedStation={destStation}
                         showFrequentDestinations
+                        frequentDestinationOriginId={originId}
                         excludedFrequentDestinationId={originId}
                     />
                 </div>

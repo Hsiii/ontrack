@@ -5,6 +5,7 @@ const LEGACY_RECENT_DEPARTURE_STATIONS_KEY =
 const MAX_FREQUENT_DESTINATIONS = 12;
 
 interface FrequentDestination {
+    originId: string;
     id: string;
     count: number;
     updatedAt: number;
@@ -47,6 +48,11 @@ function readFrequentDestinations(): FrequentDestination[] {
             (item): item is FrequentDestination =>
                 typeof item === 'object' &&
                 item !== null &&
+                (typeof item.originId === 'undefined' ||
+                    typeof item.originId === 'string') &&
+                (typeof item.originId === 'undefined' ||
+                    item.originId === '' ||
+                    isValidStationId(item.originId)) &&
                 typeof item.id === 'string' &&
                 isValidStationId(item.id) &&
                 typeof item.count === 'number' &&
@@ -68,6 +74,7 @@ function readFrequentDestinationsWithLegacy() {
     ].filter((id, index, ids) => ids.indexOf(id) === index);
 
     return legacyIds.map((id, index) => ({
+        originId: '',
         id,
         count: legacyIds.length - index,
         updatedAt: Date.now() - index,
@@ -88,20 +95,57 @@ export function getFrequentDestinationIds(excludedId = ''): string[] {
         .map((destination) => destination.id);
 }
 
-export function persistFrequentDestinationId(stationId: string) {
-    if (!canUseLocalStorage() || !isValidStationId(stationId)) {
-        return getFrequentDestinationIds();
+export function getFrequentDestinationIdsForOrigin(
+    originId: string,
+    excludedId = ''
+): string[] {
+    if (!canUseLocalStorage() || !isValidStationId(originId)) {
+        return getFrequentDestinationIds(excludedId);
+    }
+
+    const destinations = readFrequentDestinationsWithLegacy();
+    const originDestinations = sortDestinations(
+        destinations.filter((destination) => destination.originId === originId)
+    );
+    const fallbackDestinations = sortDestinations(
+        destinations.filter((destination) => destination.originId !== originId)
+    );
+    const seenIds = new Set<string>();
+
+    return [...originDestinations, ...fallbackDestinations]
+        .filter((destination) => {
+            if (destination.id === excludedId || seenIds.has(destination.id)) {
+                return false;
+            }
+
+            seenIds.add(destination.id);
+            return true;
+        })
+        .map((destination) => destination.id);
+}
+
+export function persistFrequentDestinationId(
+    originId: string,
+    stationId: string
+) {
+    if (
+        !canUseLocalStorage() ||
+        !isValidStationId(originId) ||
+        !isValidStationId(stationId)
+    ) {
+        return getFrequentDestinationIdsForOrigin(originId);
     }
 
     const now = Date.now();
     const destinations = readFrequentDestinationsWithLegacy();
     const existingDestination = destinations.find(
-        (destination) => destination.id === stationId
+        (destination) =>
+            destination.originId === originId && destination.id === stationId
     );
 
     const nextDestinations = existingDestination
         ? destinations.map((destination) =>
-              destination.id === stationId
+              destination.originId === originId && destination.id === stationId
                   ? {
                         ...destination,
                         count: destination.count + 1,
@@ -109,7 +153,10 @@ export function persistFrequentDestinationId(stationId: string) {
                     }
                   : destination
           )
-        : [{ id: stationId, count: 1, updatedAt: now }, ...destinations];
+        : [
+              { originId, id: stationId, count: 1, updatedAt: now },
+              ...destinations,
+          ];
 
     const sortedDestinations = sortDestinations(nextDestinations).slice(
         0,
@@ -123,5 +170,5 @@ export function persistFrequentDestinationId(stationId: string) {
     localStorage.removeItem(LEGACY_RECENT_STATIONS_KEY);
     localStorage.removeItem(LEGACY_RECENT_DEPARTURE_STATIONS_KEY);
 
-    return sortedDestinations.map((destination) => destination.id);
+    return getFrequentDestinationIdsForOrigin(originId);
 }

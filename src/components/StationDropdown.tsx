@@ -11,7 +11,7 @@ import { Clock3, Search, X } from 'lucide-react';
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
 import {
-    getFrequentDestinationIds,
+    getFrequentDestinationIdsForOrigin,
     persistFrequentDestinationId,
 } from './frequentDestinations';
 import {
@@ -37,6 +37,7 @@ interface StationDropdownProps {
     onCacheSelection?: (id: string) => void;
     triggerAction?: ReactNode;
     showFrequentDestinations?: boolean;
+    frequentDestinationOriginId?: string;
     excludedFrequentDestinationId?: string;
 }
 
@@ -63,6 +64,7 @@ export function StationDropdown({
     onCacheSelection,
     triggerAction,
     showFrequentDestinations = false,
+    frequentDestinationOriginId = '',
     excludedFrequentDestinationId = '',
 }: StationDropdownProps) {
     const { t, language } = useI18n();
@@ -72,7 +74,10 @@ export function StationDropdown({
         string[]
     >(() =>
         showFrequentDestinations
-            ? getFrequentDestinationIds(excludedFrequentDestinationId)
+            ? getFrequentDestinationIdsForOrigin(
+                  frequentDestinationOriginId,
+                  excludedFrequentDestinationId
+              )
             : []
     );
 
@@ -199,7 +204,10 @@ export function StationDropdown({
 
         if (showFrequentDestinations) {
             setFrequentDestinationIds(
-                persistFrequentDestinationId(preferredStationId)
+                persistFrequentDestinationId(
+                    frequentDestinationOriginId,
+                    preferredStationId
+                )
             );
         }
 
@@ -210,7 +218,10 @@ export function StationDropdown({
     const handleOpen = () => {
         if (showFrequentDestinations) {
             setFrequentDestinationIds(
-                getFrequentDestinationIds(excludedFrequentDestinationId)
+                getFrequentDestinationIdsForOrigin(
+                    frequentDestinationOriginId,
+                    excludedFrequentDestinationId
+                )
             );
         }
 
