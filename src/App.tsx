@@ -31,14 +31,6 @@ const EMPTY_TIME_SELECTION: TimeSelection = {
     timeDigits: '',
 };
 
-function getLaunchTimeSelection() {
-    if (typeof window === 'undefined') {
-        return EMPTY_TIME_SELECTION;
-    }
-
-    return getInitialTimeSelection();
-}
-
 function App() {
     const { t, language } = useI18n();
     const {
@@ -52,9 +44,8 @@ function App() {
 
     const [stations, setStations] = useState<Station[]>([]);
     const [selectedTrain, setSelectedTrain] = useState<TrainInfo | null>(null);
-    const [timeSelection, setTimeSelection] = useState<TimeSelection>(
-        getLaunchTimeSelection
-    );
+    const [timeSelection, setTimeSelection] =
+        useState<TimeSelection>(EMPTY_TIME_SELECTION);
     const [stationsLoading, setStationsLoading] = useState(true);
     const [stationsError, setStationsError] = useState<string | null>(null);
 
@@ -68,6 +59,19 @@ function App() {
             })
             .finally(() => setStationsLoading(false));
     }, [t]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setTimeSelection((currentTimeSelection) =>
+                currentTimeSelection.dateDigits.length === 4 &&
+                currentTimeSelection.timeDigits.length === 4
+                    ? currentTimeSelection
+                    : getInitialTimeSelection()
+            );
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, []);
 
     useEffect(() => {
         if ('serviceWorker' in navigator) {

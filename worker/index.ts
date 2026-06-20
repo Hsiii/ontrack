@@ -1,6 +1,6 @@
 import {
+    ensureRouteTimetable,
     ensureStations,
-    ensureTimetable,
     getLiveBoard,
     getTaipeiDate,
     refreshDailySnapshots,
@@ -125,14 +125,14 @@ async function handleSchedule(url: URL, env: Env) {
 
     const queryDate = date || getTaipeiDate();
     const isToday = queryDate === getTaipeiDate();
-    const [allTrains, liveBoard] = await Promise.all([
-        ensureTimetable(env, queryDate),
+    const [routeTrains, liveBoard] = await Promise.all([
+        ensureRouteTimetable(env, queryDate, origin, dest),
         isToday
             ? getLiveBoard(env)
             : Promise.resolve<DelaySnapshot>({ delays: {} }),
     ]);
     const delayMap = new Map(Object.entries(liveBoard.delays));
-    const trains = allTrains
+    const trains = routeTrains
         .map((t) => mapTrainToAppTrainInfo(t, origin, dest, delayMap))
         .filter((t): t is TrainInfo => t !== null)
         .sort((a, b) => a.departureTime.localeCompare(b.departureTime));

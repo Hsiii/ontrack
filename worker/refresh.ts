@@ -25,6 +25,10 @@ export function timetableKey(date: string) {
     return `daily-timetable:${date}`;
 }
 
+export function routeTimetableKey(date: string, origin: string, dest: string) {
+    return `daily-timetable-od:${date}:${origin}:${dest}`;
+}
+
 function toStations(data: TDXStation[]): Station[] {
     return data.map((station) => ({
         id: station.StationID,
@@ -67,6 +71,30 @@ export async function refreshTimetable(env: Env, date = getTaipeiDate()) {
     const timetables = data.TrainTimetables ?? [];
 
     await upsertSnapshot(env, timetableKey(date), timetables, null);
+    return timetables;
+}
+
+export async function refreshRouteTimetable(
+    env: Env,
+    date: string,
+    origin: string,
+    dest: string
+) {
+    const data = await fetchTDX<TDXTimetableResponse>(
+        env,
+        `v3/Rail/TRA/DailyTrainTimetable/OD/${origin}/to/${dest}/${date}`,
+        {
+            tier: 'basic',
+        }
+    );
+    const timetables = data.TrainTimetables ?? [];
+
+    await upsertSnapshot(
+        env,
+        routeTimetableKey(date, origin, dest),
+        timetables,
+        null
+    );
     return timetables;
 }
 
@@ -115,6 +143,19 @@ export async function ensureTimetable(env: Env, date: string) {
         timetableKey(date)
     );
     return snapshot?.data ?? refreshTimetable(env, date);
+}
+
+export async function ensureRouteTimetable(
+    env: Env,
+    date: string,
+    origin: string,
+    dest: string
+) {
+    const snapshot = await getSnapshot<TDXFullTimetable[]>(
+        env,
+        routeTimetableKey(date, origin, dest)
+    );
+    return snapshot?.data ?? refreshRouteTimetable(env, date, origin, dest);
 }
 
 export async function getLiveBoard(env: Env) {
