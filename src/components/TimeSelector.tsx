@@ -222,6 +222,8 @@ interface TimeSelectorProps {
 export function TimeSelector({ value, onChange }: TimeSelectorProps) {
     const { t } = useI18n();
     const [modeMenuOpen, setModeMenuOpen] = useState(false);
+    const [currentTimeSelection, setCurrentTimeSelection] =
+        useState<TimeSelection | null>(null);
     const modeMenuRef = useRef<HTMLDivElement>(null);
 
     const modeOptions = useMemo(
@@ -277,6 +279,19 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
         };
     }, [modeMenuOpen]);
 
+    useEffect(() => {
+        const syncCurrentTimeSelection = () => {
+            setCurrentTimeSelection(getCurrentDateTimeSelection(value.mode));
+        };
+        const initialTimer = window.setTimeout(syncCurrentTimeSelection, 0);
+        const interval = window.setInterval(syncCurrentTimeSelection, 60000);
+
+        return () => {
+            window.clearTimeout(initialTimer);
+            window.clearInterval(interval);
+        };
+    }, [value.mode]);
+
     const handleTimeCommit = () => {
         const parsedTime = parseTimeInput(value.timeDigits);
 
@@ -322,6 +337,10 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
         onChange(getCurrentDateTimeSelection(value.mode));
     };
 
+    const isNowSelected =
+        currentTimeSelection?.dateDigits === value.dateDigits &&
+        currentTimeSelection?.timeDigits === value.timeDigits;
+
     return (
         <section
             className='time-selector'
@@ -331,6 +350,38 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                 {t('time.selectTime')}
             </h2>
             <div className='time-selector-row'>
+                <button
+                    type='button'
+                    className='time-selector-now-btn'
+                    onClick={handleSetNow}
+                    aria-label={t('time.now')}
+                    title={t('time.now')}
+                    disabled={isNowSelected}
+                >
+                    <TimerReset aria-hidden='true' />
+                </button>
+                <div className='time-selector-fields'>
+                    <DigitInput
+                        ariaLabel={t('time.date')}
+                        value={value.dateDigits}
+                        maxLength={DATE_DIGIT_COUNT}
+                        formatValue={formatDateDigits}
+                        onChange={(dateDigits) =>
+                            onChange({ ...value, dateDigits })
+                        }
+                    />
+                    <DigitInput
+                        ariaLabel={t('time.time')}
+                        value={value.timeDigits}
+                        maxLength={TIME_DIGIT_COUNT}
+                        formatValue={formatTimeDigits}
+                        onChange={(timeDigits) =>
+                            onChange({ ...value, timeDigits })
+                        }
+                        onBlur={handleTimeCommit}
+                        onInputValue={handleTimeInputValue}
+                    />
+                </div>
                 <div className='time-selector-mode' ref={modeMenuRef}>
                     <button
                         type='button'
@@ -372,38 +423,6 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                         </div>
                     )}
                 </div>
-
-                <div className='time-selector-fields'>
-                    <DigitInput
-                        ariaLabel={t('time.date')}
-                        value={value.dateDigits}
-                        maxLength={DATE_DIGIT_COUNT}
-                        formatValue={formatDateDigits}
-                        onChange={(dateDigits) =>
-                            onChange({ ...value, dateDigits })
-                        }
-                    />
-                    <DigitInput
-                        ariaLabel={t('time.time')}
-                        value={value.timeDigits}
-                        maxLength={TIME_DIGIT_COUNT}
-                        formatValue={formatTimeDigits}
-                        onChange={(timeDigits) =>
-                            onChange({ ...value, timeDigits })
-                        }
-                        onBlur={handleTimeCommit}
-                        onInputValue={handleTimeInputValue}
-                    />
-                </div>
-                <button
-                    type='button'
-                    className='time-selector-now-btn'
-                    onClick={handleSetNow}
-                    aria-label={t('time.now')}
-                    title={t('time.now')}
-                >
-                    <TimerReset aria-hidden='true' />
-                </button>
             </div>
         </section>
     );

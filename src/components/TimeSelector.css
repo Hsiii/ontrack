@@ -41,8 +41,13 @@
 }
 
 .time-selector-mode-trigger:active,
-.time-selector-now-btn:active {
+.time-selector-now-btn:not(:disabled):active {
     transform: scale(0.95);
+}
+
+.time-selector-now-btn:disabled {
+    color: var(--color-border);
+    cursor: default;
 }
 
 .time-selector-mode-menu {
