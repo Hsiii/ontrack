@@ -47,6 +47,46 @@
     min-width: 0;
 }
 
+.station-swap-row {
+    display: flex;
+    justify-content: center;
+    height: 24px;
+    margin: calc(var(--space-1) * -1) 0;
+    position: relative;
+    z-index: 1;
+}
+
+.station-swap-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-bg);
+    color: var(--color-text-dim);
+    cursor: pointer;
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.1s ease;
+}
+
+.station-swap-btn svg {
+    width: 16px;
+    height: 16px;
+}
+
+.station-swap-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.station-swap-btn:not(:disabled):active {
+    transform: scale(0.95);
+}
+
 .station-action-btn {
     position: absolute;
     top: 50%;

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
+import { ArrowUpDown, MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
@@ -246,6 +246,13 @@ export function StationSelector({
         showToast(next ? t('toast.geoEnabled') : t('toast.geoDisabled'));
     };
 
+    const handleSwapStations = () => {
+        if (!originId || !destId) return;
+
+        setOriginWithSource(destId, 'manual');
+        setDestId(originId);
+    };
+
     return (
         <div className='station-selector-container'>
             {/* Toast */}
@@ -285,6 +292,19 @@ export function StationSelector({
                         }
                     />
                 </div>
+            </div>
+
+            <div className='station-swap-row'>
+                <button
+                    type='button'
+                    className='station-swap-btn'
+                    onClick={handleSwapStations}
+                    disabled={!originId || !destId}
+                    aria-label={t('station.swap')}
+                    title={t('station.swap')}
+                >
+                    <ArrowUpDown aria-hidden='true' />
+                </button>
             </div>
 
             {/* Destination Station Row */}
