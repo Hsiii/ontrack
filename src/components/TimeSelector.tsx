@@ -46,6 +46,14 @@ function getCurrentTimeDigits() {
         .replace(':', '');
 }
 
+function getCurrentDateTimeSelection(mode: TimeMode): TimeSelection {
+    return {
+        mode,
+        dateDigits: getTodayDigits(),
+        timeDigits: getCurrentTimeDigits(),
+    };
+}
+
 function appendDigits(value: string, input: string, maxLength: number) {
     const digits = input.replace(/\D/g, '');
 
@@ -54,15 +62,7 @@ function appendDigits(value: string, input: string, maxLength: number) {
     return `${value}${digits}`.slice(0, maxLength);
 }
 
-export function getInitialTimeSelection(): TimeSelection {
-    return {
-        mode: 'departure',
-        dateDigits: getTodayDigits(),
-        timeDigits: getCurrentTimeDigits(),
-    };
-}
-
-export function getScheduleDate(dateDigits: string) {
+function parseDateDigits(dateDigits: string) {
     const today = new Date();
     const year = today.getFullYear();
     const month = Number(dateDigits.slice(0, 2));
@@ -75,8 +75,64 @@ export function getScheduleDate(dateDigits: string) {
         selectedDate.getMonth() !== month - 1 ||
         selectedDate.getDate() !== date
     ) {
-        return today.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+        return today;
     }
+
+    return selectedDate;
+}
+
+function addDaysToDateDigits(dateDigits: string, dayOffset: number) {
+    const selectedDate = parseDateDigits(dateDigits);
+
+    selectedDate.setDate(selectedDate.getDate() + dayOffset);
+
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const date = String(selectedDate.getDate()).padStart(2, '0');
+
+    return `${month}${date}`;
+}
+
+function parseTimeInput(inputValue: string) {
+    const digits = inputValue.replace(/\D/g, '');
+
+    if (!digits) return null;
+
+    const normalizedDigits = digits.slice(0, TIME_DIGIT_COUNT);
+    const splitIndex =
+        normalizedDigits.length <= 2
+            ? normalizedDigits.length
+            : normalizedDigits.length - 2;
+    const hours = Number(normalizedDigits.slice(0, splitIndex));
+    const minutes =
+        normalizedDigits.length <= 2
+            ? 0
+            : Number(normalizedDigits.slice(splitIndex));
+
+    if (hours === 24 && minutes === 0) {
+        return { timeDigits: '0000', dayOffset: 1 };
+    }
+
+    if (hours > 23 || minutes > 59) return null;
+
+    return {
+        timeDigits: `${String(hours).padStart(2, '0')}${String(minutes).padStart(2, '0')}`,
+        dayOffset: 0,
+    };
+}
+
+export function getInitialTimeSelection(): TimeSelection {
+    return {
+        mode: 'departure',
+        dateDigits: getTodayDigits(),
+        timeDigits: getCurrentTimeDigits(),
+    };
+}
+
+export function getScheduleDate(dateDigits: string) {
+    const selectedDate = parseDateDigits(dateDigits);
+    const year = selectedDate.getFullYear();
+    const month = selectedDate.getMonth() + 1;
+    const date = selectedDate.getDate();
 
     return `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
 }
@@ -98,6 +154,8 @@ interface DigitInputProps {
     maxLength: number;
     formatValue: (value: string) => string;
     onChange: (value: string) => void;
+    onBlur?: () => void;
+    onInputValue?: (inputValue: string) => boolean;
 }
 
 function DigitInput({
@@ -106,6 +164,8 @@ function DigitInput({
     maxLength,
     formatValue,
     onChange,
+    onBlur,
+    onInputValue,
 }: DigitInputProps) {
     return (
         <input
@@ -119,14 +179,28 @@ function DigitInput({
                 const input = event.nativeEvent.data ?? '';
 
                 event.preventDefault();
+
+                if (input.length > 1 && onInputValue?.(input)) return;
+
                 onChange(appendDigits(value, input, maxLength));
             }}
             onChange={(event) => {
-                onChange(
-                    event.currentTarget.value
-                        .replace(/\D/g, '')
-                        .slice(0, maxLength)
-                );
+                const inputValue = event.currentTarget.value;
+
+                if (onInputValue?.(inputValue)) return;
+
+                onChange(inputValue.replace(/\D/g, '').slice(0, maxLength));
+            }}
+            onPaste={(event) => {
+                const inputValue = event.clipboardData.getData('text');
+
+                if (!inputValue) return;
+
+                event.preventDefault();
+
+                if (onInputValue?.(inputValue)) return;
+
+                onChange(appendDigits(value, inputValue, maxLength));
             }}
             onKeyDown={(event) => {
                 if (event.key !== 'Backspace') return;
@@ -134,6 +208,7 @@ function DigitInput({
                 event.preventDefault();
                 onChange(value.slice(0, -1));
             }}
+            onBlur={onBlur}
         />
     );
 }
@@ -161,6 +236,51 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
             ] satisfies { value: TimeMode; label: string }[],
         [t]
     );
+
+    const handleTimeCommit = () => {
+        const parsedTime = parseTimeInput(value.timeDigits);
+
+        if (!parsedTime) {
+            onChange({ ...value, timeDigits: getCurrentTimeDigits() });
+            return;
+        }
+
+        onChange({
+            ...value,
+            dateDigits:
+                parsedTime.dayOffset > 0
+                    ? addDaysToDateDigits(
+                          value.dateDigits,
+                          parsedTime.dayOffset
+                      )
+                    : value.dateDigits,
+            timeDigits: parsedTime.timeDigits,
+        });
+    };
+
+    const handleTimeInputValue = (inputValue: string) => {
+        const parsedTime = parseTimeInput(inputValue);
+
+        if (!parsedTime) return false;
+
+        onChange({
+            ...value,
+            dateDigits:
+                parsedTime.dayOffset > 0
+                    ? addDaysToDateDigits(
+                          value.dateDigits,
+                          parsedTime.dayOffset
+                      )
+                    : value.dateDigits,
+            timeDigits: parsedTime.timeDigits,
+        });
+
+        return true;
+    };
+
+    const handleSetNow = () => {
+        onChange(getCurrentDateTimeSelection(value.mode));
+    };
 
     return (
         <section
@@ -211,8 +331,18 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                         onChange={(timeDigits) =>
                             onChange({ ...value, timeDigits })
                         }
+                        onBlur={handleTimeCommit}
+                        onInputValue={handleTimeInputValue}
                     />
                 </div>
+                <button
+                    type='button'
+                    className='time-selector-now-btn'
+                    onClick={handleSetNow}
+                    aria-label={t('time.now')}
+                >
+                    {t('time.now')}
+                </button>
             </div>
         </section>
     );
