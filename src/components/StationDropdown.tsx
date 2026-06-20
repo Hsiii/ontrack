@@ -104,13 +104,9 @@ export function StationDropdown({
     };
 
     const handleDismiss = useCallback(() => {
-        if (trimmedSearchValue === '') {
-            onSelect('');
-        }
-
         setSearchValue('');
         setIsOpen(false);
-    }, [onSelect, setIsOpen, setSearchValue, trimmedSearchValue]);
+    }, [setIsOpen, setSearchValue]);
 
     useEffect(() => {
         if (!isOpen) return;
