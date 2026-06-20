@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MapPin, MapPinCheck, MapPinOff, Star } from 'lucide-react';
+import { MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
-import { DestinationPromptSheet } from './DestinationPromptSheet';
-import { getRecentStationIds } from './recentStations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -18,8 +16,6 @@ interface StationSelectorProps {
     setDestId: (id: string) => void;
     autoDetectOrigin: boolean;
     setAutoDetectOrigin: (value: boolean) => void;
-    defaultDestId: string;
-    setDefaultDestId: (id: string) => void;
 }
 
 const CACHED_ORIGIN_KEY = 'ontrack_cached_origin';
@@ -33,16 +29,12 @@ export function StationSelector({
     setDestId,
     autoDetectOrigin,
     setAutoDetectOrigin,
-    defaultDestId,
-    setDefaultDestId,
 }: StationSelectorProps) {
     const { t } = useI18n();
     const [originSearch, setOriginSearch] = useState('');
     const [destSearch, setDestSearch] = useState('');
     const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
     const [destDropdownOpen, setDestDropdownOpen] = useState(false);
-    const [destinationPromptOpen, setDestinationPromptOpen] = useState(false);
-    const [promptStationIds, setPromptStationIds] = useState<string[]>([]);
     const [toast, setToast] = useState<string | null>(null);
     const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     const hasAutoSelected = useRef(false);
@@ -201,35 +193,9 @@ export function StationSelector({
 
     const originStation = stations.find((s) => s.id === originId);
     const destStation = stations.find((s) => s.id === destId);
-    const promptStations = promptStationIds
-        .map((id) => stations.find((station) => station.id === id))
-        .filter((station): station is Station => Boolean(station));
-
-    const showDestinationPrompt = (currentOriginId: string) => {
-        const recentDestinations = getRecentStationIds()
-            .filter((id) => id !== currentOriginId)
-            .filter((id) => stations.some((station) => station.id === id))
-            .slice(0, 2);
-
-        if (recentDestinations.length === 0) return;
-
-        setPromptStationIds(recentDestinations);
-        setDestinationPromptOpen(true);
-    };
 
     const handleOriginSelect = (id: string) => {
         setOriginWithSource(id, 'manual');
-        showDestinationPrompt(id);
-    };
-
-    const handlePromptSelect = (stationId: string) => {
-        setDestId(stationId);
-        setDestinationPromptOpen(false);
-    };
-
-    const handlePromptSearch = () => {
-        setDestinationPromptOpen(false);
-        handleDestDropdownOpen(true);
     };
 
     const geoToggleIcon = !autoDetectOrigin ? (
@@ -259,18 +225,6 @@ export function StationSelector({
         setAutoDetectOrigin(next);
         showToast(next ? t('toast.geoEnabled') : t('toast.geoDisabled'));
     };
-
-    const handleToggleDefaultDest = () => {
-        if (defaultDestId === destId) {
-            setDefaultDestId('');
-            showToast(t('toast.defaultDestCleared'));
-        } else {
-            setDefaultDestId(destId);
-            showToast(t('toast.defaultDestSet'));
-        }
-    };
-
-    const isDefaultDest = defaultDestId !== '' && defaultDestId === destId;
 
     return (
         <div className='station-selector-container'>
@@ -327,39 +281,9 @@ export function StationSelector({
                         placeholder={t('station.destination')}
                         title={t('station.selectDestination')}
                         selectedStation={destStation}
-                        triggerAction={
-                            destId ? (
-                                <button
-                                    type='button'
-                                    className={`station-action-btn station-action-btn-default ${isDefaultDest ? 'active' : ''}`}
-                                    onClick={handleToggleDefaultDest}
-                                    aria-label={
-                                        isDefaultDest
-                                            ? t('toast.defaultDestCleared')
-                                            : t('toast.defaultDestSet')
-                                    }
-                                >
-                                    <Star
-                                        fill={
-                                            isDefaultDest
-                                                ? 'currentColor'
-                                                : 'none'
-                                        }
-                                    />
-                                </button>
-                            ) : null
-                        }
                     />
                 </div>
             </div>
-
-            <DestinationPromptSheet
-                isOpen={destinationPromptOpen}
-                stations={promptStations}
-                onSelect={handlePromptSelect}
-                onSearch={handlePromptSearch}
-                onDismiss={() => setDestinationPromptOpen(false)}
-            />
         </div>
     );
 }

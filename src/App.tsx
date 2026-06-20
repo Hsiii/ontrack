@@ -46,8 +46,6 @@ function App() {
         setOriginId,
         destId,
         setDestId,
-        defaultDestId,
-        setDefaultDestId,
         autoDetectOrigin,
         setAutoDetectOrigin,
     } = usePersistence();
@@ -156,8 +154,6 @@ function App() {
                                 setDestId={setDestId}
                                 autoDetectOrigin={autoDetectOrigin}
                                 setAutoDetectOrigin={setAutoDetectOrigin}
-                                defaultDestId={defaultDestId}
-                                setDefaultDestId={setDefaultDestId}
                             />
                         )}
                     </section>

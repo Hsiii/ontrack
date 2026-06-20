@@ -6,7 +6,7 @@ import '../index.css';
 
 const APP_TITLE = 'OnTrack | 台鐵時刻表與即時到站查詢';
 const APP_DESCRIPTION =
-    '自動偵測最近車站、自動填入預設目的地、自動計算延誤以顯示下一班列車，不需要手動輸入的極速台鐵App。';
+    '自動偵測最近車站、優先顯示常用目的地、自動計算延誤以顯示下一班列車，不需要手動輸入的極速台鐵App。';
 const APP_URL = 'https://ontrack.hsichen.dev/';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.PNG';
 

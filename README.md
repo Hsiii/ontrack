@@ -14,7 +14,7 @@ Check train status and arrival time with zero taps:
 
 - Real-time train schedules from [TDX](https://tdx.transportdata.tw/)
 - Auto-detect nearest start station
-- Auto-fill the destination station by setting a favorite station
+- Prioritize frequent destination stations in search
 - Auto-select the next departing train while taking delays into account
 - Quick destination and arrival time sharing
 
