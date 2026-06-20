@@ -3,6 +3,7 @@ import { MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
+import { getFrequentDestinationIds } from './frequentDestinations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -63,6 +64,19 @@ export function StationSelector({
     useEffect(() => {
         originIdRef.current = originId;
     }, [originId]);
+
+    useEffect(() => {
+        if (originSource !== 'geo' || !originId || destId !== originId) return;
+
+        const replacementDestinationId =
+            getFrequentDestinationIds(originId).find((id) =>
+                stations.some((station) => station.id === id)
+            ) ?? '';
+
+        if (replacementDestinationId) {
+            setDestId(replacementDestinationId);
+        }
+    }, [destId, originId, originSource, setDestId, stations]);
 
     // Auto-select nearest station when autoDetectOrigin is enabled.
     // This should only happen once on app start, or once each time the
@@ -281,6 +295,8 @@ export function StationSelector({
                         placeholder={t('station.destination')}
                         title={t('station.selectDestination')}
                         selectedStation={destStation}
+                        showFrequentDestinations
+                        excludedFrequentDestinationId={originId}
                     />
                 </div>
             </div>

@@ -10,7 +10,10 @@ import { Clock3, Search, X } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
-import { getRecentStationIds, persistRecentStationId } from './recentStations';
+import {
+    getFrequentDestinationIds,
+    persistFrequentDestinationId,
+} from './frequentDestinations';
 import {
     filterStationsBySearch,
     normalizeEnglishStationName,
@@ -33,6 +36,8 @@ interface StationDropdownProps {
     selectedStation?: Station;
     onCacheSelection?: (id: string) => void;
     triggerAction?: ReactNode;
+    showFrequentDestinations?: boolean;
+    excludedFrequentDestinationId?: string;
 }
 
 function shouldAutoFocusSearchInput() {
@@ -57,12 +62,18 @@ export function StationDropdown({
     selectedStation,
     onCacheSelection,
     triggerAction,
+    showFrequentDestinations = false,
+    excludedFrequentDestinationId = '',
 }: StationDropdownProps) {
     const { t, language } = useI18n();
     const inputRef = useRef<HTMLInputElement>(null);
     const shouldAutoFocusOnMobile = shouldAutoFocusSearchInput();
-    const [recentStationIds, setRecentStationIds] = useState<string[]>(() =>
-        getRecentStationIds()
+    const [frequentDestinationIds, setFrequentDestinationIds] = useState<
+        string[]
+    >(() =>
+        showFrequentDestinations
+            ? getFrequentDestinationIds(excludedFrequentDestinationId)
+            : []
     );
 
     const trimmedSearchValue = searchValue.trim();
@@ -104,10 +115,16 @@ export function StationDropdown({
 
         const frameId = window.requestAnimationFrame(() => {
             const input = inputRef.current;
-            if (!input || !shouldAutoFocusOnMobile) return;
+            if (!input) return;
 
-            const cursorPosition = input.value.length;
-            input.setSelectionRange(cursorPosition, cursorPosition);
+            if (input.value) {
+                input.setSelectionRange(0, input.value.length);
+                return;
+            }
+
+            if (shouldAutoFocusOnMobile) {
+                input.setSelectionRange(0, 0);
+            }
         });
 
         return () => {
@@ -130,12 +147,13 @@ export function StationDropdown({
         return () => document.removeEventListener('keydown', handleKeyDown);
     }, [handleDismiss, isOpen]);
 
-    const recentStations = useMemo(
+    const frequentDestinationStations = useMemo(
         () =>
-            recentStationIds
+            frequentDestinationIds
+                .slice(0, 3)
                 .map((id) => stationMap.get(id))
                 .filter((station): station is Station => Boolean(station)),
-        [recentStationIds, stationMap]
+        [frequentDestinationIds, stationMap]
     );
 
     const filteredStations = useMemo(() => {
@@ -179,13 +197,23 @@ export function StationDropdown({
             onCacheSelection(preferredStationId);
         }
 
-        setRecentStationIds(persistRecentStationId(preferredStationId));
+        if (showFrequentDestinations) {
+            setFrequentDestinationIds(
+                persistFrequentDestinationId(preferredStationId)
+            );
+        }
+
         setSearchValue('');
         setIsOpen(false);
     };
 
     const handleOpen = () => {
-        setRecentStationIds(getRecentStationIds());
+        if (showFrequentDestinations) {
+            setFrequentDestinationIds(
+                getFrequentDestinationIds(excludedFrequentDestinationId)
+            );
+        }
+
         setSearchValue(
             selectedStation
                 ? language === 'en'
@@ -200,10 +228,27 @@ export function StationDropdown({
         setSearchValue(value);
     };
 
-    const visibleStations = useMemo(
-        () => (trimmedSearchValue ? filteredStations : recentStations),
-        [filteredStations, recentStations, trimmedSearchValue]
-    );
+    const visibleStations = useMemo(() => {
+        if (!showFrequentDestinations) {
+            return trimmedSearchValue ? filteredStations : [];
+        }
+
+        const frequentDestinationIdSet = new Set(
+            frequentDestinationStations.map((station) => station.id)
+        );
+        const matchingStations = trimmedSearchValue
+            ? filteredStations.filter(
+                  (station) => !frequentDestinationIdSet.has(station.id)
+              )
+            : [];
+
+        return [...frequentDestinationStations, ...matchingStations];
+    }, [
+        filteredStations,
+        frequentDestinationStations,
+        showFrequentDestinations,
+        trimmedSearchValue,
+    ]);
 
     return (
         <div className='station-input-wrapper'>
@@ -289,8 +334,13 @@ export function StationDropdown({
                                     {visibleStations.length > 0 ? (
                                         <div className='station-search-list'>
                                             {visibleStations.map((station) => {
-                                                const isRecent =
-                                                    !trimmedSearchValue;
+                                                const isFrequent =
+                                                    showFrequentDestinations &&
+                                                    frequentDestinationStations.some(
+                                                        (frequentStation) =>
+                                                            frequentStation.id ===
+                                                            station.id
+                                                    );
 
                                                 return (
                                                     <button
@@ -304,7 +354,7 @@ export function StationDropdown({
                                                         }
                                                     >
                                                         <span className='station-search-item-icon'>
-                                                            {isRecent ? (
+                                                            {isFrequent ? (
                                                                 <Clock3 />
                                                             ) : (
                                                                 <Search />
