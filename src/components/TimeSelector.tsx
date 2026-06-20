@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { TimerReset } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 
@@ -340,8 +341,9 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                     className='time-selector-now-btn'
                     onClick={handleSetNow}
                     aria-label={t('time.now')}
+                    title={t('time.now')}
                 >
-                    {t('time.now')}
+                    <TimerReset aria-hidden='true' />
                 </button>
             </div>
         </section>
