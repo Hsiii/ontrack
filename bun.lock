@@ -4,20 +4,10 @@
   "workspaces": {
     "": {
       "name": "ontrack",
-      "dependencies": {
-        "lucide-react": "^0.563.0",
-        "next": "^16.2.9",
-        "react": "^19.2.7",
-        "react-dom": "^19.2.7",
-      },
       "devDependencies": {
         "@cloudflare/workers-types": "^4.20260607.1",
         "@eslint/js": "^9.39.1",
         "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
-        "@types/node": "^24.10.1",
-        "@types/react": "^19.2.5",
-        "@types/react-dom": "^19.2.3",
-        "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "^9.39.1",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-react-hooks": "^7.0.1",
@@ -26,10 +16,26 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.2.7",
         "prettier": "^3.8.1",
-        "sharp": "^0.34.5",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.46.4",
         "wrangler": "^4.98.0",
+      },
+    },
+    "apps/web": {
+      "name": "@ontrack/web",
+      "version": "0.0.0",
+      "dependencies": {
+        "lucide-react": "^0.563.0",
+        "next": "^16.2.9",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7",
+      },
+      "devDependencies": {
+        "@types/node": "^24.10.1",
+        "@types/react": "^19.2.5",
+        "@types/react-dom": "^19.2.3",
+        "babel-plugin-react-compiler": "^1.0.0",
+        "sharp": "^0.34.5",
       },
     },
   },
@@ -247,6 +253,8 @@
     "@next/swc-win32-arm64-msvc": ["@next/swc-win32-arm64-msvc@16.2.9", "", { "os": "win32", "cpu": "arm64" }, "sha512-hzQpKZvw8rAwI6A2uQh6SacCSvNAXaIkPNsWwzqqfRiIMiXMfH936skDhz1OO6KpvdKkJrgHHtqQOq5PIXOvdQ=="],
 
     "@next/swc-win32-x64-msvc": ["@next/swc-win32-x64-msvc@16.2.9", "", { "os": "win32", "cpu": "x64" }, "sha512-qr2VL3Ce5QrwgO2yh1ujSBawrimjVKX8FGF/cOynmdYKJY0BdHpGVNIRK1tqONB10Vkm25Ub1BD2bkjWs4+96w=="],
+
+    "@ontrack/web": ["@ontrack/web@workspace:apps/web"],
 
     "@poppinss/colors": ["@poppinss/colors@4.1.6", "", { "dependencies": { "kleur": "^4.1.5" } }, "sha512-H9xkIdFswbS8n1d6vmRd8+c10t2Qe+rZITbbDHHkQixH5+2x1FDGmi/0K+WgWiqQFKPSlIYB7jlH6Kpfn6Fleg=="],
 

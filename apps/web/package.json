@@ -1,0 +1,26 @@
+{
+    "name": "@ontrack/web",
+    "private": true,
+    "version": "0.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "next dev",
+        "build": "next build",
+        "lint": "eslint .",
+        "format": "prettier --write .",
+        "generate-pwa-assets": "node scripts/generate-pwa-assets.js"
+    },
+    "dependencies": {
+        "lucide-react": "^0.563.0",
+        "next": "^16.2.9",
+        "react": "^19.2.7",
+        "react-dom": "^19.2.7"
+    },
+    "devDependencies": {
+        "@types/node": "^24.10.1",
+        "@types/react": "^19.2.5",
+        "@types/react-dom": "^19.2.3",
+        "babel-plugin-react-compiler": "^1.0.0",
+        "sharp": "^0.34.5"
+    }
+}

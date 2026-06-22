@@ -12,7 +12,7 @@
         },
     ],
     "assets": {
-        "directory": "./out",
+        "directory": "./apps/web/out",
         "not_found_handling": "single-page-application",
     },
     "routes": [

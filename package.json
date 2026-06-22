@@ -1,18 +1,24 @@
 {
-    "name": "ontrack",
+    "name": "ontrack-monorepo",
     "private": true,
     "version": "0.0.0",
     "type": "module",
+    "workspaces": [
+        "apps/*"
+    ],
     "scripts": {
-        "dev": "next dev",
+        "dev": "bun run --filter @ontrack/web dev",
+        "dev:web": "bun run --filter @ontrack/web dev",
         "dev:worker": "wrangler dev --test-scheduled",
-        "build": "next build && tsc -p tsconfig.worker.json",
+        "build": "bun run --filter @ontrack/web build && tsc -p tsconfig.worker.json",
+        "build:web": "bun run --filter @ontrack/web build",
+        "build:worker": "tsc -p tsconfig.worker.json",
         "deploy": "bun run build && wrangler deploy",
         "lint": "eslint .",
         "format": "prettier --write .",
         "preview": "wrangler dev",
         "prepare": "husky",
-        "generate-pwa-assets": "node scripts/generate-pwa-assets.js"
+        "generate-pwa-assets": "bun run --filter @ontrack/web generate-pwa-assets"
     },
     "lint-staged": {
         "*.{ts,tsx,js,jsx}": [
@@ -23,20 +29,10 @@
             "prettier --write"
         ]
     },
-    "dependencies": {
-        "lucide-react": "^0.563.0",
-        "next": "^16.2.9",
-        "react": "^19.2.7",
-        "react-dom": "^19.2.7"
-    },
     "devDependencies": {
         "@cloudflare/workers-types": "^4.20260607.1",
         "@eslint/js": "^9.39.1",
         "@ianvs/prettier-plugin-sort-imports": "^4.7.0",
-        "@types/node": "^24.10.1",
-        "@types/react": "^19.2.5",
-        "@types/react-dom": "^19.2.3",
-        "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "^9.39.1",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-react-hooks": "^7.0.1",
@@ -45,7 +41,6 @@
         "husky": "^9.1.7",
         "lint-staged": "^16.2.7",
         "prettier": "^3.8.1",
-        "sharp": "^0.34.5",
         "typescript": "~5.9.3",
         "typescript-eslint": "^8.46.4",
         "wrangler": "^4.98.0"
