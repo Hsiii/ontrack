@@ -12,6 +12,10 @@ node_modules
 out
 dist
 dist-ssr
+build
+*.xcarchive
+*.xcresult
+*.ipa
 *.local
 
 # Editor directories and files
