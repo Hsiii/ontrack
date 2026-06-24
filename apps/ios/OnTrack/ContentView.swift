@@ -108,7 +108,7 @@ struct ContentView: View {
                     title: role.title,
                     placeholder: role.placeholder,
                     stations: stations,
-                    selectedStationId: role == .origin ? originId : destinationId
+                    selectedStation: role == .origin ? originStation : destinationStation
                 ) { station in
                     select(station: station, for: role)
                 }
@@ -516,15 +516,20 @@ private struct StationSearchSheet: View {
     let title: String
     let placeholder: String
     let stations: [Station]
-    let selectedStationId: String
+    let selectedStation: Station?
     let onSelect: (Station) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @FocusState private var isSearchFocused: Bool
 
     private var visibleStations: [Station] {
         let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedSearch.isEmpty else {
+            if let selectedStation {
+                return [selectedStation] + stations.filter { $0.id != selectedStation.id }.prefix(11)
+            }
+
             return Array(stations.prefix(12))
         }
 
@@ -542,18 +547,32 @@ private struct StationSearchSheet: View {
                     .ignoresSafeArea()
 
                 VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
-                    TextField(placeholder, text: $searchText)
-                        .keyboardType(.default)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .padding(.horizontal, OnTrackTheme.space4)
-                        .frame(height: 48)
-                        .foregroundStyle(OnTrackTheme.text)
-                        .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
-                                .stroke(OnTrackTheme.border, lineWidth: 1)
+                    HStack(spacing: OnTrackTheme.space2) {
+                        TextField(placeholder, text: $searchText)
+                            .focused($isSearchFocused)
+                            .keyboardType(.default)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .foregroundStyle(OnTrackTheme.text)
+
+                        if !searchText.isEmpty {
+                            Button {
+                                searchText = ""
+                                isSearchFocused = true
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(OnTrackTheme.dimText)
+                            }
+                            .buttonStyle(.plain)
                         }
+                    }
+                    .padding(.horizontal, OnTrackTheme.space4)
+                    .frame(height: OnTrackTheme.controlHeight)
+                    .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
+                    .overlay {
+                        RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
+                            .stroke(OnTrackTheme.border, lineWidth: 1)
+                    }
 
                     ScrollView {
                         LazyVStack(spacing: OnTrackTheme.space2) {
@@ -563,8 +582,8 @@ private struct StationSearchSheet: View {
                                     dismiss()
                                 } label: {
                                     HStack(spacing: OnTrackTheme.space3) {
-                                        Image(systemName: station.id == selectedStationId ? "checkmark.circle.fill" : "magnifyingglass")
-                                            .foregroundStyle(station.id == selectedStationId ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                                        Image(systemName: station.id == selectedStation?.id ? "checkmark.circle.fill" : "magnifyingglass")
+                                            .foregroundStyle(station.id == selectedStation?.id ? OnTrackTheme.primary : OnTrackTheme.dimText)
                                             .frame(width: 24)
 
                                         VStack(alignment: .leading, spacing: 2) {
@@ -584,7 +603,7 @@ private struct StationSearchSheet: View {
                                     .overlay {
                                         RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
                                             .stroke(
-                                                station.id == selectedStationId ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border,
+                                                station.id == selectedStation?.id ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border,
                                                 lineWidth: 1
                                             )
                                     }
@@ -602,14 +621,24 @@ private struct StationSearchSheet: View {
             .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(.white.opacity(0.72))
+                            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
                     }
+                    .buttonStyle(.plain)
                 }
             }
         }
         .tint(OnTrackTheme.primary)
+        .onAppear {
+            searchText = selectedStation?.name ?? ""
+            isSearchFocused = true
+        }
     }
 }
 
