@@ -119,10 +119,18 @@ struct ContentView: View {
 
                 ShareBar(message: shareMessage)
             }
-            .navigationTitle("OnTrack")
+            .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Image("AppIcon")
+                        .resizable()
+                        .clipShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
+                        .frame(width: 28, height: 28)
+                }
+            }
             .task {
                 await loadStations()
             }
