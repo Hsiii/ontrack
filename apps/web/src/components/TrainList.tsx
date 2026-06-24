@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api } from '../api/client';
 import { useI18n } from '../i18n/useI18n';
@@ -7,6 +7,8 @@ import type { TimeMode } from './TimeSelector';
 import { TrainListSkeleton } from './TrainListSkeleton';
 
 import './TrainList.css';
+
+const SCHEDULE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
 
 /**
  * Chinese → English abbreviated train type mapping.
@@ -130,7 +132,7 @@ export function TrainList({
     selectedTrainNo,
 }: TrainListProps) {
     const { t, language } = useI18n();
-    const [trains, setTrains] = useState<TrainInfo[]>([]);
+    const [allTrains, setAllTrains] = useState<TrainInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const lastFetchTimeRef = useRef<number | null>(null);
@@ -141,7 +143,7 @@ export function TrainList({
         if (!originId || !destId) return;
 
         // Prevent duplicate requests
-        const currentParams = `${originId}-${destId}-${date}-${time}-${timeMode}`;
+        const currentParams = `${originId}-${destId}-${date}`;
         if (
             lastFetchParamsRef.current === currentParams &&
             lastFetchTimeRef.current &&
@@ -154,7 +156,7 @@ export function TrainList({
         const requestId = requestIdRef.current + 1;
         requestIdRef.current = requestId;
         lastFetchParamsRef.current = currentParams;
-        setLoading(trains.length === 0);
+        setLoading(allTrains.length === 0);
         setError(null);
 
         api.getSchedule(originId, destId, date)
@@ -163,19 +165,9 @@ export function TrainList({
                     return;
                 }
 
-                const { displayTrains, recommendedTrain } = buildDisplayState(
-                    res.trains,
-                    time,
-                    timeMode
-                );
-
-                setTrains(displayTrains);
+                setAllTrains(res.trains);
                 setLoading(false);
                 lastFetchTimeRef.current = Date.now();
-
-                if (recommendedTrain) {
-                    onSelect(recommendedTrain);
-                }
             })
             .catch((err) => {
                 if (requestId !== requestIdRef.current) {
@@ -186,23 +178,34 @@ export function TrainList({
                 setError(t('error.failedToLoadSchedule'));
                 setLoading(false);
             });
-    }, [originId, destId, date, time, timeMode, onSelect, trains.length, t]);
+    }, [originId, destId, date, allTrains.length, t]);
 
     useEffect(() => {
         const initialFetchTimer = window.setTimeout(() => {
             fetchSchedule();
         }, 0);
 
-        // Poll every minute
+        // Match the Worker live-board sync cadence.
         const interval = setInterval(() => {
             fetchSchedule();
-        }, 60000);
+        }, SCHEDULE_REFRESH_INTERVAL_MS);
 
         return () => {
             window.clearTimeout(initialFetchTimer);
             clearInterval(interval);
         };
     }, [fetchSchedule]);
+
+    const { displayTrains, recommendedTrain } = useMemo(
+        () => buildDisplayState(allTrains, time, timeMode),
+        [allTrains, time, timeMode]
+    );
+
+    useEffect(() => {
+        if (recommendedTrain) {
+            onSelect(recommendedTrain);
+        }
+    }, [recommendedTrain, onSelect]);
 
     if (!originId || !destId) return null;
 
@@ -218,13 +221,13 @@ export function TrainList({
                 </div>
             ) : loading ? (
                 <TrainListSkeleton showLabel={false} />
-            ) : trains.length === 0 ? (
+            ) : displayTrains.length === 0 ? (
                 <div className='train-list-empty'>
                     {t('train.noTrainsAvailable')}
                 </div>
             ) : (
                 <div className='train-list-container'>
-                    {trains.map((train) => {
+                    {displayTrains.map((train) => {
                         const trainData = train as TrainInfo;
                         const isSelected =
                             trainData.trainNo === selectedTrainNo;
