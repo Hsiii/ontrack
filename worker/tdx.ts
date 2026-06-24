@@ -6,6 +6,38 @@ const TOKEN_URL =
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
+function getResponseBytes(response: Response, bodyText?: string) {
+    const contentLength = response.headers.get('Content-Length');
+    if (contentLength) {
+        const parsed = Number(contentLength);
+        if (Number.isFinite(parsed)) {
+            return parsed;
+        }
+    }
+
+    return bodyText === undefined
+        ? null
+        : new TextEncoder().encode(bodyText).length;
+}
+
+function logTDXRequest(details: {
+    path: string;
+    tier: string;
+    caller: string;
+    status: number;
+    notModified: boolean;
+    durationMs: number;
+    bytes: number | null;
+    authenticated: boolean;
+}) {
+    console.info(
+        JSON.stringify({
+            event: 'tdx_request',
+            ...details,
+        })
+    );
+}
+
 async function getAccessToken(env: Env): Promise<string | null> {
     const now = Date.now();
     if (cachedToken && now < tokenExpiresAt) {
@@ -64,6 +96,7 @@ export async function fetchTDXWithCache<T>(
         tier = 'basic',
         format = 'JSON',
         ifModifiedSince,
+        caller = 'route-cache-miss',
     } = options;
 
     const token = await getAccessToken(env);
@@ -88,9 +121,22 @@ export async function fetchTDXWithCache<T>(
         headers['If-Modified-Since'] = ifModifiedSince;
     }
 
+    const startedAt = Date.now();
     const response = await fetch(url.toString(), { headers });
+    const durationMs = Date.now() - startedAt;
 
     if (response.status === 304) {
+        logTDXRequest({
+            path,
+            tier,
+            caller,
+            status: response.status,
+            notModified: true,
+            durationMs,
+            bytes: getResponseBytes(response),
+            authenticated: Boolean(token),
+        });
+
         return {
             data: null,
             lastModified: ifModifiedSince ?? null,
@@ -100,13 +146,35 @@ export async function fetchTDXWithCache<T>(
 
     if (!response.ok) {
         const errorBody = await response.text();
+        logTDXRequest({
+            path,
+            tier,
+            caller,
+            status: response.status,
+            notModified: false,
+            durationMs,
+            bytes: getResponseBytes(response, errorBody),
+            authenticated: Boolean(token),
+        });
         throw new Error(
             `TDX API Error: ${response.status} ${response.statusText} - ${errorBody}`
         );
     }
 
+    const responseBody = await response.text();
+    logTDXRequest({
+        path,
+        tier,
+        caller,
+        status: response.status,
+        notModified: false,
+        durationMs,
+        bytes: getResponseBytes(response, responseBody),
+        authenticated: Boolean(token),
+    });
+
     return {
-        data: (await response.json()) as T,
+        data: JSON.parse(responseBody) as T,
         lastModified: response.headers.get('Last-Modified'),
         notModified: false,
     };

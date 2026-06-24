@@ -1,5 +1,9 @@
 export type TDXFormat = 'JSON' | 'XML';
 export type TDXTier = 'basic' | 'advanced';
+export type TDXCaller =
+    | 'station-refresh'
+    | 'route-cache-miss'
+    | 'live-board-refresh';
 
 export interface Env {
     ASSETS: Fetcher;
@@ -73,6 +77,7 @@ export interface TDXOptions {
     tier?: TDXTier;
     format?: TDXFormat;
     ifModifiedSince?: string | null;
+    caller?: TDXCaller;
 }
 
 export interface TDXResponse<T> {

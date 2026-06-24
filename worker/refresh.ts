@@ -51,6 +51,7 @@ export async function refreshStations(env: Env) {
                 $top: '999',
             },
             tier: 'basic',
+            caller: 'station-refresh',
         }
     );
 
@@ -72,6 +73,7 @@ export async function refreshRouteTimetable(
         `v3/Rail/TRA/DailyTrainTimetable/OD/${origin}/to/${dest}/${date}`,
         {
             tier: 'basic',
+            caller: 'route-cache-miss',
         }
     );
     const timetables = data.TrainTimetables ?? [];
@@ -93,6 +95,7 @@ export async function refreshLiveBoard(env: Env) {
     }>(env, 'v3/Rail/TRA/TrainLiveBoard', {
         tier: 'basic',
         ifModifiedSince: previous?.last_modified,
+        caller: 'live-board-refresh',
     });
 
     if (response.notModified && previous) {
