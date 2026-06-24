@@ -3,6 +3,7 @@ import SwiftUI
 
 private let taipeiMainStationName = "臺北"
 private let taipeiCircularStationName = "臺北(環島)"
+private let scheduleRefreshInterval: TimeInterval = 5 * 60
 
 struct ContentView: View {
     @AppStorage("ontrack_origin_id") private var originId = ""
@@ -20,6 +21,12 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
+
+    private let scheduleRefreshTimer = Timer.publish(
+        every: scheduleRefreshInterval,
+        on: .main,
+        in: .common
+    ).autoconnect()
 
     private var stationMap: [String: Station] {
         Dictionary(uniqueKeysWithValues: stations.map { ($0.id, $0) })
@@ -113,6 +120,11 @@ struct ContentView: View {
             }
             .task(id: scheduleTaskID) {
                 await loadSchedule()
+            }
+            .onReceive(scheduleRefreshTimer) { _ in
+                Task {
+                    await loadSchedule()
+                }
             }
             .onChange(of: locationService.coordinate) { _, coordinate in
                 guard let coordinate else {
