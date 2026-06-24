@@ -46,8 +46,8 @@ struct ContentView: View {
             originId,
             destinationId,
             timeSelection.mode.rawValue,
-            timeSelection.dateDigits,
-            timeSelection.timeDigits,
+            Formatters.scheduleDate.string(from: timeSelection.date),
+            Formatters.displayTime.string(from: timeSelection.date),
         ].joined(separator: "-")
     }
 
@@ -245,7 +245,18 @@ private enum StationPickerRole: String, Identifiable {
 
 private struct TimeSelectorView: View {
     @Binding var selection: TimeSelection
-    @FocusState private var focusedField: TimeField?
+
+    private var dateRange: ClosedRange<Date> {
+        let calendar = Formatters.taipeiCalendar
+        let today = calendar.startOfDay(for: Date())
+        let maxDate = calendar.date(
+            byAdding: .day,
+            value: TimeSelection.futureDayLimit + 1,
+            to: today
+        ) ?? today
+
+        return today...maxDate.addingTimeInterval(-1)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
@@ -255,25 +266,27 @@ private struct TimeSelectorView: View {
                 IconSquareButton(systemName: "timer") {
                     selection = .current(mode: selection.mode)
                 }
-                .disabled(selection == .current(mode: selection.mode))
 
-                TimeTextField(
-                    label: "Date",
-                    text: $selection.dateDigits,
-                    formattedText: selection.formattedDate,
-                    focusedField: $focusedField,
-                    field: .date,
-                    limit: 4
+                DatePicker(
+                    "Date",
+                    selection: $selection.date,
+                    in: dateRange,
+                    displayedComponents: .date
                 )
+                .labelsHidden()
+                .datePickerStyle(.compact)
+                .frame(maxWidth: .infinity)
+                .tint(OnTrackTheme.primary)
 
-                TimeTextField(
-                    label: "Time",
-                    text: $selection.timeDigits,
-                    formattedText: selection.formattedTime,
-                    focusedField: $focusedField,
-                    field: .time,
-                    limit: 4
+                DatePicker(
+                    "Time",
+                    selection: $selection.date,
+                    displayedComponents: .hourAndMinute
                 )
+                .labelsHidden()
+                .datePickerStyle(.compact)
+                .frame(maxWidth: .infinity)
+                .tint(OnTrackTheme.primary)
 
                 Menu {
                     ForEach(TimeMode.allCases) { mode in
@@ -288,50 +301,6 @@ private struct TimeSelectorView: View {
                 }
             }
         }
-    }
-}
-
-private struct TimeTextField: View {
-    let label: String
-    @Binding var text: String
-    let formattedText: String
-    var focusedField: FocusState<TimeField?>.Binding
-    let field: TimeField
-    let limit: Int
-
-    var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
-                .fill(OnTrackTheme.panel)
-                .overlay {
-                    RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
-                        .stroke(
-                            focusedField.wrappedValue == field
-                                ? OnTrackTheme.primary
-                                : OnTrackTheme.border,
-                            lineWidth: 1
-                        )
-                }
-
-            Text(formattedText)
-                .font(.system(size: 16, weight: .medium, design: .monospaced))
-                .foregroundStyle(OnTrackTheme.text)
-                .allowsHitTesting(false)
-
-            TextField(label, text: $text)
-                .keyboardType(.numberPad)
-                .textContentType(.none)
-                .focused(focusedField, equals: field)
-                .foregroundStyle(.clear)
-                .tint(.clear)
-                .multilineTextAlignment(.center)
-                .onChange(of: text) { _, newValue in
-                    text = String(newValue.filter(\.isNumber).prefix(limit))
-                }
-        }
-        .frame(height: 44)
-        .accessibilityLabel(label)
-        .accessibilityValue(formattedText)
     }
 }
 

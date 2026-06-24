@@ -63,118 +63,24 @@ enum TimeMode: String, CaseIterable, Identifiable {
 
 struct TimeSelection: Equatable {
     var mode: TimeMode
-    var dateDigits: String
-    var timeDigits: String
+    var date: Date
+
+    static let futureDayLimit = 1
 
     static func current(mode: TimeMode = .departure, date: Date = Date()) -> TimeSelection {
         TimeSelection(
             mode: mode,
-            dateDigits: Formatters.monthDayDigits.string(from: date),
-            timeDigits: Formatters.timeDigits.string(from: date)
+            date: date
         )
     }
 
     var scheduleDate: Date {
-        guard dateDigits.count == 4,
-              let month = Int(dateDigits.prefix(2)),
-              let day = Int(dateDigits.suffix(2))
-        else {
-            return Date()
-        }
-
-        let calendar = Formatters.taipeiCalendar
-        let currentYear = calendar.component(.year, from: Date())
-        var components = DateComponents()
-        components.calendar = calendar
-        components.timeZone = Formatters.taipeiTimeZone
-        components.year = currentYear
-        components.month = month
-        components.day = day
-
-        return calendar.date(from: components) ?? Date()
+        date
     }
 
     var scheduleTime: String {
-        guard timeDigits.count == 4,
-              let hours = Int(timeDigits.prefix(2)),
-              let minutes = Int(timeDigits.suffix(2)),
-              hours <= 23,
-              minutes <= 59
-        else {
-            return Formatters.displayTime.string(from: Date())
-        }
-
-        return "\(String(format: "%02d", hours)):\(String(format: "%02d", minutes))"
+        Formatters.displayTime.string(from: date)
     }
-
-    var formattedDate: String {
-        let padded = dateDigits.padding(toLength: 4, withPad: " ", startingAt: 0)
-        return "\(padded.prefix(2))/\(padded.suffix(2))"
-    }
-
-    var formattedTime: String {
-        let padded = timeDigits.padding(toLength: 4, withPad: " ", startingAt: 0)
-        return "\(padded.prefix(2)):\(padded.suffix(2))"
-    }
-
-    mutating func appendDigit(_ digit: String, to field: TimeField) {
-        let cleanDigit = digit.filter(\.isNumber)
-        guard let nextDigit = cleanDigit.first else {
-            return
-        }
-
-        switch field {
-        case .date:
-            dateDigits = String((dateDigits + String(nextDigit)).suffix(4))
-        case .time:
-            timeDigits = String((timeDigits + String(nextDigit)).suffix(4))
-            normalizeTimeIfComplete()
-        }
-    }
-
-    mutating func deleteDigit(from field: TimeField) {
-        switch field {
-        case .date:
-            dateDigits = String(dateDigits.dropLast())
-        case .time:
-            timeDigits = String(timeDigits.dropLast())
-        }
-    }
-
-    private mutating func normalizeTimeIfComplete() {
-        guard timeDigits.count == 4,
-              let hours = Int(timeDigits.prefix(2)),
-              let minutes = Int(timeDigits.suffix(2))
-        else {
-            return
-        }
-
-        if hours == 24 && minutes == 0 {
-            timeDigits = "0000"
-            dateDigits = Self.offsetDateDigits(dateDigits, by: 1)
-            return
-        }
-
-        if hours > 23 || minutes > 59 {
-            timeDigits = Formatters.timeDigits.string(from: Date())
-        }
-    }
-
-    private static func offsetDateDigits(_ dateDigits: String, by dayOffset: Int) -> String {
-        let baseSelection = TimeSelection(mode: .departure, dateDigits: dateDigits, timeDigits: "0000")
-        let shiftedDate = Formatters.taipeiCalendar.date(
-            byAdding: .day,
-            value: dayOffset,
-            to: baseSelection.scheduleDate
-        ) ?? Date()
-
-        return Formatters.monthDayDigits.string(from: shiftedDate)
-    }
-}
-
-enum TimeField {
-    case date
-    case time
 }
 
 struct DisplaySchedule {
@@ -292,24 +198,6 @@ enum Formatters {
         formatter.locale = Locale(identifier: "en_US_POSIX")
         formatter.timeZone = taipeiTimeZone
         formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
-
-    static let monthDayDigits: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = taipeiCalendar
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = taipeiTimeZone
-        formatter.dateFormat = "MMdd"
-        return formatter
-    }()
-
-    static let timeDigits: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = taipeiCalendar
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = taipeiTimeZone
-        formatter.dateFormat = "HHmm"
         return formatter
     }()
 
