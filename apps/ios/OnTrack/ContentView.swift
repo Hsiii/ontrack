@@ -283,6 +283,11 @@ private struct TimeSelectorView: View {
                 .frame(maxWidth: .infinity)
                 .frame(height: OnTrackTheme.controlHeight)
                 .tint(OnTrackTheme.primary)
+
+                IconSquareButton(systemName: "clock.arrow.circlepath") {
+                    selection = .current(mode: selection.mode)
+                }
+                .accessibilityLabel("Sync time")
             }
         }
     }
