@@ -1322,7 +1322,7 @@ private struct StationSearchRow: View {
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
-        .buttonStyle(OnTrackPressButtonStyle())
+        .buttonStyle(.plain)
         .listRowBackground(OnTrackTheme.panel)
     }
 }
@@ -1425,9 +1425,13 @@ private struct SkeletonTrainCard: View {
 }
 
 private struct OnTrackPressButtonStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
+
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .opacity(isEnabled ? 1 : 0.48)
+            .scaleEffect(isEnabled && configuration.isPressed && !reduceMotion ? 0.96 : 1)
             .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
