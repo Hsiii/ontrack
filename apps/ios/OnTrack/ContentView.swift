@@ -149,7 +149,7 @@ struct ContentView: View {
                 await loadStations()
             }
             .onAppear {
-                requestAutoDetectedOrigin()
+                refreshAutoDetectedOrigin()
             }
             .task(id: scheduleTaskID) {
                 await loadSchedule()
@@ -164,14 +164,14 @@ struct ContentView: View {
                     return
                 }
 
-                requestAutoDetectedOrigin()
+                refreshAutoDetectedOrigin()
             }
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else {
                     return
                 }
 
-                requestAutoDetectedOrigin()
+                refreshAutoDetectedOrigin()
             }
             .onChange(of: locationService.coordinate) { _, coordinate in
                 guard let coordinate else {
@@ -206,6 +206,10 @@ struct ContentView: View {
     }
 
     private func openStationPicker(_ role: StationPickerRole) {
+        if role == .origin {
+            promptForAutoDetectedOrigin()
+        }
+
         var transaction = Transaction()
         transaction.disablesAnimations = true
         withTransaction(transaction) {
@@ -234,7 +238,7 @@ struct ContentView: View {
             stations = loadedStations
 
             resolveInitialStations(loadedStations)
-            requestAutoDetectedOrigin()
+            refreshAutoDetectedOrigin()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -314,8 +318,20 @@ struct ContentView: View {
         }
     }
 
-    private func requestAutoDetectedOrigin() {
-        guard !stations.isEmpty, locationService.grantState.canRequestLocation, !isManualOriginProtected else {
+    private func promptForAutoDetectedOrigin() {
+        requestAutoDetectedOrigin(allowPermissionPrompt: true)
+    }
+
+    private func refreshAutoDetectedOrigin() {
+        requestAutoDetectedOrigin(allowPermissionPrompt: false)
+    }
+
+    private func requestAutoDetectedOrigin(allowPermissionPrompt: Bool) {
+        guard !stations.isEmpty, !isManualOriginProtected else {
+            return
+        }
+
+        guard locationService.grantState == .allowed || (allowPermissionPrompt && locationService.grantState == .notDetermined) else {
             return
         }
 
@@ -425,15 +441,6 @@ private enum GeoGrantState {
     case allowed
     case denied
     case restricted
-
-    var canRequestLocation: Bool {
-        switch self {
-        case .notDetermined, .allowed:
-            true
-        case .denied, .restricted:
-            false
-        }
-    }
 }
 
 private struct UserCoordinate: Equatable, Sendable {
