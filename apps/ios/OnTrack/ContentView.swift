@@ -959,6 +959,7 @@ private struct StationSearchSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
+    @State private var isSearchPresented = true
 
     private var trimmedSearch: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -968,30 +969,45 @@ private struct StationSearchSheet: View {
         !trimmedSearch.isEmpty
     }
 
-    private var searchResults: [Station] {
-        guard isSearching else {
-            return defaultStations
-        }
-
+    private var matchingStations: [Station] {
         let normalizedSearch = trimmedSearch.replacingOccurrences(of: "台", with: "臺")
         let normalizedEnglishSearch = normalizedEnglishName(trimmedSearch)
         let allowsCircularStation = isCircularSearch(trimmedSearch)
 
-        return stations.filter { station in
-            let matches = station.name.localizedCaseInsensitiveContains(trimmedSearch)
-                || station.name.localizedCaseInsensitiveContains(normalizedSearch)
-                || normalizedEnglishName(station.nameEn).contains(normalizedEnglishSearch)
-                || station.id.localizedCaseInsensitiveContains(trimmedSearch)
+        return stations
+            .enumerated()
+            .compactMap { index, station -> RankedStation? in
+                let normalizedStationName = normalizedEnglishName(station.nameEn)
+                let matches = station.name.localizedCaseInsensitiveContains(trimmedSearch)
+                    || station.name.localizedCaseInsensitiveContains(normalizedSearch)
+                    || normalizedStationName.contains(normalizedEnglishSearch)
+                    || station.id.localizedCaseInsensitiveContains(trimmedSearch)
 
-            guard matches else {
-                return false
+                guard matches, allowsCircularStation || station.name != taipeiCircularStationName else {
+                    return nil
+                }
+
+                let isExactMatch = station.name == trimmedSearch
+                    || station.name == normalizedSearch
+                    || normalizedStationName == normalizedEnglishSearch
+                let priority = isExactMatch ? 0 : 1
+                return RankedStation(station: station, priority: priority, index: index)
             }
-
-            return allowsCircularStation || station.name != taipeiCircularStationName
-        }
+            .sorted { lhs, rhs in
+                lhs.priority == rhs.priority ? lhs.index < rhs.index : lhs.priority < rhs.priority
+            }
+            .map(\.station)
     }
 
-    private var defaultStations: [Station] {
+    private var visibleMatchingStations: [Station] {
+        guard isSearching else {
+            return []
+        }
+
+        return matchingStations.filter { !featuredStationIDs.contains($0.id) }
+    }
+
+    private var restStations: [Station] {
         var hiddenIDs = Set(suggestedStations.map(\.id))
         if let selectedStation {
             hiddenIDs.insert(selectedStation.id)
@@ -1004,6 +1020,14 @@ private struct StationSearchSheet: View {
 
     private var visibleSuggestions: [Station] {
         suggestedStations.filter { $0.id != selectedStation?.id }
+    }
+
+    private var featuredStationIDs: Set<String> {
+        var stationIDs = Set(visibleSuggestions.map(\.id))
+        if let selectedStation {
+            stationIDs.insert(selectedStation.id)
+        }
+        return stationIDs
     }
 
     private func selectedStation(_ station: Station) -> Station {
@@ -1037,11 +1061,11 @@ private struct StationSearchSheet: View {
     var body: some View {
         NavigationStack {
             List {
-                if !isSearching, let selectedStation {
-                    Section {
+                if let selectedStation {
+                    Section(AppText.selectedStation) {
                         StationSearchRow(
                             station: selectedStation,
-                            isSelected: true
+                            role: .selected
                         ) {
                             onSelect(selectedStation)
                             dismiss()
@@ -1049,12 +1073,12 @@ private struct StationSearchSheet: View {
                     }
                 }
 
-                if !isSearching, !visibleSuggestions.isEmpty {
-                    Section {
+                if !visibleSuggestions.isEmpty {
+                    Section(AppText.recentStations) {
                         ForEach(visibleSuggestions) { station in
                             StationSearchRow(
                                 station: station,
-                                isSelected: false
+                                role: .recent
                             ) {
                                 onSelect(selectedStation(station))
                                 dismiss()
@@ -1063,14 +1087,36 @@ private struct StationSearchSheet: View {
                     }
                 }
 
-                Section {
-                    ForEach(searchResults) { station in
-                        StationSearchRow(
-                            station: station,
-                            isSelected: station.id == selectedStation?.id
-                        ) {
-                            onSelect(selectedStation(station))
-                            dismiss()
+                if isSearching {
+                    Section(AppText.matchingStations) {
+                        if visibleMatchingStations.isEmpty {
+                            Text(AppText.noMatchingStations)
+                                .font(.system(size: 16))
+                                .foregroundStyle(OnTrackTheme.dimText)
+                                .frame(minHeight: 44)
+                                .listRowBackground(OnTrackTheme.panel)
+                        }
+
+                        ForEach(visibleMatchingStations) { station in
+                            StationSearchRow(
+                                station: station,
+                                role: .regular
+                            ) {
+                                onSelect(selectedStation(station))
+                                dismiss()
+                            }
+                        }
+                    }
+                } else {
+                    Section(AppText.allStations) {
+                        ForEach(restStations) { station in
+                            StationSearchRow(
+                                station: station,
+                                role: .regular
+                            ) {
+                                onSelect(selectedStation(station))
+                                dismiss()
+                            }
                         }
                     }
                 }
@@ -1080,7 +1126,12 @@ private struct StationSearchSheet: View {
             .background(OnTrackTheme.background)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .always), prompt: placeholder)
+            .searchable(
+                text: $searchText,
+                isPresented: $isSearchPresented,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: placeholder
+            )
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
             .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
@@ -1100,20 +1151,55 @@ private struct StationSearchSheet: View {
             }
         }
         .tint(OnTrackTheme.primary)
+        .onAppear {
+            isSearchPresented = true
+        }
+    }
+}
+
+private struct RankedStation {
+    let station: Station
+    let priority: Int
+    let index: Int
+}
+
+private enum StationSearchRowRole {
+    case selected
+    case recent
+    case regular
+
+    var iconSystemName: String {
+        switch self {
+        case .selected:
+            "checkmark.circle.fill"
+        case .recent:
+            "clock"
+        case .regular:
+            "train.side.front.car"
+        }
+    }
+
+    var iconColor: Color {
+        switch self {
+        case .selected:
+            OnTrackTheme.primary
+        case .recent, .regular:
+            OnTrackTheme.dimText
+        }
     }
 }
 
 private struct StationSearchRow: View {
     let station: Station
-    let isSelected: Bool
+    let role: StationSearchRowRole
     let onSelect: () -> Void
 
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: OnTrackTheme.space3) {
-                Image(systemName: isSelected ? "checkmark.circle.fill" : "train.side.front.car")
+                Image(systemName: role.iconSystemName)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(isSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                    .foregroundStyle(role.iconColor)
                     .frame(width: 24)
 
                 VStack(alignment: .leading, spacing: 2) {

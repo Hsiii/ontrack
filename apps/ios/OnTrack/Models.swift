@@ -240,6 +240,11 @@ enum AppText {
     static var destination: String { isZh ? "抵達站" : "Destination" }
     static var selectOrigin: String { isZh ? "選擇出發站" : "Select origin" }
     static var selectDestination: String { isZh ? "選擇抵達站" : "Select destination" }
+    static var selectedStation: String { isZh ? "已選擇" : "Selected" }
+    static var recentStations: String { isZh ? "最近使用" : "Recent" }
+    static var matchingStations: String { isZh ? "符合結果" : "Matching results" }
+    static var allStations: String { isZh ? "所有車站" : "All stations" }
+    static var noMatchingStations: String { isZh ? "找不到符合的車站" : "No stations found" }
     static var message: String { isZh ? "訊息" : "Message" }
     static var noTrainMessage: String { isZh ? "好像沒車搭了" : "No more trains available" }
     static var enableAutoDetectOrigin: String { isZh ? "開啟定位起點" : "Enable origin auto-detect" }
