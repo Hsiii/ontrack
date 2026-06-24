@@ -1,4 +1,4 @@
-import { getSnapshot, upsertSnapshot } from './d1';
+import { getSnapshot, pruneSnapshots, upsertSnapshot } from './d1';
 import { fetchTDX, fetchTDXWithCache } from './tdx';
 import type {
     DelaySnapshot,
@@ -11,9 +11,19 @@ import type {
 
 export const STATIONS_KEY = 'stations';
 export const LIVE_BOARD_KEY = 'train-live-board';
+const ROUTE_TIMETABLE_RETENTION_DAYS = 2;
 
 export function getTaipeiDate(date = new Date()) {
     return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+}
+
+function getRoutePruneCutoffDate(date = new Date()) {
+    return getTaipeiDate(
+        new Date(
+            date.getTime() -
+                ROUTE_TIMETABLE_RETENTION_DAYS * 24 * 60 * 60 * 1000
+        )
+    );
 }
 
 export function routeTimetableKey(date: string, origin: string, dest: string) {
@@ -132,5 +142,8 @@ export async function getLiveBoard(env: Env) {
 }
 
 export async function refreshDailySnapshots(env: Env) {
-    await refreshStations(env);
+    await Promise.all([
+        refreshStations(env),
+        pruneSnapshots(env, getRoutePruneCutoffDate()),
+    ]);
 }
