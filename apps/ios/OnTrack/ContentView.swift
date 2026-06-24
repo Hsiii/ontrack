@@ -10,6 +10,7 @@ struct ContentView: View {
     @AppStorage("ontrack_destination_id") private var destinationId = ""
     @AppStorage("ontrack_auto_detect_origin") private var autoDetectOrigin = false
     @AppStorage("ontrack_cached_origin_id") private var cachedOriginId = ""
+    @AppStorage("ontrack_recent_destination_ids") private var recentDestinationIDs = ""
 
     @StateObject private var locationService = LocationService()
     @State private var stations: [Station] = []
@@ -38,6 +39,13 @@ struct ContentView: View {
 
     private var destinationStation: Station? {
         stationMap[destinationId]
+    }
+
+    private var recentDestinationStations: [Station] {
+        recentDestinationIDs
+            .split(separator: ",")
+            .compactMap { stationMap[String($0)] }
+            .filter { $0.id != originId }
     }
 
     private var canLoadSchedule: Bool {
@@ -145,7 +153,8 @@ struct ContentView: View {
                     title: role.title,
                     placeholder: role.placeholder,
                     stations: stations,
-                    selectedStation: role == .origin ? originStation : destinationStation
+                    selectedStation: role == .origin ? originStation : destinationStation,
+                    suggestedStations: role == .destination ? recentDestinationStations : []
                 ) { station in
                     select(station: station, for: role)
                 }
@@ -223,6 +232,7 @@ struct ContentView: View {
             }
         case .destination:
             destinationId = station.id
+            rememberDestination(station.id)
         }
     }
 
@@ -341,6 +351,17 @@ struct ContentView: View {
 
     private func isKnownStation(_ id: String, in stations: [Station]) -> Bool {
         !id.isEmpty && stations.contains { $0.id == id }
+    }
+
+    private func rememberDestination(_ id: String) {
+        let previousIDs = recentDestinationIDs
+            .split(separator: ",")
+            .map(String.init)
+            .filter { $0 != id }
+
+        recentDestinationIDs = ([id] + previousIDs)
+            .prefix(12)
+            .joined(separator: ",")
     }
 }
 
@@ -929,6 +950,7 @@ private struct StationSearchSheet: View {
     let placeholder: String
     let stations: [Station]
     let selectedStation: Station?
+    let suggestedStations: [Station]
     let onSelect: (Station) -> Void
 
     @Environment(\.dismiss) private var dismiss
@@ -938,13 +960,19 @@ private struct StationSearchSheet: View {
     private var visibleStations: [Station] {
         let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedSearch.isEmpty else {
+            let suggestedIDs = Set(suggestedStations.map(\.id))
+            let fallbackStations = stations.filter { station in
+                station.id != selectedStation?.id
+                    && !suggestedIDs.contains(station.id)
+                    && station.name != taipeiCircularStationName
+            }
+            let defaultStations = suggestedStations + fallbackStations
+
             if let selectedStation {
-                return [selectedStation] + stations
-                    .filter { $0.id != selectedStation.id && $0.name != taipeiCircularStationName }
-                    .prefix(11)
+                return [selectedStation] + defaultStations.prefix(11)
             }
 
-            return Array(stations.filter { $0.name != taipeiCircularStationName }.prefix(12))
+            return Array(defaultStations.prefix(12))
         }
 
         let normalizedSearch = trimmedSearch.replacingOccurrences(of: "台", with: "臺")
