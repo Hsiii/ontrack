@@ -21,6 +21,11 @@ const SECURITY_HEADERS = {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
 };
+const LIVE_BOARD_REFRESH_CRONS = new Set([
+    '*/5 0-15,21-23 * * *',
+    '*/10 16,20 * * *',
+]);
+const DAILY_REFRESH_CRON = '50 19 * * *';
 
 function json(data: unknown, init: ResponseInit = {}) {
     return new Response(JSON.stringify(data), {
@@ -215,13 +220,11 @@ export default {
     },
 
     async scheduled(controller, env, ctx) {
-        const refresh =
-            controller.cron === '*/5 * * * *'
-                ? refreshLiveBoard(env)
-                : Promise.all([
-                      refreshDailySnapshots(env),
-                      refreshLiveBoard(env),
-                  ]);
+        const refresh = LIVE_BOARD_REFRESH_CRONS.has(controller.cron)
+            ? refreshLiveBoard(env)
+            : controller.cron === DAILY_REFRESH_CRON
+              ? refreshDailySnapshots(env)
+              : Promise.resolve();
 
         ctx.waitUntil(refresh);
     },

@@ -94,6 +94,9 @@ export async function refreshLiveBoard(env: Env) {
         TrainLiveBoardList?: { TrainNo: string; DelayTime?: number }[];
     }>(env, 'v3/Rail/TRA/TrainLiveBoard', {
         tier: 'basic',
+        searchParams: {
+            $select: 'TrainNo,DelayTime',
+        },
         ifModifiedSince: previous?.last_modified,
         caller: 'live-board-refresh',
     });
