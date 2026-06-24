@@ -698,7 +698,7 @@ private struct TimeEditorSheet: View {
         VStack(spacing: 0) {
             HStack(spacing: OnTrackTheme.space2) {
                 Button {
-                    draft = .current(mode: .now)
+                    draft.date = Date()
                 } label: {
                     Text(AppText.now)
                         .font(.system(size: 16, weight: .semibold))
