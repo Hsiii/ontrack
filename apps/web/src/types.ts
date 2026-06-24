@@ -23,4 +23,11 @@ export interface ScheduleResponse {
     origin: Station;
     destination: Station;
     trains: TrainInfo[];
+    meta?: {
+        scheduleCacheStatus: 'hit' | 'derived' | 'warming';
+        scheduleSnapshotFetchedAt: string | null;
+        liveDataStatus: 'fresh' | 'stale' | 'unavailable' | 'not-applicable';
+        liveDataFetchedAt: string | null;
+        liveDataAgeSeconds: number | null;
+    };
 }

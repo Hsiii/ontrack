@@ -4,6 +4,7 @@ import SwiftUI
 private let taipeiMainStationName = "臺北"
 private let taipeiCircularStationName = "臺北(環島)"
 private let scheduleRefreshInterval: TimeInterval = 5 * 60
+private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
 private let manualOriginProtectionInterval: TimeInterval = 10 * 60
 
@@ -251,11 +252,31 @@ struct ContentView: View {
         defer { isLoadingSchedule = false }
 
         do {
-            let response = try await APIClient.shared.schedule(
-                origin: originStation,
-                destination: destinationStation,
-                date: timeSelection.scheduleDate
-            )
+            var response: ScheduleResponse?
+            for attempt in 0..<3 {
+                let candidate = try await APIClient.shared.schedule(
+                    origin: originStation,
+                    destination: destinationStation,
+                    date: timeSelection.scheduleDate
+                )
+                response = candidate
+
+                guard candidate.meta?.scheduleCacheStatus == .warming, attempt < 2 else {
+                    break
+                }
+
+                try? await Task.sleep(nanoseconds: scheduleWarmupRetryDelayNanos)
+                if Task.isCancelled {
+                    return
+                }
+            }
+
+            guard let response, response.meta?.scheduleCacheStatus != .warming else {
+                trains = []
+                selectedTrain = nil
+                return
+            }
+
             let display = TrainDisplay.displaySchedule(
                 trains: response.trains,
                 targetTime: timeSelection.scheduleTime,
@@ -965,6 +986,17 @@ private struct TrainCard: View {
         (train.delay ?? 0) > 0
     }
 
+    private var statusColor: Color {
+        switch train.status {
+        case .delayed:
+            OnTrackTheme.danger
+        case .onTime:
+            OnTrackTheme.success
+        case .cancelled, .unknown:
+            OnTrackTheme.dimText
+        }
+    }
+
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: OnTrackTheme.space3) {
@@ -1012,7 +1044,7 @@ private struct TrainCard: View {
                         .frame(width: 36)
 
                     Circle()
-                        .fill(isDelayed ? OnTrackTheme.danger : OnTrackTheme.success)
+                        .fill(statusColor)
                         .frame(width: 6, height: 6)
                 }
             }

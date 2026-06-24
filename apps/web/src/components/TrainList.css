@@ -156,6 +156,11 @@
     background: var(--color-danger);
 }
 
+.train-card-dot.unknown {
+    background: var(--color-text-dim);
+    opacity: 0.7;
+}
+
 .train-card-type {
     flex: 0 0 6.25ch;
     font-size: var(--text-sm);

@@ -9,6 +9,7 @@ import { TrainListSkeleton } from './TrainListSkeleton';
 import './TrainList.css';
 
 const SCHEDULE_REFRESH_INTERVAL_MS = 5 * 60 * 1000;
+const SCHEDULE_WARMING_RETRY_MS = 4 * 1000;
 
 /**
  * Chinese → English abbreviated train type mapping.
@@ -54,6 +55,12 @@ function timeToMinutes(time: string): number {
 
 function getEffectiveDepartureMinutes(train: TrainInfo): number {
     return timeToMinutes(train.departureTime) + (train.delay ?? 0);
+}
+
+function getStatusClass(train: TrainInfo) {
+    if (train.status === 'delayed') return 'delayed';
+    if (train.status === 'on-time') return 'on-time';
+    return 'unknown';
 }
 
 /** Calculate trip duration in minutes between two HH:mm strings */
@@ -135,12 +142,19 @@ export function TrainList({
     const [allTrains, setAllTrains] = useState<TrainInfo[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [warmingRetryNonce, setWarmingRetryNonce] = useState(0);
     const lastFetchTimeRef = useRef<number | null>(null);
     const lastFetchParamsRef = useRef<string>('');
     const requestIdRef = useRef(0);
+    const warmingRetryTimerRef = useRef<number | null>(null);
 
     const fetchSchedule = useCallback(() => {
         if (!originId || !destId) return;
+
+        if (warmingRetryTimerRef.current) {
+            window.clearTimeout(warmingRetryTimerRef.current);
+            warmingRetryTimerRef.current = null;
+        }
 
         // Prevent duplicate requests
         const currentParams = `${originId}-${destId}-${date}`;
@@ -166,8 +180,18 @@ export function TrainList({
                 }
 
                 setAllTrains(res.trains);
-                setLoading(false);
                 lastFetchTimeRef.current = Date.now();
+
+                if (res.meta?.scheduleCacheStatus === 'warming') {
+                    setLoading(true);
+                    warmingRetryTimerRef.current = window.setTimeout(() => {
+                        warmingRetryTimerRef.current = null;
+                        setWarmingRetryNonce((value) => value + 1);
+                    }, SCHEDULE_WARMING_RETRY_MS);
+                    return;
+                }
+
+                setLoading(false);
             })
             .catch((err) => {
                 if (requestId !== requestIdRef.current) {
@@ -192,9 +216,13 @@ export function TrainList({
 
         return () => {
             window.clearTimeout(initialFetchTimer);
+            if (warmingRetryTimerRef.current) {
+                window.clearTimeout(warmingRetryTimerRef.current);
+                warmingRetryTimerRef.current = null;
+            }
             clearInterval(interval);
         };
-    }, [fetchSchedule]);
+    }, [fetchSchedule, warmingRetryNonce]);
 
     const { displayTrains, recommendedTrain } = useMemo(
         () => buildDisplayState(allTrains, time, timeMode),
@@ -232,6 +260,7 @@ export function TrainList({
                         const isSelected =
                             trainData.trainNo === selectedTrainNo;
                         const isDelayed = (trainData.delay ?? 0) > 0;
+                        const statusClass = getStatusClass(trainData);
                         const tripMin = getTripMinutes(
                             trainData.departureTime,
                             trainData.arrivalTime
@@ -305,7 +334,7 @@ export function TrainList({
                                         {trainData.trainNo}
                                     </span>
                                     <span
-                                        className={`train-card-dot ${isDelayed ? 'delayed' : 'on-time'}`}
+                                        className={`train-card-dot ${statusClass}`}
                                     />
                                 </div>
                             </div>

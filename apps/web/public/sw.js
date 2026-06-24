@@ -52,7 +52,7 @@ async function networkFirst(request, cacheName) {
 
     try {
         const response = await withTimeout(fetch(request), SCHEDULE_TIMEOUT_MS);
-        if (response.ok) {
+        if (response.ok && response.status === 200) {
             await cache.put(request, response.clone());
         }
         return response;

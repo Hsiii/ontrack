@@ -38,6 +38,28 @@ struct ScheduleResponse: Decodable {
     let origin: Station
     let destination: Station
     let trains: [TrainInfo]
+    let meta: ScheduleMeta?
+}
+
+struct ScheduleMeta: Decodable {
+    let scheduleCacheStatus: ScheduleCacheStatus
+    let scheduleSnapshotFetchedAt: String?
+    let liveDataStatus: LiveDataStatus
+    let liveDataFetchedAt: String?
+    let liveDataAgeSeconds: Int?
+}
+
+enum ScheduleCacheStatus: String, Decodable {
+    case hit
+    case derived
+    case warming
+}
+
+enum LiveDataStatus: String, Decodable {
+    case fresh
+    case stale
+    case unavailable
+    case notApplicable = "not-applicable"
 }
 
 enum TimeMode: String, CaseIterable, Identifiable {
