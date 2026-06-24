@@ -9,6 +9,7 @@ import {
     LIVE_BOARD_FRESH_SECONDS,
     refreshDailySnapshots,
     refreshLiveBoard,
+    shouldRefreshLiveBoard,
 } from './refresh';
 import type {
     Env,
@@ -199,7 +200,10 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
         );
     }
 
-    if (liveData.status === 'stale' || liveData.status === 'unavailable') {
+    if (
+        (liveData.status === 'stale' || liveData.status === 'unavailable') &&
+        shouldRefreshLiveBoard()
+    ) {
         waitUntilLogged(ctx, refreshLiveBoard(env), 'Live board refresh');
     }
 

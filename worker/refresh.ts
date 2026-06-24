@@ -57,6 +57,18 @@ export function getNextTaipeiDate(date = new Date()) {
     return getTaipeiDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
 }
 
+export function shouldRefreshLiveBoard(date = new Date()) {
+    const hour = Number(
+        date.toLocaleTimeString('en-CA', {
+            hour: '2-digit',
+            hour12: false,
+            timeZone: 'Asia/Taipei',
+        })
+    );
+
+    return hour === 0 || hour >= 4;
+}
+
 export function timetableKey(date: string) {
     return `daily-timetable:${date}`;
 }
