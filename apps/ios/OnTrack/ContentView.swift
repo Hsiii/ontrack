@@ -97,8 +97,6 @@ struct ContentView: View {
                         RouteSelectorView(
                             origin: originStation,
                             destination: destinationStation,
-                            locationAuthorizationStatus: locationService.authorizationStatus,
-                            originSource: originSource,
                             isLoading: isLoadingStations,
                             onPickOrigin: { openStationPicker(.origin) },
                             onPickDestination: { openStationPicker(.destination) },
@@ -798,47 +796,47 @@ private struct TimeEditorSheet: View {
 private struct RouteSelectorView: View {
     let origin: Station?
     let destination: Station?
-    let locationAuthorizationStatus: CLAuthorizationStatus
-    let originSource: OriginSelectionSource
     let isLoading: Bool
     let onPickOrigin: () -> Void
     let onPickDestination: () -> Void
     let onSwap: () -> Void
 
-    private var locationIcon: String {
-        if locationAuthorizationStatus == .denied || locationAuthorizationStatus == .restricted {
-            return "location.slash"
-        }
-
-        return originSource == .geo ? "location.fill" : "location"
-    }
-
-    private var locationIsActive: Bool {
-        (locationAuthorizationStatus == .authorizedAlways || locationAuthorizationStatus == .authorizedWhenInUse) && originSource == .geo
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
             SectionLabel(AppText.selectRoute)
 
-            ZStack {
-                VStack(spacing: OnTrackTheme.space2) {
+            ZStack(alignment: .trailing) {
+                VStack(spacing: 0) {
                     StationTrigger(
                         title: AppText.origin,
                         station: origin,
                         isLoading: isLoading,
-                        accessorySystemName: locationIcon,
-                        accessoryIsActive: locationIsActive,
-                        accessoryAccessibilityLabel: AppText.locationPermission,
+                        glyphSystemName: "circle.fill",
+                        glyphColor: OnTrackTheme.primary,
+                        showsBottomConnector: true,
                         onTap: onPickOrigin
                     )
+
+                    Rectangle()
+                        .fill(OnTrackTheme.border)
+                        .frame(height: 1)
+                        .padding(.leading, OnTrackTheme.controlHeight + OnTrackTheme.space3)
+                        .padding(.trailing, OnTrackTheme.controlHeight + OnTrackTheme.space4)
 
                     StationTrigger(
                         title: AppText.destination,
                         station: destination,
                         isLoading: isLoading,
+                        glyphSystemName: "mappin.circle.fill",
+                        glyphColor: OnTrackTheme.danger,
+                        showsTopConnector: true,
                         onTap: onPickDestination
                     )
+                }
+                .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
+                .overlay {
+                    RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+                        .stroke(OnTrackTheme.border, lineWidth: 1)
                 }
 
                 Button(action: onSwap) {
@@ -853,6 +851,7 @@ private struct RouteSelectorView: View {
                         }
                 }
                 .disabled(origin == nil || destination == nil)
+                .padding(.trailing, OnTrackTheme.space2)
             }
         }
     }
@@ -862,59 +861,74 @@ private struct StationTrigger: View {
     let title: String
     let station: Station?
     let isLoading: Bool
-    var accessorySystemName: String?
-    var accessoryIsActive = false
-    var accessoryAccessibilityLabel = ""
+    let glyphSystemName: String
+    let glyphColor: Color
+    var showsTopConnector = false
+    var showsBottomConnector = false
     let onTap: () -> Void
 
     var body: some View {
-        HStack(spacing: 0) {
-            Button(action: onTap) {
-                HStack(spacing: OnTrackTheme.space3) {
-                    Image(systemName: "magnifyingglass")
-                        .font(.system(size: 18, weight: .medium))
+        Button(action: onTap) {
+            HStack(spacing: OnTrackTheme.space3) {
+                RouteGlyph(
+                    systemName: glyphSystemName,
+                    color: glyphColor,
+                    showsTopConnector: showsTopConnector,
+                    showsBottomConnector: showsBottomConnector
+                )
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(OnTrackTheme.dimText)
 
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(title)
-                            .font(.system(size: 12, weight: .medium))
-                            .foregroundStyle(OnTrackTheme.dimText)
-
-                        if isLoading {
-                            ProgressView()
-                                .controlSize(.small)
-                        } else {
-                            Text(station?.displayName ?? "")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(OnTrackTheme.text)
-                                .lineLimit(1)
-                        }
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text(station?.displayName ?? "")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(OnTrackTheme.text)
+                            .lineLimit(1)
                     }
-
-                    Spacer()
                 }
-                .padding(.leading, OnTrackTheme.space4)
-                .padding(.trailing, accessorySystemName == nil ? OnTrackTheme.space4 : OnTrackTheme.space2)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                .contentShape(Rectangle())
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .buttonStyle(.plain)
 
-            if let accessorySystemName {
-                Image(systemName: accessorySystemName)
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
-                    .frame(width: 48, height: 64)
-                    .accessibilityLabel(accessoryAccessibilityLabel)
+                Spacer()
             }
+            .padding(.leading, OnTrackTheme.space4)
+            .padding(.trailing, OnTrackTheme.controlHeight + OnTrackTheme.space4)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
         .frame(height: 64)
-        .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-        .overlay {
-            RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                .stroke(OnTrackTheme.border, lineWidth: 1)
+        .buttonStyle(.plain)
+    }
+}
+
+private struct RouteGlyph: View {
+    let systemName: String
+    let color: Color
+    let showsTopConnector: Bool
+    let showsBottomConnector: Bool
+
+    var body: some View {
+        VStack(spacing: 0) {
+            connector(isVisible: showsTopConnector)
+
+            Image(systemName: systemName)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(color)
+                .frame(width: 24, height: 24)
+
+            connector(isVisible: showsBottomConnector)
         }
+        .frame(width: 24, height: 64)
+    }
+
+    private func connector(isVisible: Bool) -> some View {
+        Rectangle()
+            .fill(isVisible ? OnTrackTheme.border : Color.clear)
+            .frame(width: 2, height: 20)
     }
 }
 

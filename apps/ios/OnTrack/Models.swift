@@ -241,7 +241,6 @@ enum AppText {
     static var selectDestination: String { isZh ? "選擇抵達站" : "Select destination" }
     static var message: String { isZh ? "訊息" : "Message" }
     static var noTrainMessage: String { isZh ? "好像沒車搭了" : "No more trains available" }
-    static var locationPermission: String { isZh ? "定位權限" : "Location permission" }
     static var cancel: String { isZh ? "取消" : "Cancel" }
     static var clear: String { isZh ? "清除" : "Clear" }
     static var done: String { isZh ? "完成" : "Done" }
