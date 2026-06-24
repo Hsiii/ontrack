@@ -13,6 +13,13 @@ interface SnapshotChunkRow {
     data: string;
 }
 
+export interface RouteInterest {
+    origin: string;
+    dest: string;
+    request_count: number;
+    last_seen_at: string;
+}
+
 const INLINE_DATA_LIMIT = 200_000;
 
 function toSnapshot<T>(row: SnapshotRow, data: T): Snapshot<T> {
@@ -176,4 +183,48 @@ export async function pruneSnapshots(env: Env, routeCutoffDate: string) {
             `
         ).bind(routeCutoffDate),
     ]);
+}
+
+export async function recordRouteInterest(
+    env: Env,
+    origin: string,
+    dest: string
+) {
+    const routeKey = `${origin}:${dest}`;
+    const seenAt = new Date().toISOString();
+
+    await env.DB.prepare(
+        `
+            insert into route_interest (
+                route_key,
+                origin,
+                dest,
+                request_count,
+                last_seen_at,
+                updated_at
+            )
+            values (?, ?, ?, 1, ?, current_timestamp)
+            on conflict(route_key) do update set
+                request_count = request_count + 1,
+                last_seen_at = excluded.last_seen_at,
+                updated_at = current_timestamp
+        `
+    )
+        .bind(routeKey, origin, dest, seenAt)
+        .run();
+}
+
+export async function getTopRouteInterests(env: Env, limit: number) {
+    const { results } = await env.DB.prepare(
+        `
+            select origin, dest, request_count, last_seen_at
+            from route_interest
+            order by request_count desc, last_seen_at desc
+            limit ?
+        `
+    )
+        .bind(limit)
+        .all<RouteInterest>();
+
+    return results;
 }
