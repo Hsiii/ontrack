@@ -583,13 +583,9 @@ private struct TimeSelectorView: View {
             }
             .padding(.horizontal, OnTrackTheme.space4)
             .frame(height: OnTrackTheme.controlHeight)
-            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                    .stroke(OnTrackTheme.border, lineWidth: 1)
-            }
+            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(OnTrackPressButtonStyle())
         .sheet(isPresented: $isEditorPresented) {
             TimeEditorSheet(
                 selection: $selection,
@@ -702,13 +698,12 @@ private struct TimeEditorSheet: View {
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(draft.mode == .now ? OnTrackTheme.primary : OnTrackTheme.text)
                         .frame(width: 72, height: OnTrackTheme.controlHeight)
-                        .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
-                        .overlay {
-                            RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
-                                .stroke(draft.mode == .now ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
-                        }
+                        .onTrackPanelSurface(
+                            cornerRadius: OnTrackTheme.radiusSmall,
+                            ringColor: draft.mode == .now ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                        )
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(OnTrackPressButtonStyle())
                 .disabled(draft.mode == .lastTrain)
                 .opacity(draft.mode == .lastTrain ? 0.48 : 1)
 
@@ -833,23 +828,16 @@ private struct RouteSelectorView: View {
                         onTap: onPickDestination
                     )
                 }
-                .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-                .overlay {
-                    RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                        .stroke(OnTrackTheme.border, lineWidth: 1)
-                }
+                .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
 
                 Button(action: onSwap) {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(.system(size: 18, weight: .semibold))
                         .frame(width: 40, height: 40)
                         .foregroundStyle(OnTrackTheme.dimText)
-                        .background(OnTrackTheme.panel, in: Circle())
-                        .overlay {
-                            Circle()
-                                .stroke(OnTrackTheme.border, lineWidth: 1)
-                        }
+                        .onTrackCircleSurface()
                 }
+                .buttonStyle(OnTrackPressButtonStyle())
                 .disabled(origin == nil || destination == nil)
                 .padding(.trailing, OnTrackTheme.space2)
             }
@@ -901,7 +889,7 @@ private struct StationTrigger: View {
             .contentShape(Rectangle())
         }
         .frame(height: 64)
-        .buttonStyle(.plain)
+        .buttonStyle(OnTrackPressButtonStyle())
     }
 }
 
@@ -1036,12 +1024,12 @@ private struct TrainCard: View {
                 isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
             )
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                    .stroke(isSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
-            }
+            .onTrackSurfaceRing(
+                cornerRadius: OnTrackTheme.radiusLarge,
+                ringColor: isSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+            )
         }
-        .buttonStyle(.plain)
+        .buttonStyle(OnTrackPressButtonStyle())
     }
 }
 
@@ -1202,7 +1190,7 @@ private struct StationSearchView: View {
                             .foregroundStyle(OnTrackTheme.dimText)
                             .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(OnTrackPressButtonStyle())
                     .accessibilityLabel(AppText.cancel)
                 }
             }
@@ -1237,18 +1225,17 @@ private struct StationSearchView: View {
                             .foregroundStyle(OnTrackTheme.dimText)
                             .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(OnTrackPressButtonStyle())
                     .accessibilityLabel(AppText.clear)
                 }
             }
             .padding(.leading, OnTrackTheme.space4)
             .padding(.trailing, OnTrackTheme.space2)
             .frame(height: 64)
-            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                    .stroke(isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
-            }
+            .onTrackPanelSurface(
+                cornerRadius: OnTrackTheme.radiusLarge,
+                ringColor: isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+            )
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.bottom, OnTrackTheme.space2)
             .contentShape(Rectangle())
@@ -1335,7 +1322,7 @@ private struct StationSearchRow: View {
             .frame(minHeight: 44)
             .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(OnTrackPressButtonStyle())
         .listRowBackground(OnTrackTheme.panel)
     }
 }
@@ -1351,11 +1338,7 @@ private struct ShareBar: View {
                 .foregroundStyle(OnTrackTheme.text)
                 .padding(.horizontal, OnTrackTheme.space3)
                 .frame(height: OnTrackTheme.controlHeight)
-                .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
-                .overlay {
-                    RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
-                        .stroke(OnTrackTheme.border, lineWidth: 1)
-                }
+                .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusSmall)
 
             ShareLink(item: editableMessage.isEmpty ? message : editableMessage) {
                 IconSquare(systemName: "paperplane.fill")
@@ -1402,7 +1385,7 @@ private struct IconSquareButton: View {
         Button(action: action) {
             IconSquare(systemName: systemName)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(OnTrackPressButtonStyle())
     }
 }
 
@@ -1414,11 +1397,7 @@ private struct IconSquare: View {
             .font(.system(size: 18, weight: .semibold))
             .foregroundStyle(OnTrackTheme.dimText)
             .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
-                    .stroke(OnTrackTheme.border, lineWidth: 1)
-            }
+            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusSmall)
     }
 }
 
@@ -1431,11 +1410,7 @@ private struct EmptyPanel: View {
             .foregroundStyle(OnTrackTheme.dimText)
             .frame(maxWidth: .infinity)
             .padding(OnTrackTheme.space5)
-            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                    .stroke(OnTrackTheme.border, lineWidth: 1)
-            }
+            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
     }
 }
 
@@ -1443,12 +1418,47 @@ private struct SkeletonTrainCard: View {
     var body: some View {
         RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
             .fill(OnTrackTheme.panel)
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                    .stroke(OnTrackTheme.border, lineWidth: 1)
-            }
+            .onTrackSurfaceRing(cornerRadius: OnTrackTheme.radiusLarge)
             .frame(height: 72)
             .opacity(0.7)
+    }
+}
+
+private struct OnTrackPressButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+}
+
+private extension View {
+    func onTrackPanelSurface(
+        cornerRadius: CGFloat,
+        ringColor: Color = OnTrackTheme.border
+    ) -> some View {
+        background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: cornerRadius))
+            .onTrackSurfaceRing(cornerRadius: cornerRadius, ringColor: ringColor)
+    }
+
+    func onTrackSurfaceRing(
+        cornerRadius: CGFloat,
+        ringColor: Color = OnTrackTheme.border
+    ) -> some View {
+        overlay {
+            RoundedRectangle(cornerRadius: cornerRadius)
+                .stroke(ringColor, lineWidth: 1)
+        }
+        .shadow(color: OnTrackTheme.surfaceShadow, radius: 8, x: 0, y: 4)
+    }
+
+    func onTrackCircleSurface() -> some View {
+        background(OnTrackTheme.panel, in: Circle())
+            .overlay {
+                Circle()
+                    .stroke(OnTrackTheme.border, lineWidth: 1)
+            }
+            .shadow(color: OnTrackTheme.surfaceShadow, radius: 8, x: 0, y: 4)
     }
 }
 
@@ -1461,6 +1471,7 @@ private enum OnTrackTheme {
     static let primary = Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
+    static let surfaceShadow = Color.black.opacity(0.12)
 
     static let radiusSmall: CGFloat = 8
     static let radiusLarge: CGFloat = 16
