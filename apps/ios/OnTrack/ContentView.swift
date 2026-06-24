@@ -97,16 +97,6 @@ struct ContentView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        Task { await loadSchedule() }
-                    } label: {
-                        Image(systemName: "arrow.clockwise")
-                    }
-                    .disabled(!canLoadSchedule || isLoadingSchedule)
-                }
-            }
             .task {
                 await loadStations()
             }
