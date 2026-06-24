@@ -1073,6 +1073,10 @@ private struct StationSearchView: View {
         !trimmedSearch.isEmpty
     }
 
+    private var searchPlaceholder: String {
+        selectedStation?.displayName ?? placeholder
+    }
+
     private var matchingStations: [Station] {
         let normalizedSearch = trimmedSearch.replacingOccurrences(of: "台", with: "臺")
         let normalizedEnglishSearch = normalizedEnglishName(trimmedSearch)
@@ -1169,17 +1173,39 @@ private struct StationSearchView: View {
 
     var body: some View {
         VStack(spacing: 0) {
+            ZStack {
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundStyle(OnTrackTheme.text)
+                    .lineLimit(1)
+
+                HStack {
+                    Spacer()
+
+                    Button(action: onDismiss) {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(OnTrackTheme.dimText)
+                            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(AppText.cancel)
+                }
+            }
+            .frame(height: 52)
+            .padding(.horizontal, OnTrackTheme.space3)
+
             HStack(spacing: OnTrackTheme.space3) {
                 Image(systemName: "magnifyingglass")
                     .font(.system(size: 18, weight: .medium))
                     .foregroundStyle(OnTrackTheme.dimText)
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
+                    Text(placeholder)
                         .font(.system(size: 12, weight: .medium))
                         .foregroundStyle(OnTrackTheme.dimText)
 
-                    TextField(placeholder, text: $searchText)
+                    TextField(searchPlaceholder, text: $searchText)
                         .focused($isSearchFocused)
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundStyle(OnTrackTheme.text)
@@ -1188,14 +1214,18 @@ private struct StationSearchView: View {
                         .submitLabel(.search)
                 }
 
-                Button(action: onDismiss) {
-                    Image(systemName: "xmark")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(OnTrackTheme.dimText)
-                        .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                if isSearching {
+                    Button {
+                        searchText = ""
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundStyle(OnTrackTheme.dimText)
+                            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(AppText.clear)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(AppText.cancel)
             }
             .padding(.leading, OnTrackTheme.space4)
             .padding(.trailing, OnTrackTheme.space2)
@@ -1206,7 +1236,6 @@ private struct StationSearchView: View {
                     .stroke(isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
             }
             .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.top, OnTrackTheme.space3)
             .padding(.bottom, OnTrackTheme.space2)
             .contentShape(Rectangle())
             .onTapGesture {

@@ -248,6 +248,7 @@ enum AppText {
     static var noTrainMessage: String { isZh ? "好像沒車搭了" : "No more trains available" }
     static var locationPermission: String { isZh ? "定位權限" : "Location permission" }
     static var cancel: String { isZh ? "取消" : "Cancel" }
+    static var clear: String { isZh ? "清除" : "Clear" }
     static var done: String { isZh ? "完成" : "Done" }
     static var today: String { isZh ? "今天" : "Today" }
     static var tomorrow: String { isZh ? "明天" : "Tomorrow" }
