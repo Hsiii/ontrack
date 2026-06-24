@@ -16,7 +16,7 @@ actor APIClient {
         components.queryItems = [
             URLQueryItem(name: "origin", value: origin.id),
             URLQueryItem(name: "dest", value: destination.id),
-            URLQueryItem(name: "date", value: Self.scheduleDateFormatter.string(from: date)),
+            URLQueryItem(name: "date", value: Formatters.scheduleDate.string(from: date)),
         ]
 
         guard let url = components.url(relativeTo: baseURL)?.absoluteURL else {
@@ -48,14 +48,6 @@ actor APIClient {
         return try decoder.decode(T.self, from: data)
     }
 
-    private static let scheduleDateFormatter: DateFormatter = {
-        let formatter = DateFormatter()
-        formatter.calendar = Calendar(identifier: .gregorian)
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        formatter.timeZone = TimeZone(identifier: "Asia/Taipei")
-        formatter.dateFormat = "yyyy-MM-dd"
-        return formatter
-    }()
 }
 
 enum APIError: LocalizedError {
