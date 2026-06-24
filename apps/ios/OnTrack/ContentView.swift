@@ -91,8 +91,8 @@ struct ContentView: View {
                             originSource: originSource,
                             isLoading: isLoadingStations,
                             onToggleAutoDetectOrigin: toggleAutoDetectOrigin,
-                            onPickOrigin: { stationPicker = .origin },
-                            onPickDestination: { stationPicker = .destination },
+                            onPickOrigin: { openStationPicker(.origin) },
+                            onPickDestination: { openStationPicker(.destination) },
                             onSwap: swapStations
                         )
 
@@ -118,6 +118,22 @@ struct ContentView: View {
                 }
 
                 ShareBar(message: shareMessage)
+
+                if let stationPicker {
+                    StationSearchView(
+                        title: stationPicker.title,
+                        placeholder: stationPicker.placeholder,
+                        stations: stations,
+                        selectedStation: stationPicker == .origin ? originStation : destinationStation,
+                        suggestedStations: stationPicker == .destination ? recentDestinationStations : [],
+                        onDismiss: dismissStationPicker
+                    ) { station in
+                        select(station: station, for: stationPicker)
+                        dismissStationPicker()
+                    }
+                    .zIndex(1)
+                    .transition(.identity)
+                }
             }
             .toolbar(.hidden, for: .navigationBar)
             .task {
@@ -145,17 +161,6 @@ struct ContentView: View {
 
                 fallbackToCachedOrigin()
             }
-            .sheet(item: $stationPicker) { role in
-                StationSearchSheet(
-                    title: role.title,
-                    placeholder: role.placeholder,
-                    stations: stations,
-                    selectedStation: role == .origin ? originStation : destinationStation,
-                    suggestedStations: role == .destination ? recentDestinationStations : []
-                ) { station in
-                    select(station: station, for: role)
-                }
-            }
             .alert("OnTrack", isPresented: hasError) {
                 Button("OK", role: .cancel) {
                     errorMessage = nil
@@ -172,6 +177,22 @@ struct ContentView: View {
             get: { errorMessage != nil },
             set: { if !$0 { errorMessage = nil } }
         )
+    }
+
+    private func openStationPicker(_ role: StationPickerRole) {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            stationPicker = role
+        }
+    }
+
+    private func dismissStationPicker() {
+        var transaction = Transaction()
+        transaction.disablesAnimations = true
+        withTransaction(transaction) {
+            stationPicker = nil
+        }
     }
 
     private func loadStations() async {
@@ -946,17 +967,17 @@ private struct TimeColumn: View {
     }
 }
 
-private struct StationSearchSheet: View {
+private struct StationSearchView: View {
     let title: String
     let placeholder: String
     let stations: [Station]
     let selectedStation: Station?
     let suggestedStations: [Station]
+    let onDismiss: () -> Void
     let onSelect: (Station) -> Void
 
-    @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @State private var isSearchPresented = true
+    @FocusState private var isSearchFocused: Bool
 
     private var trimmedSearch: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1014,6 +1035,16 @@ private struct StationSearchSheet: View {
         suggestedStations.filter { $0.id != selectedStation?.id }
     }
 
+    private var resultRows: [StationSearchResult] {
+        if isSearching {
+            return visibleMatchingStations.map { StationSearchResult(station: $0, role: .regular) }
+                + visibleSuggestions.map { StationSearchResult(station: $0, role: .recent) }
+        }
+
+        return visibleSuggestions.map { StationSearchResult(station: $0, role: .recent) }
+            + restStations.map { StationSearchResult(station: $0, role: .regular) }
+    }
+
     private var hiddenStationIDs: Set<String> {
         var stationIDs = Set(visibleSuggestions.map(\.id))
         if let selectedStation {
@@ -1051,41 +1082,58 @@ private struct StationSearchSheet: View {
     }
 
     var body: some View {
-        NavigationStack {
+        VStack(spacing: 0) {
+            HStack(spacing: OnTrackTheme.space3) {
+                Image(systemName: "magnifyingglass")
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundStyle(OnTrackTheme.dimText)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(title)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(OnTrackTheme.dimText)
+
+                    TextField(placeholder, text: $searchText)
+                        .focused($isSearchFocused)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(OnTrackTheme.text)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.search)
+                }
+
+                Button(action: onDismiss) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(AppText.cancel)
+            }
+            .padding(.leading, OnTrackTheme.space4)
+            .padding(.trailing, OnTrackTheme.space2)
+            .frame(height: 64)
+            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
+            .overlay {
+                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+                    .stroke(isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
+            }
+            .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.top, OnTrackTheme.space3)
+            .padding(.bottom, OnTrackTheme.space2)
+            .contentShape(Rectangle())
+            .onTapGesture {
+                isSearchFocused = true
+            }
+
             List {
-                if isSearching {
-                    ForEach(visibleMatchingStations) { station in
-                        StationSearchRow(
-                            station: station,
-                            role: .regular
-                        ) {
-                            onSelect(selectedStation(station))
-                            dismiss()
-                        }
-                    }
-                }
-
-                if !visibleSuggestions.isEmpty {
-                    ForEach(visibleSuggestions) { station in
-                        StationSearchRow(
-                            station: station,
-                            role: .recent
-                        ) {
-                            onSelect(selectedStation(station))
-                            dismiss()
-                        }
-                    }
-                }
-
-                if !isSearching {
-                    ForEach(restStations) { station in
-                        StationSearchRow(
-                            station: station,
-                            role: .regular
-                        ) {
-                            onSelect(selectedStation(station))
-                            dismiss()
-                        }
+                ForEach(resultRows) { row in
+                    StationSearchRow(
+                        station: row.station,
+                        role: row.role
+                    ) {
+                        onSelect(selectedStation(row.station))
                     }
                 }
             }
@@ -1093,36 +1141,22 @@ private struct StationSearchSheet: View {
             .scrollContentBackground(.hidden)
             .scrollDismissesKeyboard(.interactively)
             .background(OnTrackTheme.background)
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .searchable(
-                text: $searchText,
-                isPresented: $isSearchPresented,
-                placement: .navigationBarDrawer(displayMode: .always),
-                prompt: placeholder
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
-            .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        dismiss()
-                    } label: {
-                        Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(.white.opacity(0.72))
-                            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(OnTrackTheme.background.ignoresSafeArea())
         .tint(OnTrackTheme.primary)
-        .onAppear {
-            isSearchPresented = true
+        .task {
+            isSearchFocused = true
         }
+    }
+}
+
+private struct StationSearchResult: Identifiable {
+    let station: Station
+    let role: StationSearchRowRole
+
+    var id: String {
+        "\(role)-\(station.id)"
     }
 }
 
