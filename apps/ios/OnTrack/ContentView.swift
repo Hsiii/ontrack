@@ -236,6 +236,12 @@ private enum StationPickerRole: String, Identifiable {
 private struct TimeSelectorView: View {
     @Binding var selection: TimeSelection
 
+    private var isSyncedToNow: Bool {
+        let now = Date()
+        return Formatters.scheduleDate.string(from: selection.date) == Formatters.scheduleDate.string(from: now)
+            && Formatters.displayTime.string(from: selection.date) == Formatters.displayTime.string(from: now)
+    }
+
     private var dateRange: ClosedRange<Date> {
         let calendar = Formatters.taipeiCalendar
         let today = calendar.startOfDay(for: Date())
@@ -284,9 +290,14 @@ private struct TimeSelectorView: View {
                 .frame(height: OnTrackTheme.controlHeight)
                 .tint(OnTrackTheme.primary)
 
-                IconSquareButton(systemName: "clock.arrow.circlepath") {
+                IconSquareButton(
+                    systemName: isSyncedToNow
+                        ? "clock.badge.checkmark"
+                        : "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
+                ) {
                     selection = .current(mode: selection.mode)
                 }
+                .disabled(isSyncedToNow)
                 .accessibilityLabel("Sync time")
             }
         }
