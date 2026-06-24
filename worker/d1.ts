@@ -156,9 +156,16 @@ export async function upsertSnapshot<T>(
     ]);
 }
 
-export async function pruneSnapshots(env: Env, routeCutoffDate: string) {
+export async function pruneSnapshots(
+    env: Env,
+    routeCutoffDate: string,
+    timetableCutoffDate: string
+) {
     const obsoleteWhere = `
-        key like 'daily-timetable:%'
+        (
+            key like 'daily-timetable:%'
+            and substr(key, 17, 10) < ?
+        )
         or (
             key like 'daily-timetable-od:%'
             and substr(key, 20, 10) < ?
@@ -169,19 +176,19 @@ export async function pruneSnapshots(env: Env, routeCutoffDate: string) {
         env.DB.prepare(
             `
                 delete from tdx_snapshot_chunks
-                where snapshot_key in (
-                    select key
-                    from tdx_snapshots
-                    where ${obsoleteWhere}
-                )
-            `
-        ).bind(routeCutoffDate),
+            where snapshot_key in (
+                select key
+                from tdx_snapshots
+                where ${obsoleteWhere}
+            )
+        `
+        ).bind(timetableCutoffDate, routeCutoffDate),
         env.DB.prepare(
             `
                 delete from tdx_snapshots
                 where ${obsoleteWhere}
             `
-        ).bind(routeCutoffDate),
+        ).bind(timetableCutoffDate, routeCutoffDate),
     ]);
 }
 

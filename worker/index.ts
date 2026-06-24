@@ -1,14 +1,19 @@
+import { recordRouteInterest } from './d1';
 import {
     ensureRouteTimetable,
     ensureStations,
-    getLiveBoard,
+    getCachedRouteTimetable,
+    getLiveBoardSnapshot,
+    getSnapshotAgeSeconds,
     getTaipeiDate,
+    LIVE_BOARD_FRESH_SECONDS,
     refreshDailySnapshots,
     refreshLiveBoard,
 } from './refresh';
 import type {
-    DelaySnapshot,
     Env,
+    LiveDataStatus,
+    ScheduleMeta,
     TDXFullTimetable,
     TDXStopTime,
     TrainInfo,
@@ -36,6 +41,18 @@ function json(data: unknown, init: ResponseInit = {}) {
             ...init.headers,
         },
     });
+}
+
+function waitUntilLogged(
+    ctx: ExecutionContext,
+    task: Promise<unknown>,
+    label: string
+) {
+    ctx.waitUntil(
+        task.catch((error) => {
+            console.error(`${label} failed:`, error);
+        })
+    );
 }
 
 function isValidStationId(id: unknown): id is string {
@@ -105,7 +122,39 @@ async function handleStations(env: Env) {
     });
 }
 
-async function handleSchedule(url: URL, env: Env) {
+function getLiveDataStatus(
+    isToday: boolean,
+    liveBoard: Awaited<ReturnType<typeof getLiveBoardSnapshot>>
+): {
+    status: LiveDataStatus;
+    fetchedAt: string | null;
+    ageSeconds: number | null;
+} {
+    if (!isToday) {
+        return {
+            status: 'not-applicable',
+            fetchedAt: null,
+            ageSeconds: null,
+        };
+    }
+
+    if (!liveBoard) {
+        return {
+            status: 'unavailable',
+            fetchedAt: null,
+            ageSeconds: null,
+        };
+    }
+
+    const ageSeconds = getSnapshotAgeSeconds(liveBoard);
+    return {
+        status: ageSeconds <= LIVE_BOARD_FRESH_SECONDS ? 'fresh' : 'stale',
+        fetchedAt: liveBoard.fetched_at,
+        ageSeconds,
+    };
+}
+
+async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
     const origin = url.searchParams.get('origin');
     const dest = url.searchParams.get('dest');
     const date = url.searchParams.get('date');
@@ -130,17 +179,45 @@ async function handleSchedule(url: URL, env: Env) {
 
     const queryDate = date || getTaipeiDate();
     const isToday = queryDate === getTaipeiDate();
-    const [routeTrains, liveBoard] = await Promise.all([
-        ensureRouteTimetable(env, queryDate, origin, dest),
-        isToday
-            ? getLiveBoard(env)
-            : Promise.resolve<DelaySnapshot>({ delays: {} }),
+    waitUntilLogged(
+        ctx,
+        recordRouteInterest(env, origin, dest),
+        'Route interest update'
+    );
+
+    const [routeResult, liveBoard] = await Promise.all([
+        getCachedRouteTimetable(env, queryDate, origin, dest),
+        isToday ? getLiveBoardSnapshot(env) : Promise.resolve(null),
     ]);
-    const delayMap = new Map(Object.entries(liveBoard.delays));
-    const trains = routeTrains
+    const liveData = getLiveDataStatus(isToday, liveBoard);
+
+    if (routeResult.cacheStatus === 'warming') {
+        waitUntilLogged(
+            ctx,
+            ensureRouteTimetable(env, queryDate, origin, dest),
+            'Route timetable warmup'
+        );
+    }
+
+    if (liveData.status === 'stale' || liveData.status === 'unavailable') {
+        waitUntilLogged(ctx, refreshLiveBoard(env), 'Live board refresh');
+    }
+
+    const delayMap =
+        liveData.status === 'fresh' && liveBoard
+            ? new Map(Object.entries(liveBoard.data.delays))
+            : new Map<string, number>();
+    const trains = routeResult.timetables
         .map((t) => mapTrainToAppTrainInfo(t, origin, dest, delayMap))
         .filter((t): t is TrainInfo => t !== null)
         .sort((a, b) => a.departureTime.localeCompare(b.departureTime));
+    const meta: ScheduleMeta = {
+        scheduleCacheStatus: routeResult.cacheStatus,
+        scheduleSnapshotFetchedAt: routeResult.snapshotFetchedAt,
+        liveDataStatus: liveData.status,
+        liveDataFetchedAt: liveData.fetchedAt,
+        liveDataAgeSeconds: liveData.ageSeconds,
+    };
 
     return json(
         {
@@ -148,11 +225,15 @@ async function handleSchedule(url: URL, env: Env) {
             origin: { id: origin, name: origin },
             destination: { id: dest, name: dest },
             trains,
+            meta,
         },
         {
+            status: routeResult.cacheStatus === 'warming' ? 202 : 200,
             headers: {
                 'Cache-Control':
-                    'public, s-maxage=60, stale-while-revalidate=300',
+                    routeResult.cacheStatus === 'warming'
+                        ? 'no-store'
+                        : 'public, s-maxage=60, stale-while-revalidate=300',
             },
         }
     );
@@ -172,7 +253,7 @@ async function handleRefresh(request: Request, env: Env) {
     return json({ ok: true });
 }
 
-async function handleApi(request: Request, env: Env) {
+async function handleApi(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
 
     try {
@@ -181,7 +262,7 @@ async function handleApi(request: Request, env: Env) {
         }
 
         if (url.pathname === '/api/schedule') {
-            return handleSchedule(url, env);
+            return handleSchedule(url, env, ctx);
         }
 
         if (url.pathname === '/api/refresh') {
@@ -199,11 +280,11 @@ async function handleApi(request: Request, env: Env) {
 }
 
 export default {
-    async fetch(request, env) {
+    async fetch(request, env, ctx) {
         const url = new URL(request.url);
 
         if (url.pathname.startsWith('/api/')) {
-            return handleApi(request, env);
+            return handleApi(request, env, ctx);
         }
 
         const response = await env.ASSETS.fetch(request);

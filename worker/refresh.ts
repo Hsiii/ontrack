@@ -1,8 +1,15 @@
-import { getSnapshot, pruneSnapshots, upsertSnapshot } from './d1';
+import {
+    getSnapshot,
+    getTopRouteInterests,
+    pruneSnapshots,
+    upsertSnapshot,
+} from './d1';
 import { fetchTDX, fetchTDXWithCache } from './tdx';
 import type {
     DelaySnapshot,
     Env,
+    ScheduleCacheStatus,
+    Snapshot,
     Station,
     TDXFullTimetable,
     TDXStation,
@@ -11,8 +18,19 @@ import type {
 
 export const STATIONS_KEY = 'stations';
 export const LIVE_BOARD_KEY = 'train-live-board';
+export const LIVE_BOARD_FRESH_SECONDS = 5 * 60;
 const ROUTE_TIMETABLE_RETENTION_DAYS = 2;
+const FULL_TIMETABLE_RETENTION_DAYS = 2;
+const POPULAR_ROUTE_PREWARM_LIMIT = 12;
 const routeTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
+const dailyTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
+let liveBoardRefresh: Promise<DelaySnapshot> | null = null;
+
+export interface CachedRouteTimetable {
+    timetables: TDXFullTimetable[];
+    cacheStatus: ScheduleCacheStatus;
+    snapshotFetchedAt: string | null;
+}
 
 export function getTaipeiDate(date = new Date()) {
     return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
@@ -25,6 +43,22 @@ function getRoutePruneCutoffDate(date = new Date()) {
                 ROUTE_TIMETABLE_RETENTION_DAYS * 24 * 60 * 60 * 1000
         )
     );
+}
+
+function getFullTimetablePruneCutoffDate(date = new Date()) {
+    return getTaipeiDate(
+        new Date(
+            date.getTime() - FULL_TIMETABLE_RETENTION_DAYS * 24 * 60 * 60 * 1000
+        )
+    );
+}
+
+export function getNextTaipeiDate(date = new Date()) {
+    return getTaipeiDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
+}
+
+export function timetableKey(date: string) {
+    return `daily-timetable:${date}`;
 }
 
 export function routeTimetableKey(date: string, origin: string, dest: string) {
@@ -62,6 +96,61 @@ export async function refreshStations(env: Env) {
     return stations;
 }
 
+export async function refreshTimetable(env: Env, date = getTaipeiDate()) {
+    const path =
+        date === getTaipeiDate()
+            ? 'v3/Rail/TRA/DailyTrainTimetable/Today'
+            : `v3/Rail/TRA/DailyTrainTimetable/TrainDate/${date}`;
+    const data = await fetchTDX<TDXTimetableResponse>(env, path, {
+        searchParams: {
+            $select: 'TrainInfo,StopTimes',
+        },
+        tier: 'basic',
+        caller: 'daily-timetable-refresh',
+    });
+    const timetables = data.TrainTimetables ?? [];
+
+    await upsertSnapshot(env, timetableKey(date), timetables, null);
+    return timetables;
+}
+
+export function filterRouteTimetables(
+    timetables: TDXFullTimetable[],
+    origin: string,
+    dest: string
+) {
+    const routeTimetables: TDXFullTimetable[] = [];
+
+    for (const timetable of timetables) {
+        const stops = timetable.StopTimes || [];
+        let originStop: TDXFullTimetable['StopTimes'][number] | null = null;
+        let destStop: TDXFullTimetable['StopTimes'][number] | null = null;
+
+        for (const stop of stops) {
+            if (!originStop) {
+                if (stop.StationID === origin) {
+                    originStop = stop;
+                }
+                continue;
+            }
+
+            if (stop.StationID === dest) {
+                destStop = stop;
+                break;
+            }
+        }
+
+        if (originStop && destStop) {
+            routeTimetables.push({
+                ...timetable,
+                StopTimes: [originStop, destStop],
+            });
+        }
+    }
+
+    return routeTimetables;
+}
+
 export async function refreshRouteTimetable(
     env: Env,
     date: string,
@@ -72,6 +161,9 @@ export async function refreshRouteTimetable(
         env,
         `v3/Rail/TRA/DailyTrainTimetable/OD/${origin}/to/${dest}/${date}`,
         {
+            searchParams: {
+                $select: 'TrainInfo,StopTimes',
+            },
             tier: 'basic',
             caller: 'route-cache-miss',
         }
@@ -87,7 +179,7 @@ export async function refreshRouteTimetable(
     return timetables;
 }
 
-export async function refreshLiveBoard(env: Env) {
+async function refreshLiveBoardUncached(env: Env) {
     const previous = await getSnapshot<DelaySnapshot>(env, LIVE_BOARD_KEY);
     const response = await fetchTDXWithCache<{
         TrainLiveBoards?: { TrainNo: string; DelayTime?: number }[];
@@ -125,9 +217,117 @@ export async function refreshLiveBoard(env: Env) {
     return snapshot;
 }
 
+export async function refreshLiveBoard(env: Env) {
+    if (liveBoardRefresh) {
+        return liveBoardRefresh;
+    }
+
+    liveBoardRefresh = refreshLiveBoardUncached(env).finally(() => {
+        liveBoardRefresh = null;
+    });
+    return liveBoardRefresh;
+}
+
 export async function ensureStations(env: Env) {
     const snapshot = await getSnapshot<Station[]>(env, STATIONS_KEY);
     return snapshot?.data ?? refreshStations(env);
+}
+
+export async function getLiveBoardSnapshot(env: Env) {
+    return getSnapshot<DelaySnapshot>(env, LIVE_BOARD_KEY);
+}
+
+export function getSnapshotAgeSeconds(snapshot: Snapshot<unknown>) {
+    return Math.max(
+        0,
+        Math.floor((Date.now() - Date.parse(snapshot.fetched_at)) / 1000)
+    );
+}
+
+export async function ensureTimetable(env: Env, date: string) {
+    const snapshot = await getSnapshot<TDXFullTimetable[]>(
+        env,
+        timetableKey(date)
+    );
+    if (snapshot) {
+        return snapshot.data;
+    }
+
+    const existingRefresh = dailyTimetableRefreshes.get(date);
+    if (existingRefresh) {
+        return existingRefresh;
+    }
+
+    const refresh = refreshTimetable(env, date).finally(() =>
+        dailyTimetableRefreshes.delete(date)
+    );
+    dailyTimetableRefreshes.set(date, refresh);
+    return refresh;
+}
+
+async function deriveRouteFromDailySnapshot(
+    env: Env,
+    date: string,
+    origin: string,
+    dest: string,
+    snapshot: Snapshot<TDXFullTimetable[]>
+): Promise<CachedRouteTimetable> {
+    const timetables = filterRouteTimetables(snapshot.data, origin, dest);
+    try {
+        await upsertSnapshot(
+            env,
+            routeTimetableKey(date, origin, dest),
+            timetables,
+            null
+        );
+    } catch (error) {
+        console.error('Failed to cache derived route timetable:', error);
+    }
+
+    return {
+        timetables,
+        cacheStatus: 'derived',
+        snapshotFetchedAt: snapshot.fetched_at,
+    };
+}
+
+export async function getCachedRouteTimetable(
+    env: Env,
+    date: string,
+    origin: string,
+    dest: string
+): Promise<CachedRouteTimetable> {
+    const routeSnapshot = await getSnapshot<TDXFullTimetable[]>(
+        env,
+        routeTimetableKey(date, origin, dest)
+    );
+    if (routeSnapshot) {
+        return {
+            timetables: routeSnapshot.data,
+            cacheStatus: 'hit',
+            snapshotFetchedAt: routeSnapshot.fetched_at,
+        };
+    }
+
+    const dailySnapshot = await getSnapshot<TDXFullTimetable[]>(
+        env,
+        timetableKey(date)
+    );
+    if (dailySnapshot) {
+        return deriveRouteFromDailySnapshot(
+            env,
+            date,
+            origin,
+            dest,
+            dailySnapshot
+        );
+    }
+
+    return {
+        timetables: [],
+        cacheStatus: 'warming',
+        snapshotFetchedAt: null,
+    };
 }
 
 export async function ensureRouteTimetable(
@@ -136,12 +336,28 @@ export async function ensureRouteTimetable(
     origin: string,
     dest: string
 ) {
-    const key = routeTimetableKey(date, origin, dest);
-    const snapshot = await getSnapshot<TDXFullTimetable[]>(env, key);
-    if (snapshot) {
-        return snapshot.data;
+    const cached = await getCachedRouteTimetable(env, date, origin, dest);
+    if (cached.cacheStatus !== 'warming') {
+        return cached.timetables;
     }
 
+    if (date === getTaipeiDate() || date === getNextTaipeiDate()) {
+        const dailyTimetables = await ensureTimetable(env, date);
+        const routeTimetables = filterRouteTimetables(
+            dailyTimetables,
+            origin,
+            dest
+        );
+        await upsertSnapshot(
+            env,
+            routeTimetableKey(date, origin, dest),
+            routeTimetables,
+            null
+        );
+        return routeTimetables;
+    }
+
+    const key = routeTimetableKey(date, origin, dest);
     const existingRefresh = routeTimetableRefreshes.get(key);
     if (existingRefresh) {
         return existingRefresh;
@@ -160,8 +376,25 @@ export async function getLiveBoard(env: Env) {
 }
 
 export async function refreshDailySnapshots(env: Env) {
+    const today = getTaipeiDate();
+    const tomorrow = getNextTaipeiDate();
+
     await Promise.all([
         refreshStations(env),
-        pruneSnapshots(env, getRoutePruneCutoffDate()),
+        refreshTimetable(env, today),
+        refreshTimetable(env, tomorrow),
+        pruneSnapshots(
+            env,
+            getRoutePruneCutoffDate(),
+            getFullTimetablePruneCutoffDate()
+        ),
     ]);
+
+    const routes = await getTopRouteInterests(env, POPULAR_ROUTE_PREWARM_LIMIT);
+    await Promise.all(
+        routes.flatMap((route) => [
+            getCachedRouteTimetable(env, today, route.origin, route.dest),
+            getCachedRouteTimetable(env, tomorrow, route.origin, route.dest),
+        ])
+    );
 }

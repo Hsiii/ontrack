@@ -3,6 +3,7 @@ export type TDXTier = 'basic' | 'advanced';
 export type TDXCaller =
     | 'station-refresh'
     | 'route-cache-miss'
+    | 'daily-timetable-refresh'
     | 'live-board-refresh';
 
 export interface Env {
@@ -88,4 +89,19 @@ export interface TDXResponse<T> {
 
 export interface DelaySnapshot {
     delays: Record<string, number>;
+}
+
+export type ScheduleCacheStatus = 'hit' | 'derived' | 'warming';
+export type LiveDataStatus =
+    | 'fresh'
+    | 'stale'
+    | 'unavailable'
+    | 'not-applicable';
+
+export interface ScheduleMeta {
+    scheduleCacheStatus: ScheduleCacheStatus;
+    scheduleSnapshotFetchedAt: string | null;
+    liveDataStatus: LiveDataStatus;
+    liveDataFetchedAt: string | null;
+    liveDataAgeSeconds: number | null;
 }
