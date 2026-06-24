@@ -16,6 +16,8 @@ build
 *.xcarchive
 *.xcresult
 *.ipa
+*.xcuserstate
+xcuserdata/
 *.local
 
 # Editor directories and files
