@@ -1,6 +1,9 @@
 import CoreLocation
 import SwiftUI
 
+private let taipeiMainStationName = "臺北"
+private let taipeiCircularStationName = "臺北(環島)"
+
 struct ContentView: View {
     @AppStorage("ontrack_origin_id") private var originId = ""
     @AppStorage("ontrack_destination_id") private var destinationId = ""
@@ -230,7 +233,7 @@ struct ContentView: View {
 
         if originId.isEmpty {
             setOrigin(
-                loadedStations.first(where: { $0.name == "臺北" || $0.name == "台北" })?.id
+                loadedStations.first(where: { $0.name == taipeiMainStationName || $0.name == "台北" })?.id
                     ?? loadedStations.first?.id
                     ?? "",
                 source: .manual
@@ -317,11 +320,11 @@ struct ContentView: View {
     }
 
     private func resolvePreferredStationId(_ stationId: String) -> String {
-        guard stationMap[stationId]?.name == "臺北(環島)" else {
+        guard stationMap[stationId]?.name == taipeiCircularStationName else {
             return stationId
         }
 
-        return stations.first(where: { $0.name == "臺北" })?.id ?? stationId
+        return stations.first(where: { $0.name == taipeiMainStationName })?.id ?? stationId
     }
 
     private func isKnownStation(_ id: String, in stations: [Station]) -> Bool {
@@ -924,17 +927,58 @@ private struct StationSearchSheet: View {
         let trimmedSearch = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedSearch.isEmpty else {
             if let selectedStation {
-                return [selectedStation] + stations.filter { $0.id != selectedStation.id }.prefix(11)
+                return [selectedStation] + stations
+                    .filter { $0.id != selectedStation.id && $0.name != taipeiCircularStationName }
+                    .prefix(11)
             }
 
-            return Array(stations.prefix(12))
+            return Array(stations.filter { $0.name != taipeiCircularStationName }.prefix(12))
         }
 
+        let normalizedSearch = trimmedSearch.replacingOccurrences(of: "台", with: "臺")
+        let normalizedEnglishSearch = normalizedEnglishName(trimmedSearch)
+        let allowsCircularStation = isCircularSearch(trimmedSearch)
+
         return stations.filter { station in
-            station.name.localizedCaseInsensitiveContains(trimmedSearch)
-                || station.nameEn.replacingOccurrences(of: "_", with: " ").localizedCaseInsensitiveContains(trimmedSearch)
+            let matches = station.name.localizedCaseInsensitiveContains(trimmedSearch)
+                || station.name.localizedCaseInsensitiveContains(normalizedSearch)
+                || normalizedEnglishName(station.nameEn).contains(normalizedEnglishSearch)
                 || station.id.localizedCaseInsensitiveContains(trimmedSearch)
+
+            guard matches else {
+                return false
+            }
+
+            return allowsCircularStation || station.name != taipeiCircularStationName
         }
+    }
+
+    private func selectedStation(_ station: Station) -> Station {
+        guard station.name == taipeiCircularStationName, !isCircularSearch(searchText) else {
+            return station
+        }
+
+        return stations.first(where: { $0.name == taipeiMainStationName }) ?? station
+    }
+
+    private func normalizedEnglishName(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "_", with: " ")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+    }
+
+    private func isCircularSearch(_ value: String) -> Bool {
+        let normalizedValue = value
+            .replacingOccurrences(of: "台", with: "臺")
+            .lowercased()
+
+        return normalizedValue.contains("環島")
+            || normalizedValue.contains("circular")
+            || normalizedValue.contains("circle")
+            || normalizedValue.contains("loop")
+            || normalizedValue.contains("round island")
+            || normalizedValue.contains("around island")
     }
 
     var body: some View {
@@ -975,7 +1019,7 @@ private struct StationSearchSheet: View {
                         LazyVStack(spacing: OnTrackTheme.space2) {
                             ForEach(visibleStations) { station in
                                 Button {
-                                    onSelect(station)
+                                    onSelect(selectedStation(station))
                                     dismiss()
                                 } label: {
                                     HStack(spacing: OnTrackTheme.space3) {
