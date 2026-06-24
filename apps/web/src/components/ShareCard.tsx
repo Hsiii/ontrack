@@ -218,6 +218,7 @@ export function ShareCard({ train, destName }: ShareCardProps) {
                     type='text'
                     className='share-card-input'
                     defaultValue={defaultMessage}
+                    aria-label={t('share.message')}
                 />
                 {overlayParts && (
                     <div className='share-card-overlay' aria-hidden='true'>
@@ -243,6 +244,8 @@ export function ShareCard({ train, destName }: ShareCardProps) {
             <IconButton
                 onClick={handleShare}
                 className='share-card-button share-button'
+                ariaLabel={t('share.shareMessage')}
+                title={t('share.shareMessage')}
             >
                 <Send />
             </IconButton>

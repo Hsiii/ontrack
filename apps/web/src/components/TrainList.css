@@ -40,12 +40,14 @@
 }
 
 .train-card {
+    width: 100%;
     padding: var(--space-3) var(--space-4);
     min-height: 4rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: var(--color-bg-light);
+    text-align: left;
     transition:
         background-color var(--motion-base) ease,
         box-shadow var(--motion-base) ease,

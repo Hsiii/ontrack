@@ -13,6 +13,7 @@
 
     --color-primary: #38bdf8;
     --color-primary-subtle: rgba(56, 189, 248, 0.1);
+    --color-focus-ring: rgba(56, 189, 248, 0.56);
     --color-danger: #ef4444;
     --color-danger-subtle: rgba(239, 68, 68, 0.2);
     --color-danger-ring: rgba(239, 68, 68, 0.28);
@@ -48,6 +49,7 @@
     /* Font Weights */
     --font-normal: 400;
     --font-medium: 500;
+    --font-semibold: 600;
     --font-bold: 700;
 
     --radius-lg: 16px;
@@ -72,6 +74,7 @@
     --motion-fast: 0.12s;
     --motion-base: 0.2s;
     --motion-panel: 0.3s;
+    --motion-splash-delay: 0.24s;
     --ease-out: cubic-bezier(0.2, 0, 0, 1);
 }
 
@@ -109,10 +112,20 @@ body {
     align-items: center;
     justify-content: center;
     z-index: 9999;
+    pointer-events: none;
+    animation: nativeSplashOut var(--motion-panel) var(--ease-out)
+        var(--motion-splash-delay) forwards;
 }
 
 .native-splash svg {
     color: var(--color-primary);
+}
+
+@keyframes nativeSplashOut {
+    to {
+        opacity: 0;
+        visibility: hidden;
+    }
 }
 
 button {
@@ -121,6 +134,22 @@ button {
     cursor: pointer;
     border: none;
     background: none;
+}
+
+:where(
+    button,
+    input,
+    select,
+    textarea,
+    [role='button'],
+    [tabindex]
+):focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 2px;
+}
+
+button:disabled {
+    cursor: default;
 }
 
 /* Typography Utility Classes */
@@ -258,6 +287,21 @@ select {
 .badge-danger {
     background: var(--color-danger-subtle);
     color: var(--color-danger);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    :where(button, .card-panel, .clickable-item):active {
+        transform: none !important;
+    }
 }
 
 .message-bar-fixed {

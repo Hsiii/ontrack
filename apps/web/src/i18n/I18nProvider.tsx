@@ -34,7 +34,7 @@ function detectLanguage(): LanguageCode {
     return 'en';
 }
 
-function getInitialLanguage(): LanguageCode {
+function getPreferredLanguage(): LanguageCode {
     if (typeof window === 'undefined') {
         return FALLBACK_LANGUAGE;
     }
@@ -50,11 +50,19 @@ function getInitialLanguage(): LanguageCode {
 
 export function I18nProvider({ children }: { children: ReactNode }) {
     const [language, setLanguageState] =
-        useState<LanguageCode>(getInitialLanguage);
+        useState<LanguageCode>(FALLBACK_LANGUAGE);
 
     useEffect(() => {
         document.documentElement.lang = language;
     }, [language]);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setLanguageState(getPreferredLanguage());
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, []);
 
     const setLanguage = (next: LanguageCode) => {
         setLanguageState(next);

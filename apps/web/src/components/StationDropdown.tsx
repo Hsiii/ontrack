@@ -256,6 +256,9 @@ export function StationDropdown({
         showFrequentDestinations,
         trimmedSearchValue,
     ]);
+    const triggerLabel = selectedStation
+        ? `${placeholder}: ${getDisplayStationName(selectedStation)}`
+        : placeholder;
 
     return (
         <div className='station-input-wrapper'>
@@ -263,6 +266,9 @@ export function StationDropdown({
                 type='button'
                 className={`station-trigger ${selectedStation ? 'has-value' : ''} ${triggerAction ? 'has-action' : ''}`}
                 onClick={handleOpen}
+                aria-label={triggerLabel}
+                aria-haspopup='dialog'
+                aria-expanded={isOpen}
             >
                 <Search className='station-trigger-leading-icon' />
                 <span className='station-trigger-copy'>
@@ -317,6 +323,7 @@ export function StationDropdown({
                                             autoFocus
                                             value={searchValue}
                                             placeholder={placeholder}
+                                            aria-label={placeholder}
                                             onChange={(event) =>
                                                 handleInputChange(
                                                     event.target.value
@@ -358,6 +365,12 @@ export function StationDropdown({
                                                             handleSelect(
                                                                 station.id
                                                             )
+                                                        }
+                                                        aria-current={
+                                                            station.id ===
+                                                            selectedId
+                                                                ? 'true'
+                                                                : undefined
                                                         }
                                                     >
                                                         <span className='station-search-item-icon'>

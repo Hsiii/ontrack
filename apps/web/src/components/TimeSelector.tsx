@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowRightFromLine, ArrowRightToLine, TimerReset } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
@@ -221,10 +221,8 @@ interface TimeSelectorProps {
 
 export function TimeSelector({ value, onChange }: TimeSelectorProps) {
     const { t } = useI18n();
-    const [modeMenuOpen, setModeMenuOpen] = useState(false);
     const [currentTimeSelection, setCurrentTimeSelection] =
         useState<TimeSelection | null>(null);
-    const modeMenuRef = useRef<HTMLDivElement>(null);
 
     const modeOptions = useMemo(
         () =>
@@ -246,38 +244,6 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
             }[],
         [t]
     );
-    const selectedModeOption =
-        modeOptions.find((option) => option.value === value.mode) ??
-        modeOptions[0];
-
-    useEffect(() => {
-        if (!modeMenuOpen) return;
-
-        const handlePointerDown = (event: PointerEvent) => {
-            if (
-                event.target instanceof Node &&
-                modeMenuRef.current?.contains(event.target)
-            ) {
-                return;
-            }
-
-            setModeMenuOpen(false);
-        };
-
-        const handleKeyDown = (event: KeyboardEvent) => {
-            if (event.key === 'Escape') {
-                setModeMenuOpen(false);
-            }
-        };
-
-        document.addEventListener('pointerdown', handlePointerDown);
-        document.addEventListener('keydown', handleKeyDown);
-
-        return () => {
-            document.removeEventListener('pointerdown', handlePointerDown);
-            document.removeEventListener('keydown', handleKeyDown);
-        };
-    }, [modeMenuOpen]);
 
     useEffect(() => {
         const syncCurrentTimeSelection = () => {
@@ -349,6 +315,36 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
             <h2 id='time-selector-heading' className='label-dim'>
                 {t('time.selectTime')}
             </h2>
+            <div
+                className='time-selector-mode-segmented'
+                role='radiogroup'
+                aria-label={t('time.mode')}
+            >
+                {modeOptions.map((option) => {
+                    const isActive = value.mode === option.value;
+
+                    return (
+                        <button
+                            key={option.value}
+                            type='button'
+                            className={`time-selector-mode-option ${isActive ? 'active' : ''}`}
+                            role='radio'
+                            aria-checked={isActive}
+                            onClick={() => {
+                                if (isActive) return;
+
+                                onChange({
+                                    ...value,
+                                    mode: option.value,
+                                });
+                            }}
+                        >
+                            <option.Icon aria-hidden='true' />
+                            <span>{option.label}</span>
+                        </button>
+                    );
+                })}
+            </div>
             <div className='time-selector-row'>
                 <button
                     type='button'
@@ -381,47 +377,6 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                         onBlur={handleTimeCommit}
                         onInputValue={handleTimeInputValue}
                     />
-                </div>
-                <div className='time-selector-mode' ref={modeMenuRef}>
-                    <button
-                        type='button'
-                        className='time-selector-mode-trigger'
-                        onClick={() => setModeMenuOpen((isOpen) => !isOpen)}
-                        aria-label={selectedModeOption.label}
-                        aria-haspopup='menu'
-                        aria-expanded={modeMenuOpen}
-                        title={selectedModeOption.label}
-                    >
-                        <selectedModeOption.Icon aria-hidden='true' />
-                    </button>
-
-                    {modeMenuOpen && (
-                        <div className='time-selector-mode-menu' role='menu'>
-                            {modeOptions.map((option) => (
-                                <button
-                                    key={option.value}
-                                    type='button'
-                                    className={`time-selector-mode-option ${
-                                        value.mode === option.value
-                                            ? 'active'
-                                            : ''
-                                    }`}
-                                    role='menuitemradio'
-                                    aria-checked={value.mode === option.value}
-                                    onClick={() => {
-                                        onChange({
-                                            ...value,
-                                            mode: option.value,
-                                        });
-                                        setModeMenuOpen(false);
-                                    }}
-                                >
-                                    <option.Icon aria-hidden='true' />
-                                    <span>{option.label}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
                 </div>
             </div>
         </section>

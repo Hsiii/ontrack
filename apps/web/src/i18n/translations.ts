@@ -33,11 +33,17 @@ export const translations = {
         'time.arrival': '抵達',
         'time.departureTime': '出發時間',
         'time.arrivalTime': '抵達時間',
+        'time.mode': '時間模式',
         'time.date': '日期',
         'time.time': '時間',
         'time.now': '現在',
-        'train.onTime': 'On Time',
+        'train.onTime': '準點',
         'train.delayMinutes': '+{minutes} min',
+        'train.delayedBy': '誤點 {minutes} 分鐘',
+        'train.selected': '已選取',
+        'train.departureAt': '{time} 出發',
+        'train.arrivalAt': '{time} 抵達',
+        'train.duration': '車程 {duration}',
         'train.noTrainsAvailable': '查無可搭乘班次',
 
         'error.failedToLoadSchedule': '無法取得時刻表',
@@ -48,6 +54,8 @@ export const translations = {
 
         'share.arrivalMessage': '{time}到{station}',
         'share.noTrainMessage': '好像沒車搭了',
+        'share.message': '分享訊息',
+        'share.shareMessage': '分享訊息',
 
         'iosInstall.title': '加到主畫面',
         'iosInstall.subtitle': '將 {appName} 加入主畫面以享受最佳使用體驗',
@@ -82,11 +90,17 @@ export const translations = {
         'time.arrival': 'Arrive',
         'time.departureTime': 'Departure time',
         'time.arrivalTime': 'Arrival time',
+        'time.mode': 'Time mode',
         'time.date': 'Date',
         'time.time': 'Time',
         'time.now': 'Now',
         'train.onTime': 'On Time',
         'train.delayMinutes': '+{minutes} min',
+        'train.delayedBy': 'Delayed {minutes} minutes',
+        'train.selected': 'Selected',
+        'train.departureAt': 'Departs {time}',
+        'train.arrivalAt': 'Arrives {time}',
+        'train.duration': 'Duration {duration}',
         'train.noTrainsAvailable': 'No trains available',
 
         'error.failedToLoadSchedule': 'Failed to load schedule',
@@ -97,6 +111,8 @@ export const translations = {
 
         'share.arrivalMessage': 'Arrive at {station} by {time}',
         'share.noTrainMessage': 'No more trains available',
+        'share.message': 'Share message',
+        'share.shareMessage': 'Share message',
 
         'iosInstall.title': 'Add to Home Screen',
         'iosInstall.subtitle':

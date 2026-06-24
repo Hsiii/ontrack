@@ -258,6 +258,9 @@ export function StationSelector({
             {/* Toast */}
             <div
                 className={`station-toast ${toast ? 'station-toast-visible' : ''}`}
+                role='status'
+                aria-live='polite'
+                aria-atomic='true'
             >
                 {toast}
             </div>

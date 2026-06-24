@@ -30,6 +30,7 @@ const EMPTY_TIME_SELECTION: TimeSelection = {
     dateDigits: '',
     timeDigits: '',
 };
+const NATIVE_SPLASH_HIDE_FALLBACK_MS = 240;
 
 function App() {
     const { t, language } = useI18n();
@@ -86,15 +87,21 @@ function App() {
         }
 
         let secondFrame = 0;
+        const hideSplash = () => {
+            nativeSplash.style.display = 'none';
+        };
         const firstFrame = window.requestAnimationFrame(() => {
-            secondFrame = window.requestAnimationFrame(() => {
-                nativeSplash.style.display = 'none';
-            });
+            secondFrame = window.requestAnimationFrame(hideSplash);
         });
+        const fallbackTimer = window.setTimeout(
+            hideSplash,
+            NATIVE_SPLASH_HIDE_FALLBACK_MS
+        );
 
         return () => {
             window.cancelAnimationFrame(firstFrame);
             window.cancelAnimationFrame(secondFrame);
+            window.clearTimeout(fallbackTimer);
         };
     }, []);
 

@@ -1,22 +1,28 @@
 .time-selector {
     display: flex;
     flex-direction: column;
+    gap: var(--space-2);
 }
 
 .time-selector-row {
     display: grid;
-    grid-template-columns: 44px minmax(64px, 1fr) minmax(64px, 1fr) 44px;
+    grid-template-columns: 44px minmax(72px, 1fr) minmax(72px, 1fr);
     align-items: center;
     gap: var(--space-2);
 }
 
-.time-selector-mode {
-    position: relative;
-    width: 100%;
-    height: 44px;
+.time-selector-mode-segmented {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-1);
+    min-height: 44px;
+    padding: var(--space-1);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-surface);
 }
 
-.time-selector-mode-trigger,
 .time-selector-now-btn {
     display: flex;
     align-items: center;
@@ -36,12 +42,6 @@
         transform var(--motion-fast) ease;
 }
 
-.time-selector-mode-trigger[aria-expanded='true'] {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
-}
-
-.time-selector-mode-trigger:active,
 .time-selector-now-btn:not(:disabled):active {
     transform: scale(0.96);
 }
@@ -51,32 +51,24 @@
     cursor: default;
 }
 
-.time-selector-mode-menu {
-    position: absolute;
-    top: calc(100% + var(--space-2));
-    left: 0;
-    z-index: 20;
-    display: flex;
-    flex-direction: column;
-    width: 176px;
-    overflow: hidden;
-    border-radius: var(--radius-sm);
-    background: var(--color-bg-light);
-    box-shadow: var(--shadow-surface);
-}
-
 .time-selector-mode-option {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: var(--space-3);
     width: 100%;
     min-height: 44px;
     padding: 0 var(--space-3);
+    border-radius: var(--radius-sm);
     color: var(--color-text-dim);
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
     white-space: nowrap;
     text-align: left;
+    transition:
+        background-color var(--motion-base) ease,
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .time-selector-mode-option.active {
@@ -84,8 +76,11 @@
     color: var(--color-primary);
 }
 
+.time-selector-mode-option:not(.active):active {
+    transform: scale(0.98);
+}
+
 .time-selector-mode-option svg,
-.time-selector-mode-trigger svg,
 .time-selector-now-btn svg {
     width: 20px;
     height: 20px;

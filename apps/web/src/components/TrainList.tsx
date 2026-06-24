@@ -265,12 +265,40 @@ export function TrainList({
                             trainData.departureTime,
                             trainData.arrivalTime
                         );
+                        const trainType = parseTrainType(
+                            trainData.trainType,
+                            language
+                        );
+                        const delayStatus = isDelayed
+                            ? t('train.delayedBy', {
+                                  minutes: trainData.delay ?? 0,
+                              })
+                            : t('train.onTime');
+                        const trainLabel = [
+                            isSelected ? t('train.selected') : '',
+                            `${trainType} ${trainData.trainNo}`,
+                            t('train.departureAt', {
+                                time: trainData.departureTime,
+                            }),
+                            t('train.arrivalAt', {
+                                time: trainData.arrivalTime,
+                            }),
+                            t('train.duration', {
+                                duration: formatDuration(tripMin),
+                            }),
+                            delayStatus,
+                        ]
+                            .filter(Boolean)
+                            .join(language === 'en' ? ', ' : '，');
 
                         return (
-                            <div
+                            <button
                                 key={trainData.trainNo}
+                                type='button'
                                 className={`card-panel clickable-item train-card ${isSelected ? 'selected' : ''}`}
                                 onClick={() => onSelect(trainData)}
+                                aria-pressed={isSelected}
+                                aria-label={trainLabel}
                             >
                                 <div className='train-card-times'>
                                     <span
@@ -325,10 +353,7 @@ export function TrainList({
                                 </div>
                                 <div className='train-card-info'>
                                     <span className='train-card-type'>
-                                        {parseTrainType(
-                                            trainData.trainType,
-                                            language
-                                        )}
+                                        {trainType}
                                     </span>
                                     <span className='train-card-number'>
                                         {trainData.trainNo}
@@ -337,7 +362,7 @@ export function TrainList({
                                         className={`train-card-dot ${statusClass}`}
                                     />
                                 </div>
-                            </div>
+                            </button>
                         );
                     })}
                 </div>

@@ -9,6 +9,7 @@ const APP_DESCRIPTION =
     '自動偵測最近車站、優先顯示常用目的地、自動計算延誤以顯示下一班列車，不需要手動輸入的極速台鐵App。';
 const APP_URL = 'https://ontrack.hsichen.dev/';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.PNG';
+const ENABLE_ANALYTICS = process.env.NODE_ENV === 'production';
 
 export const metadata: Metadata = {
     title: APP_TITLE,
@@ -170,12 +171,14 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         __html: JSON.stringify(structuredData),
                     }}
                 />
-                <Script
-                    id='cloudflare-web-analytics'
-                    src='https://static.cloudflareinsights.com/beacon.min.js'
-                    strategy='afterInteractive'
-                    data-cf-beacon='{"token":"675861a849a8490d85d36c5b9a0908d8"}'
-                />
+                {ENABLE_ANALYTICS ? (
+                    <Script
+                        id='cloudflare-web-analytics'
+                        src='https://static.cloudflareinsights.com/beacon.min.js'
+                        strategy='afterInteractive'
+                        data-cf-beacon='{"token":"675861a849a8490d85d36c5b9a0908d8"}'
+                    />
+                ) : null}
             </body>
         </html>
     );
