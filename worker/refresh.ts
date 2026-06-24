@@ -16,15 +16,6 @@ export function getTaipeiDate(date = new Date()) {
     return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
 }
 
-export function getNextTaipeiDate(date = new Date()) {
-    const next = new Date(date.getTime() + 24 * 60 * 60 * 1000);
-    return getTaipeiDate(next);
-}
-
-export function timetableKey(date: string) {
-    return `daily-timetable:${date}`;
-}
-
 export function routeTimetableKey(date: string, origin: string, dest: string) {
     return `daily-timetable-od:${date}:${origin}:${dest}`;
 }
@@ -57,21 +48,6 @@ export async function refreshStations(env: Env) {
     );
     await upsertSnapshot(env, STATIONS_KEY, stations, null);
     return stations;
-}
-
-export async function refreshTimetable(env: Env, date = getTaipeiDate()) {
-    const path =
-        date === getTaipeiDate()
-            ? 'v3/Rail/TRA/DailyTrainTimetable/Today'
-            : `v3/Rail/TRA/DailyTrainTimetable/TrainDate/${date}`;
-
-    const data = await fetchTDX<TDXTimetableResponse>(env, path, {
-        tier: 'basic',
-    });
-    const timetables = data.TrainTimetables ?? [];
-
-    await upsertSnapshot(env, timetableKey(date), timetables, null);
-    return timetables;
 }
 
 export async function refreshRouteTimetable(
@@ -137,14 +113,6 @@ export async function ensureStations(env: Env) {
     return snapshot?.data ?? refreshStations(env);
 }
 
-export async function ensureTimetable(env: Env, date: string) {
-    const snapshot = await getSnapshot<TDXFullTimetable[]>(
-        env,
-        timetableKey(date)
-    );
-    return snapshot?.data ?? refreshTimetable(env, date);
-}
-
 export async function ensureRouteTimetable(
     env: Env,
     date: string,
@@ -164,12 +132,5 @@ export async function getLiveBoard(env: Env) {
 }
 
 export async function refreshDailySnapshots(env: Env) {
-    const today = getTaipeiDate();
-    const tomorrow = getNextTaipeiDate();
-
-    await Promise.all([
-        refreshStations(env),
-        refreshTimetable(env, today),
-        refreshTimetable(env, tomorrow),
-    ]);
+    await refreshStations(env);
 }
