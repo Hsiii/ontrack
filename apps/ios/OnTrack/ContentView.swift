@@ -956,7 +956,7 @@ private struct StationSearchSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @FocusState private var isSearchFocused: Bool
+    @State private var isSearchPresented = true
 
     private var trimmedSearch: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1052,103 +1052,57 @@ private struct StationSearchSheet: View {
 
     var body: some View {
         NavigationStack {
-            VStack(spacing: 0) {
-                HStack(spacing: 0) {
-                    HStack(spacing: OnTrackTheme.space3) {
-                        Image(systemName: "magnifyingglass")
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundStyle(OnTrackTheme.dimText)
-
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(placeholder)
-                                .font(.system(size: 12, weight: .medium))
-                                .foregroundStyle(OnTrackTheme.dimText)
-
-                            TextField("", text: $searchText)
-                                .focused($isSearchFocused)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(OnTrackTheme.text)
-                                .keyboardType(.default)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled()
-                                .submitLabel(.search)
-                        }
-                    }
-                    .padding(.leading, OnTrackTheme.space4)
-                    .padding(.trailing, searchText.isEmpty ? OnTrackTheme.space4 : OnTrackTheme.space2)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-                    .contentShape(Rectangle())
-                    .onTapGesture {
-                        isSearchFocused = true
-                    }
-
-                    if !searchText.isEmpty {
-                        Button {
-                            searchText = ""
-                            isSearchFocused = true
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 18, weight: .semibold))
-                                .foregroundStyle(OnTrackTheme.dimText)
-                                .frame(width: 48, height: 64)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(AppText.clearSearch)
-                    }
-                }
-                .frame(height: 64)
-                .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-                .overlay {
-                    RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                        .stroke(isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
-                }
-                .padding(.horizontal, OnTrackTheme.space5)
-                .padding(.top, OnTrackTheme.space3)
-                .padding(.bottom, OnTrackTheme.space2)
-
-                List {
-                    if isSearching {
-                        ForEach(visibleMatchingStations) { station in
-                            StationSearchRow(
-                                station: station,
-                                role: .regular
-                            ) {
-                                onSelect(selectedStation(station))
-                                dismiss()
-                            }
-                        }
-                    }
-
-                    if !visibleSuggestions.isEmpty {
-                        ForEach(visibleSuggestions) { station in
-                            StationSearchRow(
-                                station: station,
-                                role: .recent
-                            ) {
-                                onSelect(selectedStation(station))
-                                dismiss()
-                            }
-                        }
-                    }
-
-                    if !isSearching {
-                        ForEach(restStations) { station in
-                            StationSearchRow(
-                                station: station,
-                                role: .regular
-                            ) {
-                                onSelect(selectedStation(station))
-                                dismiss()
-                            }
+            List {
+                if isSearching {
+                    ForEach(visibleMatchingStations) { station in
+                        StationSearchRow(
+                            station: station,
+                            role: .regular
+                        ) {
+                            onSelect(selectedStation(station))
+                            dismiss()
                         }
                     }
                 }
-                .listStyle(.insetGrouped)
-                .scrollContentBackground(.hidden)
+
+                if !visibleSuggestions.isEmpty {
+                    ForEach(visibleSuggestions) { station in
+                        StationSearchRow(
+                            station: station,
+                            role: .recent
+                        ) {
+                            onSelect(selectedStation(station))
+                            dismiss()
+                        }
+                    }
+                }
+
+                if !isSearching {
+                    ForEach(restStations) { station in
+                        StationSearchRow(
+                            station: station,
+                            role: .regular
+                        ) {
+                            onSelect(selectedStation(station))
+                            dismiss()
+                        }
+                    }
+                }
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.interactively)
             .background(OnTrackTheme.background)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
+            .searchable(
+                text: $searchText,
+                isPresented: $isSearchPresented,
+                placement: .navigationBarDrawer(displayMode: .always),
+                prompt: placeholder
+            )
+            .textInputAutocapitalization(.never)
+            .autocorrectionDisabled()
             .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -1167,7 +1121,7 @@ private struct StationSearchSheet: View {
         }
         .tint(OnTrackTheme.primary)
         .onAppear {
-            isSearchFocused = true
+            isSearchPresented = true
         }
     }
 }
