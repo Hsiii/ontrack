@@ -1312,15 +1312,9 @@ private struct StationSearchRow: View {
                     .foregroundStyle(role.iconColor)
                     .frame(width: 24)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(station.displayName)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(OnTrackTheme.text)
-
-                    Text(station.secondaryDisplayName)
-                        .font(.system(size: 12))
-                        .foregroundStyle(OnTrackTheme.dimText)
-                }
+                Text(station.displayName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(OnTrackTheme.text)
 
                 Spacer()
             }

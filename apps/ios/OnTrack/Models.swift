@@ -8,11 +8,7 @@ struct Station: Decodable, Identifiable, Hashable {
     let lon: Double?
 
     var displayName: String {
-        AppText.isEnglish ? nameEn.replacingOccurrences(of: "_", with: " ") : name
-    }
-
-    var secondaryDisplayName: String {
-        AppText.isEnglish ? name : nameEn.replacingOccurrences(of: "_", with: " ")
+        Locale.current.language.languageCode?.identifier == "zh" ? name : nameEn.replacingOccurrences(of: "_", with: " ")
     }
 }
 
@@ -230,7 +226,6 @@ enum AppText {
         Locale.current.language.languageCode?.identifier == "zh"
     }
 
-    static var isEnglish: Bool { !isZh }
     static var now: String { isZh ? "現在" : "Now" }
     static var leaveNow: String { isZh ? "立即出發" : "Leave now" }
     static var departure: String { isZh ? "出發" : "Depart" }
