@@ -48,6 +48,7 @@ enum TimeMode: String, CaseIterable, Identifiable {
     case now
     case departure
     case arrival
+    case lastTrain
 
     var id: String { rawValue }
 
@@ -59,12 +60,14 @@ enum TimeMode: String, CaseIterable, Identifiable {
             AppText.departure
         case .arrival:
             AppText.arrival
+        case .lastTrain:
+            AppText.lastTrain
         }
     }
 
     var scheduleMode: TimeMode {
         switch self {
-        case .now:
+        case .now, .lastTrain:
             .departure
         case .departure, .arrival:
             self
@@ -140,7 +143,7 @@ enum TrainDisplay {
         let targetMinutes = timeToMinutes(targetTime)
         let comparisonMinutes: (TrainInfo) -> Int = { train in
             switch timeMode {
-            case .now, .departure:
+            case .now, .departure, .lastTrain:
                 timeToMinutes(train.departureTime) + (train.delay ?? 0)
             case .arrival:
                 timeToMinutes(train.arrivalTime)
@@ -232,6 +235,7 @@ enum AppText {
     static var leaveNow: String { isZh ? "立即出發" : "Leave now" }
     static var departure: String { isZh ? "出發" : "Depart" }
     static var arrival: String { isZh ? "抵達" : "Arrive" }
+    static var lastTrain: String { isZh ? "末班" : "Last" }
     static var selectRoute: String { isZh ? "選擇路線" : "Select route" }
     static var selectTrain: String { isZh ? "選擇班次" : "Select train" }
     static var chooseRoute: String { isZh ? "選擇路線" : "Choose a route" }

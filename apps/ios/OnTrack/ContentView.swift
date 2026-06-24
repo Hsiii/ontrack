@@ -565,7 +565,7 @@ private struct TimeSelectorView: View {
         switch selection.mode {
         case .now:
             AppText.leaveNow
-        case .departure, .arrival:
+        case .departure, .arrival, .lastTrain:
             "\(selection.mode.title) \(Formatters.displayTime.string(from: selection.date))"
         }
     }
@@ -626,8 +626,14 @@ private struct TimeEditorSheet: View {
 
     private var modeSelection: Binding<TimeMode> {
         Binding(
-            get: { draft.mode == .arrival ? .arrival : .departure },
-            set: { draft.mode = $0 }
+            get: { draft.mode == .now ? .departure : draft.mode },
+            set: { mode in
+                draft.mode = mode
+
+                if mode == .lastTrain {
+                    draft.date = lastTrainDate()
+                }
+            }
         )
     }
 
@@ -649,6 +655,16 @@ private struct TimeEditorSheet: View {
                 ) ?? day
             }
         )
+    }
+
+    private func lastTrainDate() -> Date {
+        let calendar = Formatters.taipeiCalendar
+        return calendar.date(
+            bySettingHour: 23,
+            minute: 59,
+            second: 0,
+            of: Date()
+        ) ?? Date()
     }
 
     private var selectedTime: Binding<Date> {
@@ -695,9 +711,11 @@ private struct TimeEditorSheet: View {
                         }
                 }
                 .buttonStyle(.plain)
+                .disabled(draft.mode == .lastTrain)
+                .opacity(draft.mode == .lastTrain ? 0.48 : 1)
 
                 Picker(AppText.timeMode, selection: modeSelection) {
-                    ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
+                    ForEach([TimeMode.departure, TimeMode.arrival, TimeMode.lastTrain]) { mode in
                         Text(mode.title).tag(mode)
                     }
                 }
@@ -729,6 +747,8 @@ private struct TimeEditorSheet: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
             }
+            .disabled(draft.mode == .lastTrain)
+            .opacity(draft.mode == .lastTrain ? 0.48 : 1)
             .tint(OnTrackTheme.primary)
             .padding(.horizontal, OnTrackTheme.space5)
 
