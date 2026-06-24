@@ -4,12 +4,16 @@ import SwiftUI
 private let taipeiMainStationName = "臺北"
 private let taipeiCircularStationName = "臺北(環島)"
 private let scheduleRefreshInterval: TimeInterval = 5 * 60
+private let locationRefreshInterval: TimeInterval = 2 * 60
+private let manualOriginProtectionInterval: TimeInterval = 10 * 60
 
 struct ContentView: View {
+    @Environment(\.scenePhase) private var scenePhase
+
     @AppStorage("ontrack_origin_id") private var originId = ""
     @AppStorage("ontrack_destination_id") private var destinationId = ""
-    @AppStorage("ontrack_auto_detect_origin") private var autoDetectOrigin = false
     @AppStorage("ontrack_cached_origin_id") private var cachedOriginId = ""
+    @AppStorage("ontrack_manual_origin_selected_at") private var manualOriginSelectedAt = 0.0
     @AppStorage("ontrack_recent_destination_ids") private var recentDestinationIDs = ""
 
     @StateObject private var locationService = LocationService()
@@ -25,6 +29,12 @@ struct ContentView: View {
 
     private let scheduleRefreshTimer = Timer.publish(
         every: scheduleRefreshInterval,
+        on: .main,
+        in: .common
+    ).autoconnect()
+
+    private let locationRefreshTimer = Timer.publish(
+        every: locationRefreshInterval,
         on: .main,
         in: .common
     ).autoconnect()
@@ -87,10 +97,9 @@ struct ContentView: View {
                         RouteSelectorView(
                             origin: originStation,
                             destination: destinationStation,
-                            autoDetectOrigin: autoDetectOrigin,
+                            geoGrantState: locationService.grantState,
                             originSource: originSource,
                             isLoading: isLoadingStations,
-                            onToggleAutoDetectOrigin: toggleAutoDetectOrigin,
                             onPickOrigin: { openStationPicker(.origin) },
                             onPickDestination: { openStationPicker(.destination) },
                             onSwap: swapStations
@@ -139,6 +148,9 @@ struct ContentView: View {
             .task {
                 await loadStations()
             }
+            .onAppear {
+                requestAutoDetectedOrigin()
+            }
             .task(id: scheduleTaskID) {
                 await loadSchedule()
             }
@@ -146,6 +158,20 @@ struct ContentView: View {
                 Task {
                     await loadSchedule()
                 }
+            }
+            .onReceive(locationRefreshTimer) { _ in
+                guard scenePhase == .active else {
+                    return
+                }
+
+                requestAutoDetectedOrigin()
+            }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else {
+                    return
+                }
+
+                requestAutoDetectedOrigin()
             }
             .onChange(of: locationService.coordinate) { _, coordinate in
                 guard let coordinate else {
@@ -208,6 +234,7 @@ struct ContentView: View {
             stations = loadedStations
 
             resolveInitialStations(loadedStations)
+            requestAutoDetectedOrigin()
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -244,7 +271,7 @@ struct ContentView: View {
     private func select(station: Station, for role: StationPickerRole) {
         switch role {
         case .origin:
-            setOrigin(station.id, source: .manual)
+            setOrigin(station.id, source: .manual, selectedAt: Date())
             if destinationId == station.id {
                 destinationId = ""
             }
@@ -260,14 +287,12 @@ struct ContentView: View {
         }
 
         let currentOrigin = originId
-        setOrigin(destinationId, source: .manual)
+        setOrigin(destinationId, source: .manual, selectedAt: Date())
         destinationId = currentOrigin
     }
 
     private func resolveInitialStations(_ loadedStations: [Station]) {
-        if autoDetectOrigin {
-            requestAutoDetectedOrigin()
-        } else if originId.isEmpty, isKnownStation(cachedOriginId, in: loadedStations) {
+        if originId.isEmpty, isKnownStation(cachedOriginId, in: loadedStations) {
             setOrigin(cachedOriginId, source: .cached)
         }
 
@@ -278,6 +303,8 @@ struct ContentView: View {
                     ?? "",
                 source: .manual
             )
+        } else if isManualOriginProtected {
+            originSource = .manual
         }
 
         if destinationId.isEmpty || destinationId == originId {
@@ -287,18 +314,8 @@ struct ContentView: View {
         }
     }
 
-    private func toggleAutoDetectOrigin() {
-        autoDetectOrigin.toggle()
-
-        if autoDetectOrigin {
-            requestAutoDetectedOrigin()
-        } else {
-            originSource = .manual
-        }
-    }
-
     private func requestAutoDetectedOrigin() {
-        guard !stations.isEmpty else {
+        guard !stations.isEmpty, locationService.grantState.canRequestLocation, !isManualOriginProtected else {
             return
         }
 
@@ -306,7 +323,7 @@ struct ContentView: View {
     }
 
     private func selectNearestOrigin(to coordinate: UserCoordinate) {
-        guard autoDetectOrigin, !stations.isEmpty else {
+        guard !stations.isEmpty, !isManualOriginProtected else {
             return
         }
 
@@ -333,14 +350,14 @@ struct ContentView: View {
     }
 
     private func fallbackToCachedOrigin() {
-        guard isKnownStation(cachedOriginId, in: stations) else {
+        guard !isManualOriginProtected, isKnownStation(cachedOriginId, in: stations) else {
             return
         }
 
         setOrigin(cachedOriginId, source: .cached)
     }
 
-    private func setOrigin(_ id: String, source: OriginSelectionSource) {
+    private func setOrigin(_ id: String, source: OriginSelectionSource, selectedAt: Date? = nil) {
         guard !id.isEmpty else {
             originId = ""
             return
@@ -349,6 +366,12 @@ struct ContentView: View {
         originId = id
         cachedOriginId = id
         originSource = source
+
+        if let selectedAt, source == .manual {
+            manualOriginSelectedAt = selectedAt.timeIntervalSince1970
+        } else if source != .manual {
+            manualOriginSelectedAt = 0
+        }
     }
 
     private func replaceDestinationIfNeeded() {
@@ -371,6 +394,14 @@ struct ContentView: View {
         !id.isEmpty && stations.contains { $0.id == id }
     }
 
+    private var isManualOriginProtected: Bool {
+        guard manualOriginSelectedAt > 0 else {
+            return false
+        }
+
+        return Date().timeIntervalSince1970 - manualOriginSelectedAt < manualOriginProtectionInterval
+    }
+
     private func rememberDestination(_ id: String) {
         let previousIDs = recentDestinationIDs
             .split(separator: ",")
@@ -389,6 +420,22 @@ private enum OriginSelectionSource {
     case geo
 }
 
+private enum GeoGrantState {
+    case notDetermined
+    case allowed
+    case denied
+    case restricted
+
+    var canRequestLocation: Bool {
+        switch self {
+        case .notDetermined, .allowed:
+            true
+        case .denied, .restricted:
+            false
+        }
+    }
+}
+
 private struct UserCoordinate: Equatable, Sendable {
     let latitude: Double
     let longitude: Double
@@ -398,6 +445,7 @@ private struct UserCoordinate: Equatable, Sendable {
 private final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var coordinate: UserCoordinate?
     @Published var locationErrorID: UUID?
+    @Published var grantState: GeoGrantState = .notDetermined
 
     private let manager = CLLocationManager()
 
@@ -405,10 +453,12 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+        grantState = Self.grantState(for: manager.authorizationStatus)
     }
 
     func requestLocation() {
         locationErrorID = nil
+        grantState = Self.grantState(for: manager.authorizationStatus)
 
         switch manager.authorizationStatus {
         case .notDetermined:
@@ -429,6 +479,8 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
             guard let self else {
                 return
             }
+
+            grantState = Self.grantState(for: status)
 
             switch status {
             case .authorizedAlways, .authorizedWhenInUse:
@@ -461,6 +513,21 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor [weak self] in
             self?.locationErrorID = UUID()
+        }
+    }
+
+    private static func grantState(for status: CLAuthorizationStatus) -> GeoGrantState {
+        switch status {
+        case .notDetermined:
+            .notDetermined
+        case .authorizedAlways, .authorizedWhenInUse:
+            .allowed
+        case .denied:
+            .denied
+        case .restricted:
+            .restricted
+        @unknown default:
+            .restricted
         }
     }
 }
@@ -710,20 +777,23 @@ private struct TimeEditorSheet: View {
 private struct RouteSelectorView: View {
     let origin: Station?
     let destination: Station?
-    let autoDetectOrigin: Bool
+    let geoGrantState: GeoGrantState
     let originSource: OriginSelectionSource
     let isLoading: Bool
-    let onToggleAutoDetectOrigin: () -> Void
     let onPickOrigin: () -> Void
     let onPickDestination: () -> Void
     let onSwap: () -> Void
 
     private var locationIcon: String {
-        if !autoDetectOrigin {
+        if geoGrantState == .denied || geoGrantState == .restricted {
             return "location.slash"
         }
 
         return originSource == .geo ? "location.fill" : "location"
+    }
+
+    private var locationIsActive: Bool {
+        geoGrantState == .allowed && originSource == .geo
     }
 
     var body: some View {
@@ -737,9 +807,8 @@ private struct RouteSelectorView: View {
                         station: origin,
                         isLoading: isLoading,
                         accessorySystemName: locationIcon,
-                        accessoryIsActive: autoDetectOrigin,
-                        accessoryAccessibilityLabel: autoDetectOrigin ? AppText.disableAutoDetectOrigin : AppText.enableAutoDetectOrigin,
-                        onAccessoryTap: onToggleAutoDetectOrigin,
+                        accessoryIsActive: locationIsActive,
+                        accessoryAccessibilityLabel: AppText.locationPermission,
                         onTap: onPickOrigin
                     )
 
@@ -812,15 +881,23 @@ private struct StationTrigger: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
             .buttonStyle(.plain)
 
-            if let accessorySystemName, let onAccessoryTap {
-                Button(action: onAccessoryTap) {
+            if let accessorySystemName {
+                if let onAccessoryTap {
+                    Button(action: onAccessoryTap) {
+                        Image(systemName: accessorySystemName)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                            .frame(width: 48, height: 64)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(accessoryAccessibilityLabel)
+                } else {
                     Image(systemName: accessorySystemName)
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
                         .frame(width: 48, height: 64)
+                        .accessibilityLabel(accessoryAccessibilityLabel)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(accessoryAccessibilityLabel)
             }
         }
         .frame(height: 64)
