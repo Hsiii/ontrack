@@ -12,6 +12,7 @@ import type {
 export const STATIONS_KEY = 'stations';
 export const LIVE_BOARD_KEY = 'train-live-board';
 const ROUTE_TIMETABLE_RETENTION_DAYS = 2;
+const routeTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
 
 export function getTaipeiDate(date = new Date()) {
     return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
@@ -129,11 +130,22 @@ export async function ensureRouteTimetable(
     origin: string,
     dest: string
 ) {
-    const snapshot = await getSnapshot<TDXFullTimetable[]>(
-        env,
-        routeTimetableKey(date, origin, dest)
+    const key = routeTimetableKey(date, origin, dest);
+    const snapshot = await getSnapshot<TDXFullTimetable[]>(env, key);
+    if (snapshot) {
+        return snapshot.data;
+    }
+
+    const existingRefresh = routeTimetableRefreshes.get(key);
+    if (existingRefresh) {
+        return existingRefresh;
+    }
+
+    const refresh = refreshRouteTimetable(env, date, origin, dest).finally(() =>
+        routeTimetableRefreshes.delete(key)
     );
-    return snapshot?.data ?? refreshRouteTimetable(env, date, origin, dest);
+    routeTimetableRefreshes.set(key, refresh);
+    return refresh;
 }
 
 export async function getLiveBoard(env: Env) {
