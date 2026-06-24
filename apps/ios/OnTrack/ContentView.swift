@@ -97,7 +97,7 @@ struct ContentView: View {
                         RouteSelectorView(
                             origin: originStation,
                             destination: destinationStation,
-                            geoGrantState: locationService.grantState,
+                            locationAuthorizationStatus: locationService.authorizationStatus,
                             originSource: originSource,
                             isLoading: isLoadingStations,
                             onPickOrigin: { openStationPicker(.origin) },
@@ -331,7 +331,8 @@ struct ContentView: View {
             return
         }
 
-        guard locationService.grantState == .allowed || (allowPermissionPrompt && locationService.grantState == .notDetermined) else {
+        let status = locationService.authorizationStatus
+        guard status == .authorizedAlways || status == .authorizedWhenInUse || (allowPermissionPrompt && status == .notDetermined) else {
             return
         }
 
@@ -436,13 +437,6 @@ private enum OriginSelectionSource {
     case geo
 }
 
-private enum GeoGrantState {
-    case notDetermined
-    case allowed
-    case denied
-    case restricted
-}
-
 private struct UserCoordinate: Equatable, Sendable {
     let latitude: Double
     let longitude: Double
@@ -452,7 +446,7 @@ private struct UserCoordinate: Equatable, Sendable {
 private final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
     @Published var coordinate: UserCoordinate?
     @Published var locationErrorID: UUID?
-    @Published var grantState: GeoGrantState = .notDetermined
+    @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
 
     private let manager = CLLocationManager()
 
@@ -460,12 +454,12 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
         super.init()
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
-        grantState = Self.grantState(for: manager.authorizationStatus)
+        authorizationStatus = manager.authorizationStatus
     }
 
     func requestLocation() {
         locationErrorID = nil
-        grantState = Self.grantState(for: manager.authorizationStatus)
+        authorizationStatus = manager.authorizationStatus
 
         switch manager.authorizationStatus {
         case .notDetermined:
@@ -487,7 +481,7 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
                 return
             }
 
-            grantState = Self.grantState(for: status)
+            authorizationStatus = status
 
             switch status {
             case .authorizedAlways, .authorizedWhenInUse:
@@ -520,21 +514,6 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor [weak self] in
             self?.locationErrorID = UUID()
-        }
-    }
-
-    private static func grantState(for status: CLAuthorizationStatus) -> GeoGrantState {
-        switch status {
-        case .notDetermined:
-            .notDetermined
-        case .authorizedAlways, .authorizedWhenInUse:
-            .allowed
-        case .denied:
-            .denied
-        case .restricted:
-            .restricted
-        @unknown default:
-            .restricted
         }
     }
 }
@@ -784,7 +763,7 @@ private struct TimeEditorSheet: View {
 private struct RouteSelectorView: View {
     let origin: Station?
     let destination: Station?
-    let geoGrantState: GeoGrantState
+    let locationAuthorizationStatus: CLAuthorizationStatus
     let originSource: OriginSelectionSource
     let isLoading: Bool
     let onPickOrigin: () -> Void
@@ -792,7 +771,7 @@ private struct RouteSelectorView: View {
     let onSwap: () -> Void
 
     private var locationIcon: String {
-        if geoGrantState == .denied || geoGrantState == .restricted {
+        if locationAuthorizationStatus == .denied || locationAuthorizationStatus == .restricted {
             return "location.slash"
         }
 
@@ -800,7 +779,7 @@ private struct RouteSelectorView: View {
     }
 
     private var locationIsActive: Bool {
-        geoGrantState == .allowed && originSource == .geo
+        (locationAuthorizationStatus == .authorizedAlways || locationAuthorizationStatus == .authorizedWhenInUse) && originSource == .geo
     }
 
     var body: some View {
@@ -851,7 +830,6 @@ private struct StationTrigger: View {
     var accessorySystemName: String?
     var accessoryIsActive = false
     var accessoryAccessibilityLabel = ""
-    var onAccessoryTap: (() -> Void)?
     let onTap: () -> Void
 
     var body: some View {
@@ -889,22 +867,11 @@ private struct StationTrigger: View {
             .buttonStyle(.plain)
 
             if let accessorySystemName {
-                if let onAccessoryTap {
-                    Button(action: onAccessoryTap) {
-                        Image(systemName: accessorySystemName)
-                            .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
-                            .frame(width: 48, height: 64)
-                    }
-                    .buttonStyle(.plain)
+                Image(systemName: accessorySystemName)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                    .frame(width: 48, height: 64)
                     .accessibilityLabel(accessoryAccessibilityLabel)
-                } else {
-                    Image(systemName: accessorySystemName)
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
-                        .frame(width: 48, height: 64)
-                        .accessibilityLabel(accessoryAccessibilityLabel)
-                }
             }
         }
         .frame(height: 64)
