@@ -171,6 +171,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     }}
                 />
                 <Script
+                    id='cloudflare-web-analytics'
                     src='https://static.cloudflareinsights.com/beacon.min.js'
                     strategy='afterInteractive'
                     data-cf-beacon='{"token":"675861a849a8490d85d36c5b9a0908d8"}'
