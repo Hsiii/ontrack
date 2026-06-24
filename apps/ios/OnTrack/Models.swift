@@ -46,11 +46,11 @@ enum TimeMode: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .now:
-            "現在"
+            AppText.now
         case .departure:
-            "出發"
+            AppText.departure
         case .arrival:
-            "抵達"
+            AppText.arrival
         }
     }
 
@@ -68,7 +68,7 @@ struct TimeSelection: Equatable {
     var mode: TimeMode
     var date: Date
 
-    static let futureDayLimit = 1
+    static let futureDayLimit = 59
 
     static func current(mode: TimeMode = .now, date: Date = Date()) -> TimeSelection {
         TimeSelection(
@@ -212,4 +212,22 @@ enum Formatters {
         formatter.dateFormat = "HH:mm"
         return formatter
     }()
+}
+
+enum AppText {
+    private static var isZh: Bool {
+        Locale.current.language.languageCode?.identifier == "zh"
+    }
+
+    static var now: String { isZh ? "現在" : "Now" }
+    static var leaveNow: String { isZh ? "立即出發" : "Leave now" }
+    static var departure: String { isZh ? "出發" : "Depart" }
+    static var arrival: String { isZh ? "抵達" : "Arrive" }
+    static var cancel: String { isZh ? "取消" : "Cancel" }
+    static var done: String { isZh ? "完成" : "Done" }
+    static var today: String { isZh ? "今天" : "Today" }
+    static var tomorrow: String { isZh ? "明天" : "Tomorrow" }
+    static var date: String { isZh ? "日期" : "Date" }
+    static var time: String { isZh ? "時間" : "Time" }
+    static var timeMode: String { isZh ? "時間類型" : "Time mode" }
 }

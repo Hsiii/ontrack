@@ -254,7 +254,7 @@ private struct TimeSelectorView: View {
     private var title: String {
         switch selection.mode {
         case .now:
-            "立即出發"
+            AppText.leaveNow
         case .departure, .arrival:
             "\(selection.mode.title) \(Formatters.displayTime.string(from: selection.date))"
         }
@@ -314,6 +314,37 @@ private struct TimeEditorSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var draft: TimeSelection
 
+    private var modeSelection: Binding<TimeMode> {
+        Binding(
+            get: { draft.mode == .arrival ? .arrival : .departure },
+            set: { draft.mode = $0 }
+        )
+    }
+
+    private var selectedDay: Binding<Date> {
+        Binding(
+            get: { Formatters.taipeiCalendar.startOfDay(for: draft.date) },
+            set: { day in
+                let calendar = Formatters.taipeiCalendar
+                let time = calendar.dateComponents([.hour, .minute], from: draft.date)
+                draft.date = calendar.date(
+                    bySettingHour: time.hour ?? 0,
+                    minute: time.minute ?? 0,
+                    second: 0,
+                    of: day
+                ) ?? day
+            }
+        )
+    }
+
+    private var availableDates: [Date] {
+        let calendar = Formatters.taipeiCalendar
+        let today = calendar.startOfDay(for: Date())
+        return (0...TimeSelection.futureDayLimit).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: today)
+        }
+    }
+
     init(selection: Binding<TimeSelection>, dateRange: ClosedRange<Date>) {
         self._selection = selection
         self.dateRange = dateRange
@@ -322,34 +353,62 @@ private struct TimeEditorSheet: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("Time mode", selection: $draft.mode) {
-                ForEach(TimeMode.allCases) { mode in
-                    Text(mode.title).tag(mode)
+            HStack(spacing: OnTrackTheme.space2) {
+                Button {
+                    draft = .current(mode: .now)
+                } label: {
+                    Text(AppText.now)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(draft.mode == .now ? OnTrackTheme.primary : OnTrackTheme.text)
+                        .frame(width: 72, height: OnTrackTheme.controlHeight)
+                        .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
+                        .overlay {
+                            RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
+                                .stroke(draft.mode == .now ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
+                        }
                 }
+                .buttonStyle(.plain)
+
+                Picker(AppText.timeMode, selection: modeSelection) {
+                    ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(height: OnTrackTheme.controlHeight)
+                .opacity(draft.mode == .now ? 0.56 : 1)
             }
-            .pickerStyle(.segmented)
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.top, OnTrackTheme.space5)
-            .onChange(of: draft.mode) { _, newMode in
-                if newMode == .now {
-                    draft = .current(mode: .now)
-                }
-            }
 
-            DatePicker(
-                "Date and time",
-                selection: $draft.date,
-                in: dateRange,
-                displayedComponents: [.date, .hourAndMinute]
-            )
-            .labelsHidden()
-            .datePickerStyle(.wheel)
+            HStack(spacing: OnTrackTheme.space3) {
+                Picker(AppText.date, selection: selectedDay) {
+                    ForEach(availableDates, id: \.self) { date in
+                        Text(dateTitle(date)).tag(date)
+                    }
+                }
+                .pickerStyle(.wheel)
+                .frame(maxWidth: .infinity)
+                .clipped()
+
+                DatePicker(
+                    AppText.time,
+                    selection: $draft.date,
+                    in: dateRange,
+                    displayedComponents: .hourAndMinute
+                )
+                .labelsHidden()
+                .datePickerStyle(.wheel)
+                .frame(maxWidth: .infinity)
+                .clipped()
+            }
             .disabled(draft.mode == .now)
             .opacity(draft.mode == .now ? 0.48 : 1)
             .tint(OnTrackTheme.primary)
+            .padding(.horizontal, OnTrackTheme.space5)
 
             HStack(spacing: 0) {
-                Button("取消") {
+                Button(AppText.cancel) {
                     dismiss()
                 }
                 .font(.system(size: 17, weight: .semibold))
@@ -360,7 +419,7 @@ private struct TimeEditorSheet: View {
                     .fill(OnTrackTheme.border)
                     .frame(width: 1, height: 56)
 
-                Button("完成") {
+                Button(AppText.done) {
                     selection = draft.mode == .now ? .current(mode: .now) : draft
                     dismiss()
                 }
@@ -372,6 +431,22 @@ private struct TimeEditorSheet: View {
         }
         .background(OnTrackTheme.background)
         .presentationBackground(OnTrackTheme.background)
+    }
+
+    private func dateTitle(_ date: Date) -> String {
+        let calendar = Formatters.taipeiCalendar
+        let today = calendar.startOfDay(for: Date())
+
+        if calendar.isDate(date, inSameDayAs: today) {
+            return AppText.today
+        }
+
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
+           calendar.isDate(date, inSameDayAs: tomorrow) {
+            return AppText.tomorrow
+        }
+
+        return Formatters.scheduleDate.string(from: date)
     }
 }
 
