@@ -6,6 +6,14 @@ struct Station: Decodable, Identifiable, Hashable {
     let nameEn: String
     let lat: Double?
     let lon: Double?
+
+    var displayName: String {
+        AppText.isEnglish ? nameEn.replacingOccurrences(of: "_", with: " ") : name
+    }
+
+    var secondaryDisplayName: String {
+        AppText.isEnglish ? name : nameEn.replacingOccurrences(of: "_", with: " ")
+    }
 }
 
 struct TrainInfo: Decodable, Identifiable {
@@ -219,10 +227,23 @@ enum AppText {
         Locale.current.language.languageCode?.identifier == "zh"
     }
 
+    static var isEnglish: Bool { !isZh }
     static var now: String { isZh ? "現在" : "Now" }
     static var leaveNow: String { isZh ? "立即出發" : "Leave now" }
     static var departure: String { isZh ? "出發" : "Depart" }
     static var arrival: String { isZh ? "抵達" : "Arrive" }
+    static var selectRoute: String { isZh ? "選擇路線" : "Select route" }
+    static var selectTrain: String { isZh ? "選擇班次" : "Select train" }
+    static var chooseRoute: String { isZh ? "選擇路線" : "Choose a route" }
+    static var noTrainsAvailable: String { isZh ? "查無可搭乘班次" : "No trains available" }
+    static var origin: String { isZh ? "出發站" : "Origin" }
+    static var destination: String { isZh ? "抵達站" : "Destination" }
+    static var selectOrigin: String { isZh ? "選擇出發站" : "Select origin" }
+    static var selectDestination: String { isZh ? "選擇抵達站" : "Select destination" }
+    static var message: String { isZh ? "訊息" : "Message" }
+    static var noTrainMessage: String { isZh ? "好像沒車搭了" : "No more trains available" }
+    static var enableAutoDetectOrigin: String { isZh ? "開啟定位起點" : "Enable origin auto-detect" }
+    static var disableAutoDetectOrigin: String { isZh ? "關閉定位起點" : "Disable origin auto-detect" }
     static var cancel: String { isZh ? "取消" : "Cancel" }
     static var done: String { isZh ? "完成" : "Done" }
     static var today: String { isZh ? "今天" : "Today" }
@@ -230,4 +251,8 @@ enum AppText {
     static var date: String { isZh ? "日期" : "Date" }
     static var time: String { isZh ? "時間" : "Time" }
     static var timeMode: String { isZh ? "時間類型" : "Time mode" }
+
+    static func arrivalMessage(time: String, station: String) -> String {
+        isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"
+    }
 }

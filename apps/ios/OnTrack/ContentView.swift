@@ -54,14 +54,14 @@ struct ContentView: View {
 
     private var shareMessage: String {
         guard let selectedTrain, let destinationStation else {
-            return "Select a train"
+            return AppText.noTrainMessage
         }
 
         let arrivalTime = TrainDisplay.adjustedTime(
             selectedTrain.arrivalTime,
             delay: selectedTrain.delay
         )
-        return "\(arrivalTime)到\(destinationStation.name)"
+        return AppText.arrivalMessage(time: arrivalTime, station: destinationStation.displayName)
     }
 
     private var scheduleTaskID: String {
@@ -456,18 +456,18 @@ private enum StationPickerRole: String, Identifiable {
     var title: String {
         switch self {
         case .origin:
-            "Select origin"
+            AppText.selectOrigin
         case .destination:
-            "Select destination"
+            AppText.selectDestination
         }
     }
 
     var placeholder: String {
         switch self {
         case .origin:
-            "Origin"
+            AppText.origin
         case .destination:
-            "Destination"
+            AppText.destination
         }
     }
 }
@@ -710,23 +710,23 @@ private struct RouteSelectorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
-            SectionLabel("Select route")
+            SectionLabel(AppText.selectRoute)
 
             ZStack {
                 VStack(spacing: OnTrackTheme.space2) {
                     StationTrigger(
-                        title: "Origin",
+                        title: AppText.origin,
                         station: origin,
                         isLoading: isLoading,
                         accessorySystemName: locationIcon,
                         accessoryIsActive: autoDetectOrigin,
-                        accessoryAccessibilityLabel: autoDetectOrigin ? "Disable origin auto-detect" : "Enable origin auto-detect",
+                        accessoryAccessibilityLabel: autoDetectOrigin ? AppText.disableAutoDetectOrigin : AppText.enableAutoDetectOrigin,
                         onAccessoryTap: onToggleAutoDetectOrigin,
                         onTap: onPickOrigin
                     )
 
                     StationTrigger(
-                        title: "Destination",
+                        title: AppText.destination,
                         station: destination,
                         isLoading: isLoading,
                         onTap: onPickDestination
@@ -777,7 +777,7 @@ private struct StationTrigger: View {
                             ProgressView()
                                 .controlSize(.small)
                         } else {
-                            Text(station?.name ?? "")
+                            Text(station?.displayName ?? "")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundStyle(OnTrackTheme.text)
                                 .lineLimit(1)
@@ -819,10 +819,10 @@ private struct TrainListView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
-            SectionLabel("Select train")
+            SectionLabel(AppText.selectTrain)
 
             if !canLoadSchedule {
-                EmptyPanel(message: "Choose a route")
+                EmptyPanel(message: AppText.chooseRoute)
             } else if isLoading && trains.isEmpty {
                 VStack(spacing: OnTrackTheme.space2) {
                     ForEach(0..<3, id: \.self) { _ in
@@ -830,7 +830,7 @@ private struct TrainListView: View {
                     }
                 }
             } else if trains.isEmpty {
-                EmptyPanel(message: "No trains available")
+                EmptyPanel(message: AppText.noTrainsAvailable)
             } else {
                 VStack(spacing: OnTrackTheme.space2) {
                     ForEach(trains) { train in
@@ -1068,11 +1068,11 @@ private struct StationSearchSheet: View {
                                             .frame(width: 24)
 
                                         VStack(alignment: .leading, spacing: 2) {
-                                            Text(station.name)
+                                            Text(station.displayName)
                                                 .font(.system(size: 16, weight: .semibold))
                                                 .foregroundStyle(OnTrackTheme.text)
 
-                                            Text(station.nameEn.replacingOccurrences(of: "_", with: " "))
+                                            Text(station.secondaryDisplayName)
                                                 .font(.system(size: 12))
                                                 .foregroundStyle(OnTrackTheme.dimText)
                                         }
@@ -1117,7 +1117,7 @@ private struct StationSearchSheet: View {
         }
         .tint(OnTrackTheme.primary)
         .onAppear {
-            searchText = selectedStation?.name ?? ""
+            searchText = selectedStation?.displayName ?? ""
             isSearchFocused = true
         }
     }
@@ -1129,7 +1129,7 @@ private struct ShareBar: View {
 
     var body: some View {
         HStack(spacing: OnTrackTheme.space2) {
-            TextField("Message", text: $editableMessage)
+            TextField(AppText.message, text: $editableMessage)
                 .font(.system(size: 16))
                 .foregroundStyle(OnTrackTheme.text)
                 .padding(.horizontal, OnTrackTheme.space3)
