@@ -1,9 +1,13 @@
+import CoreLocation
 import SwiftUI
 
 struct ContentView: View {
     @AppStorage("ontrack_origin_id") private var originId = ""
     @AppStorage("ontrack_destination_id") private var destinationId = ""
+    @AppStorage("ontrack_auto_detect_origin") private var autoDetectOrigin = false
+    @AppStorage("ontrack_cached_origin_id") private var cachedOriginId = ""
 
+    @StateObject private var locationService = LocationService()
     @State private var stations: [Station] = []
     @State private var timeSelection = TimeSelection.current()
     @State private var trains: [TrainInfo] = []
@@ -12,6 +16,7 @@ struct ContentView: View {
     @State private var isLoadingSchedule = false
     @State private var errorMessage: String?
     @State private var stationPicker: StationPickerRole?
+    @State private var originSource: OriginSelectionSource = .manual
 
     private var stationMap: [String: Station] {
         Dictionary(uniqueKeysWithValues: stations.map { ($0.id, $0) })
@@ -64,7 +69,10 @@ struct ContentView: View {
                         RouteSelectorView(
                             origin: originStation,
                             destination: destinationStation,
+                            autoDetectOrigin: autoDetectOrigin,
+                            originSource: originSource,
                             isLoading: isLoadingStations,
+                            onToggleAutoDetectOrigin: toggleAutoDetectOrigin,
                             onPickOrigin: { stationPicker = .origin },
                             onPickDestination: { stationPicker = .destination },
                             onSwap: swapStations
@@ -102,6 +110,20 @@ struct ContentView: View {
             }
             .task(id: scheduleTaskID) {
                 await loadSchedule()
+            }
+            .onChange(of: locationService.coordinate) { _, coordinate in
+                guard let coordinate else {
+                    return
+                }
+
+                selectNearestOrigin(to: coordinate)
+            }
+            .onChange(of: locationService.locationErrorID) { _, errorID in
+                guard errorID != nil else {
+                    return
+                }
+
+                fallbackToCachedOrigin()
             }
             .sheet(item: $stationPicker) { role in
                 StationSearchSheet(
@@ -143,15 +165,7 @@ struct ContentView: View {
             let loadedStations = try await APIClient.shared.stations()
             stations = loadedStations
 
-            if originId.isEmpty {
-                originId = loadedStations.first(where: { $0.name == "台北" })?.id ?? loadedStations.first?.id ?? ""
-            }
-
-            if destinationId.isEmpty || destinationId == originId {
-                destinationId = loadedStations.first(where: { $0.name == "新竹" })?.id
-                    ?? loadedStations.first(where: { $0.id != originId })?.id
-                    ?? ""
-            }
+            resolveInitialStations(loadedStations)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -188,7 +202,7 @@ struct ContentView: View {
     private func select(station: Station, for role: StationPickerRole) {
         switch role {
         case .origin:
-            originId = station.id
+            setOrigin(station.id, source: .manual)
             if destinationId == station.id {
                 destinationId = ""
             }
@@ -203,8 +217,197 @@ struct ContentView: View {
         }
 
         let currentOrigin = originId
-        originId = destinationId
+        setOrigin(destinationId, source: .manual)
         destinationId = currentOrigin
+    }
+
+    private func resolveInitialStations(_ loadedStations: [Station]) {
+        if autoDetectOrigin {
+            requestAutoDetectedOrigin()
+        } else if originId.isEmpty, isKnownStation(cachedOriginId, in: loadedStations) {
+            setOrigin(cachedOriginId, source: .cached)
+        }
+
+        if originId.isEmpty {
+            setOrigin(
+                loadedStations.first(where: { $0.name == "臺北" || $0.name == "台北" })?.id
+                    ?? loadedStations.first?.id
+                    ?? "",
+                source: .manual
+            )
+        }
+
+        if destinationId.isEmpty || destinationId == originId {
+            destinationId = loadedStations.first(where: { $0.name == "新竹" })?.id
+                ?? loadedStations.first(where: { $0.id != originId })?.id
+                ?? ""
+        }
+    }
+
+    private func toggleAutoDetectOrigin() {
+        autoDetectOrigin.toggle()
+
+        if autoDetectOrigin {
+            requestAutoDetectedOrigin()
+        } else {
+            originSource = .manual
+        }
+    }
+
+    private func requestAutoDetectedOrigin() {
+        guard !stations.isEmpty else {
+            return
+        }
+
+        locationService.requestLocation()
+    }
+
+    private func selectNearestOrigin(to coordinate: UserCoordinate) {
+        guard autoDetectOrigin, !stations.isEmpty else {
+            return
+        }
+
+        let userLocation = CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)
+        let nearestStation = stations
+            .compactMap { station -> (Station, CLLocationDistance)? in
+                guard let latitude = station.lat, let longitude = station.lon else {
+                    return nil
+                }
+
+                let stationLocation = CLLocation(latitude: latitude, longitude: longitude)
+                return (station, userLocation.distance(from: stationLocation))
+            }
+            .min { $0.1 < $1.1 }?
+            .0
+
+        guard let nearestStation else {
+            fallbackToCachedOrigin()
+            return
+        }
+
+        setOrigin(resolvePreferredStationId(nearestStation.id), source: .geo)
+        replaceDestinationIfNeeded()
+    }
+
+    private func fallbackToCachedOrigin() {
+        guard isKnownStation(cachedOriginId, in: stations) else {
+            return
+        }
+
+        setOrigin(cachedOriginId, source: .cached)
+    }
+
+    private func setOrigin(_ id: String, source: OriginSelectionSource) {
+        guard !id.isEmpty else {
+            originId = ""
+            return
+        }
+
+        originId = id
+        cachedOriginId = id
+        originSource = source
+    }
+
+    private func replaceDestinationIfNeeded() {
+        guard originSource == .geo, !originId.isEmpty, (destinationId.isEmpty || destinationId == originId) else {
+            return
+        }
+
+        destinationId = stations.first(where: { $0.id != originId })?.id ?? ""
+    }
+
+    private func resolvePreferredStationId(_ stationId: String) -> String {
+        guard stationMap[stationId]?.name == "臺北(環島)" else {
+            return stationId
+        }
+
+        return stations.first(where: { $0.name == "臺北" })?.id ?? stationId
+    }
+
+    private func isKnownStation(_ id: String, in stations: [Station]) -> Bool {
+        !id.isEmpty && stations.contains { $0.id == id }
+    }
+}
+
+private enum OriginSelectionSource {
+    case manual
+    case cached
+    case geo
+}
+
+private struct UserCoordinate: Equatable, Sendable {
+    let latitude: Double
+    let longitude: Double
+}
+
+@MainActor
+private final class LocationService: NSObject, ObservableObject, CLLocationManagerDelegate {
+    @Published var coordinate: UserCoordinate?
+    @Published var locationErrorID: UUID?
+
+    private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyHundredMeters
+    }
+
+    func requestLocation() {
+        locationErrorID = nil
+
+        switch manager.authorizationStatus {
+        case .notDetermined:
+            manager.requestWhenInUseAuthorization()
+        case .authorizedAlways, .authorizedWhenInUse:
+            manager.requestLocation()
+        case .denied, .restricted:
+            locationErrorID = UUID()
+        @unknown default:
+            locationErrorID = UUID()
+        }
+    }
+
+    nonisolated func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        let status = manager.authorizationStatus
+
+        Task { @MainActor [weak self] in
+            guard let self else {
+                return
+            }
+
+            switch status {
+            case .authorizedAlways, .authorizedWhenInUse:
+                self.manager.requestLocation()
+            case .denied, .restricted:
+                locationErrorID = UUID()
+            case .notDetermined:
+                break
+            @unknown default:
+                locationErrorID = UUID()
+            }
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else {
+            return
+        }
+
+        let updatedCoordinate = UserCoordinate(
+            latitude: location.coordinate.latitude,
+            longitude: location.coordinate.longitude
+        )
+
+        Task { @MainActor [weak self] in
+            self?.coordinate = updatedCoordinate
+        }
+    }
+
+    nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        Task { @MainActor [weak self] in
+            self?.locationErrorID = UUID()
+        }
     }
 }
 
@@ -453,10 +656,21 @@ private struct TimeEditorSheet: View {
 private struct RouteSelectorView: View {
     let origin: Station?
     let destination: Station?
+    let autoDetectOrigin: Bool
+    let originSource: OriginSelectionSource
     let isLoading: Bool
+    let onToggleAutoDetectOrigin: () -> Void
     let onPickOrigin: () -> Void
     let onPickDestination: () -> Void
     let onSwap: () -> Void
+
+    private var locationIcon: String {
+        if !autoDetectOrigin {
+            return "location.slash"
+        }
+
+        return originSource == .geo ? "location.fill" : "location"
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
@@ -468,6 +682,10 @@ private struct RouteSelectorView: View {
                         title: "Origin",
                         station: origin,
                         isLoading: isLoading,
+                        accessorySystemName: locationIcon,
+                        accessoryIsActive: autoDetectOrigin,
+                        accessoryAccessibilityLabel: autoDetectOrigin ? "Disable origin auto-detect" : "Enable origin auto-detect",
+                        onAccessoryTap: onToggleAutoDetectOrigin,
                         onTap: onPickOrigin
                     )
 
@@ -500,42 +718,59 @@ private struct StationTrigger: View {
     let title: String
     let station: Station?
     let isLoading: Bool
+    var accessorySystemName: String?
+    var accessoryIsActive = false
+    var accessoryAccessibilityLabel = ""
+    var onAccessoryTap: (() -> Void)?
     let onTap: () -> Void
 
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: OnTrackTheme.space3) {
-                Image(systemName: "magnifyingglass")
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(OnTrackTheme.dimText)
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(.system(size: 12, weight: .medium))
+        HStack(spacing: OnTrackTheme.space2) {
+            Button(action: onTap) {
+                HStack(spacing: OnTrackTheme.space3) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 18, weight: .medium))
                         .foregroundStyle(OnTrackTheme.dimText)
 
-                    if isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Text(station?.name ?? "")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(OnTrackTheme.text)
-                            .lineLimit(1)
-                    }
-                }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(title)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(OnTrackTheme.dimText)
 
-                Spacer()
+                        if isLoading {
+                            ProgressView()
+                                .controlSize(.small)
+                        } else {
+                            Text(station?.name ?? "")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(OnTrackTheme.text)
+                                .lineLimit(1)
+                        }
+                    }
+
+                    Spacer()
+                }
             }
-            .frame(height: 64)
-            .padding(.horizontal, OnTrackTheme.space4)
-            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
-            .overlay {
-                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
-                    .stroke(OnTrackTheme.border, lineWidth: 1)
+            .buttonStyle(.plain)
+
+            if let accessorySystemName, let onAccessoryTap {
+                Button(action: onAccessoryTap) {
+                    Image(systemName: accessorySystemName)
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundStyle(accessoryIsActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                        .frame(width: 40, height: 40)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(accessoryAccessibilityLabel)
             }
         }
-        .buttonStyle(.plain)
+        .frame(height: 64)
+        .padding(.horizontal, OnTrackTheme.space4)
+        .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
+        .overlay {
+            RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+                .stroke(OnTrackTheme.border, lineWidth: 1)
+        }
     }
 }
 

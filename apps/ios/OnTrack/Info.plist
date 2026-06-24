@@ -18,6 +18,8 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>OnTrack uses your location to choose the nearest departure station.</string>
     <key>UILaunchScreen</key>
     <dict/>
 </dict>
