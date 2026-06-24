@@ -253,9 +253,13 @@ private struct TimeSelectorView: View {
             SectionLabel("Select time")
 
             HStack(spacing: OnTrackTheme.space2) {
-                IconSquareButton(systemName: "timer") {
-                    selection = .current(mode: selection.mode)
+                Picker("Time mode", selection: $selection.mode) {
+                    ForEach(TimeMode.allCases) { mode in
+                        Text(mode.title).tag(mode)
+                    }
                 }
+                .pickerStyle(.segmented)
+                .frame(width: 104, height: OnTrackTheme.controlHeight)
 
                 DatePicker(
                     "Date",
@@ -266,6 +270,7 @@ private struct TimeSelectorView: View {
                 .labelsHidden()
                 .datePickerStyle(.compact)
                 .frame(maxWidth: .infinity)
+                .frame(height: OnTrackTheme.controlHeight)
                 .tint(OnTrackTheme.primary)
 
                 DatePicker(
@@ -276,19 +281,8 @@ private struct TimeSelectorView: View {
                 .labelsHidden()
                 .datePickerStyle(.compact)
                 .frame(maxWidth: .infinity)
+                .frame(height: OnTrackTheme.controlHeight)
                 .tint(OnTrackTheme.primary)
-
-                Menu {
-                    ForEach(TimeMode.allCases) { mode in
-                        Button {
-                            selection.mode = mode
-                        } label: {
-                            Label(mode.title, systemImage: mode.systemImage)
-                        }
-                    }
-                } label: {
-                    IconSquare(systemName: selection.mode.systemImage)
-                }
             }
         }
     }
@@ -629,7 +623,7 @@ private struct ShareBar: View {
                 .font(.system(size: 16))
                 .foregroundStyle(OnTrackTheme.text)
                 .padding(.horizontal, OnTrackTheme.space3)
-                .frame(height: 44)
+                .frame(height: OnTrackTheme.controlHeight)
                 .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
                 .overlay {
                     RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
@@ -692,7 +686,7 @@ private struct IconSquare: View {
         Image(systemName: systemName)
             .font(.system(size: 18, weight: .semibold))
             .foregroundStyle(OnTrackTheme.dimText)
-            .frame(width: 44, height: 44)
+            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
             .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall))
             .overlay {
                 RoundedRectangle(cornerRadius: OnTrackTheme.radiusSmall)
@@ -743,6 +737,7 @@ private enum OnTrackTheme {
 
     static let radiusSmall: CGFloat = 8
     static let radiusLarge: CGFloat = 16
+    static let controlHeight: CGFloat = 44
 
     static let space1: CGFloat = 4
     static let space2: CGFloat = 8

@@ -45,18 +45,9 @@ enum TimeMode: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .departure:
-            "Departure time"
+            "出發"
         case .arrival:
-            "Arrival time"
-        }
-    }
-
-    var systemImage: String {
-        switch self {
-        case .departure:
-            "rectangle.portrait.and.arrow.forward"
-        case .arrival:
-            "rectangle.portrait.and.arrow.right"
+            "抵達"
         }
     }
 }
