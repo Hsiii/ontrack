@@ -174,7 +174,7 @@ struct ContentView: View {
             let display = TrainDisplay.displaySchedule(
                 trains: response.trains,
                 targetTime: timeSelection.scheduleTime,
-                timeMode: timeSelection.mode
+                timeMode: timeSelection.mode.scheduleMode
             )
             trains = display.trains
             selectedTrain = display.recommendedTrain
@@ -235,12 +235,9 @@ private enum StationPickerRole: String, Identifiable {
 
 private struct TimeSelectorView: View {
     @Binding var selection: TimeSelection
+    @State private var isEditorPresented = false
 
-    private var isSyncedToNow: Bool {
-        let now = Date()
-        return Formatters.scheduleDate.string(from: selection.date) == Formatters.scheduleDate.string(from: now)
-            && Formatters.displayTime.string(from: selection.date) == Formatters.displayTime.string(from: now)
-    }
+    private let syncTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
 
     private var dateRange: ClosedRange<Date> {
         let calendar = Formatters.taipeiCalendar
@@ -254,53 +251,127 @@ private struct TimeSelectorView: View {
         return today...maxDate.addingTimeInterval(-1)
     }
 
+    private var title: String {
+        switch selection.mode {
+        case .now:
+            "立即出發"
+        case .departure, .arrival:
+            "\(selection.mode.title) \(Formatters.displayTime.string(from: selection.date))"
+        }
+    }
+
     var body: some View {
-        VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
-            SectionLabel("Select time")
-
+        Button {
+            isEditorPresented = true
+        } label: {
             HStack(spacing: OnTrackTheme.space2) {
-                Picker("Time mode", selection: $selection.mode) {
-                    ForEach(TimeMode.allCases) { mode in
-                        Text(mode.title).tag(mode)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 104, height: OnTrackTheme.controlHeight)
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(OnTrackTheme.text)
 
-                DatePicker(
-                    "Date",
-                    selection: $selection.date,
-                    in: dateRange,
-                    displayedComponents: .date
-                )
-                .labelsHidden()
-                .datePickerStyle(.compact)
-                .frame(maxWidth: .infinity)
-                .frame(height: OnTrackTheme.controlHeight)
-                .tint(OnTrackTheme.primary)
-
-                DatePicker(
-                    "Time",
-                    selection: $selection.date,
-                    displayedComponents: .hourAndMinute
-                )
-                .labelsHidden()
-                .datePickerStyle(.compact)
-                .frame(maxWidth: .infinity)
-                .frame(height: OnTrackTheme.controlHeight)
-                .tint(OnTrackTheme.primary)
-
-                IconSquareButton(
-                    systemName: isSyncedToNow
-                        ? "clock.badge.checkmark"
-                        : "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
-                ) {
-                    selection = .current(mode: selection.mode)
-                }
-                .disabled(isSyncedToNow)
-                .accessibilityLabel("Sync time")
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(OnTrackTheme.dimText)
+            }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .frame(height: OnTrackTheme.controlHeight)
+            .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
+            .overlay {
+                RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+                    .stroke(OnTrackTheme.border, lineWidth: 1)
             }
         }
+        .buttonStyle(.plain)
+        .sheet(isPresented: $isEditorPresented) {
+            TimeEditorSheet(
+                selection: $selection,
+                dateRange: dateRange
+            )
+            .presentationDetents([.height(360)])
+            .presentationDragIndicator(.visible)
+        }
+        .onAppear {
+            syncNowIfNeeded()
+        }
+        .onReceive(syncTimer) { _ in
+            syncNowIfNeeded()
+        }
+    }
+
+    private func syncNowIfNeeded() {
+        guard selection.mode == .now else {
+            return
+        }
+
+        selection = .current(mode: .now)
+    }
+}
+
+private struct TimeEditorSheet: View {
+    @Binding var selection: TimeSelection
+    let dateRange: ClosedRange<Date>
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var draft: TimeSelection
+
+    init(selection: Binding<TimeSelection>, dateRange: ClosedRange<Date>) {
+        self._selection = selection
+        self.dateRange = dateRange
+        self._draft = State(initialValue: selection.wrappedValue)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Picker("Time mode", selection: $draft.mode) {
+                ForEach(TimeMode.allCases) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.top, OnTrackTheme.space5)
+            .onChange(of: draft.mode) { _, newMode in
+                if newMode == .now {
+                    draft = .current(mode: .now)
+                }
+            }
+
+            DatePicker(
+                "Date and time",
+                selection: $draft.date,
+                in: dateRange,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .labelsHidden()
+            .datePickerStyle(.wheel)
+            .disabled(draft.mode == .now)
+            .opacity(draft.mode == .now ? 0.48 : 1)
+            .tint(OnTrackTheme.primary)
+
+            HStack(spacing: 0) {
+                Button("取消") {
+                    dismiss()
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(OnTrackTheme.text)
+                .frame(maxWidth: .infinity, minHeight: 56)
+
+                Rectangle()
+                    .fill(OnTrackTheme.border)
+                    .frame(width: 1, height: 56)
+
+                Button("完成") {
+                    selection = draft.mode == .now ? .current(mode: .now) : draft
+                    dismiss()
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundStyle(OnTrackTheme.primary)
+                .frame(maxWidth: .infinity, minHeight: 56)
+            }
+            .background(OnTrackTheme.panel)
+        }
+        .background(OnTrackTheme.background)
+        .presentationBackground(OnTrackTheme.background)
     }
 }
 

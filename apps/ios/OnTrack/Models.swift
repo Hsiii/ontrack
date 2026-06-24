@@ -37,6 +37,7 @@ struct ScheduleResponse: Decodable {
 }
 
 enum TimeMode: String, CaseIterable, Identifiable {
+    case now
     case departure
     case arrival
 
@@ -44,10 +45,21 @@ enum TimeMode: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .now:
+            "現在"
         case .departure:
             "出發"
         case .arrival:
             "抵達"
+        }
+    }
+
+    var scheduleMode: TimeMode {
+        switch self {
+        case .now:
+            .departure
+        case .departure, .arrival:
+            self
         }
     }
 }
@@ -58,7 +70,7 @@ struct TimeSelection: Equatable {
 
     static let futureDayLimit = 1
 
-    static func current(mode: TimeMode = .departure, date: Date = Date()) -> TimeSelection {
+    static func current(mode: TimeMode = .now, date: Date = Date()) -> TimeSelection {
         TimeSelection(
             mode: mode,
             date: date
@@ -120,7 +132,7 @@ enum TrainDisplay {
         let targetMinutes = timeToMinutes(targetTime)
         let comparisonMinutes: (TrainInfo) -> Int = { train in
             switch timeMode {
-            case .departure:
+            case .now, .departure:
                 timeToMinutes(train.departureTime) + (train.delay ?? 0)
             case .arrival:
                 timeToMinutes(train.arrivalTime)
