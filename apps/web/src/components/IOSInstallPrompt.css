@@ -8,7 +8,7 @@
     justify-content: center;
     z-index: 10000;
     padding: var(--space-4);
-    animation: fadeIn 0.3s ease-out;
+    animation: fadeIn var(--motion-panel) var(--ease-out);
 }
 
 @keyframes fadeIn {
@@ -27,7 +27,8 @@
     max-width: 320px;
     width: 100%;
     position: relative;
-    animation: slideUp 0.3s ease-out;
+    box-shadow: var(--shadow-surface);
+    animation: slideUp var(--motion-panel) var(--ease-out);
 }
 
 @keyframes slideUp {
@@ -54,11 +55,17 @@
     align-items: center;
     justify-content: center;
     border-radius: var(--radius-sm);
-    transition: color 0.2s;
+    transition:
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .ios-install-close:hover {
     color: var(--color-text);
+}
+
+.ios-install-close:active {
+    transform: scale(0.96);
 }
 
 .ios-install-title {
@@ -66,6 +73,7 @@
     font-size: var(--text-lg);
     font-weight: var(--font-bold);
     color: var(--color-text);
+    text-wrap: balance;
 }
 
 .ios-install-subtitle {
@@ -73,6 +81,7 @@
     font-size: var(--text-sm);
     color: var(--color-text-dim);
     line-height: 1.5;
+    text-wrap: pretty;
 }
 
 .ios-install-steps {
@@ -132,7 +141,9 @@
     font-size: var(--text-base);
     font-weight: var(--font-medium);
     cursor: pointer;
-    transition: opacity 0.2s;
+    transition:
+        opacity var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .ios-install-dismiss:hover {
@@ -141,6 +152,7 @@
 
 .ios-install-dismiss:active {
     opacity: 0.8;
+    transform: scale(0.96);
 }
 
 .ios-install-arrow {

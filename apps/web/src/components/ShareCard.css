@@ -27,6 +27,7 @@
     text-align: center;
     outline: none;
     font-variant-numeric: tabular-nums;
+    box-shadow: var(--shadow-surface);
 }
 
 .share-card-input-wrapper.is-flashing .share-card-input {
@@ -77,6 +78,9 @@
     background: var(--color-primary);
     border-color: transparent;
     color: var(--color-bg-light);
+    transition:
+        filter var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .share-card-button:hover {
@@ -87,6 +91,10 @@
 .share-card-button:focus-visible {
     outline: 2px solid rgba(56, 189, 248, 0.42);
     outline-offset: 2px;
+}
+
+.share-card-button:active {
+    transform: scale(0.96);
 }
 
 .share-card-button.share-button {

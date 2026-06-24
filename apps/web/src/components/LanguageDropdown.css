@@ -13,6 +13,9 @@
     color: var(--color-text-dim);
     cursor: pointer;
     line-height: 1;
+    transition:
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .language-dropdown-trigger:hover {
@@ -25,7 +28,7 @@
 }
 
 .language-dropdown-trigger:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 .language-dropdown-trigger svg {
@@ -43,8 +46,8 @@
     align-items: flex-end;
     justify-content: center;
     background: rgba(0, 0, 0, 0.45);
-    animation: lang-backdrop-in 0.18s ease-out;
-    transition: opacity 0.18s ease-out;
+    animation: lang-backdrop-in var(--motion-base) var(--ease-out);
+    transition: opacity var(--motion-base) ease-out;
 }
 
 .lang-sheet-backdrop.dismissing {
@@ -67,8 +70,8 @@
     border-top: 1px solid var(--color-border);
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     padding: var(--space-2) 0 calc(var(--space-4) + env(safe-area-inset-bottom));
-    animation: lang-sheet-in 0.22s ease-out;
-    transition: transform 0.18s ease-out;
+    animation: lang-sheet-in var(--motion-panel) var(--ease-out);
+    transition: transform var(--motion-base) ease-out;
     touch-action: none;
 }
 
@@ -101,6 +104,7 @@
     font-size: var(--text-sm);
     font-weight: var(--font-medium);
     color: var(--color-text-dim);
+    text-wrap: balance;
 }
 
 /* ── Option row ── */
@@ -115,6 +119,9 @@
     font-size: var(--text-base);
     font-weight: var(--font-normal);
     text-align: left;
+    transition:
+        background-color var(--motion-base) ease,
+        color var(--motion-base) ease;
 }
 
 .lang-sheet-option:active {

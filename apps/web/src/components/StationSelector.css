@@ -21,8 +21,8 @@
     opacity: 0;
     overflow: hidden;
     transition:
-        opacity 0.25s ease,
-        transform 0.25s ease;
+        opacity var(--motion-panel) var(--ease-out),
+        transform var(--motion-panel) var(--ease-out);
     padding: 0 var(--space-3);
 }
 
@@ -68,15 +68,20 @@
     height: 40px;
     padding: var(--space-2);
     border-radius: 50%;
-    border: 1px solid var(--color-border);
     background: var(--color-bg-light);
+    box-shadow: var(--shadow-surface);
     color: var(--color-text-dim);
     cursor: pointer;
     pointer-events: auto;
     transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        transform 0.1s ease;
+        background-color var(--motion-base) ease,
+        box-shadow var(--motion-base) ease,
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
+}
+
+.station-swap-btn:not(:disabled):hover {
+    box-shadow: var(--shadow-surface-hover);
 }
 
 .station-swap-btn svg {
@@ -91,7 +96,7 @@
 }
 
 .station-swap-btn:not(:disabled):active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 .station-action-btn {
@@ -111,10 +116,9 @@
     color: var(--color-text-dim);
     cursor: pointer;
     transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        color 0.2s ease,
-        transform 0.1s ease;
+        background-color var(--motion-base) ease,
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .station-action-btn:hover {
@@ -128,7 +132,7 @@
 }
 
 .station-action-btn:active {
-    transform: translateY(-50%) scale(0.95);
+    transform: translateY(-50%) scale(0.96);
 }
 
 .station-action-btn.active {

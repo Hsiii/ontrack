@@ -15,7 +15,9 @@
     flex-direction: column;
     gap: var(--space-3);
     padding: var(--space-5);
-    border: 1px solid rgba(239, 68, 68, 0.28);
+    box-shadow:
+        0 0 0 1px var(--color-danger-ring),
+        var(--shadow-surface);
     background: rgba(239, 68, 68, 0.08);
     text-align: center;
 }
@@ -24,4 +26,5 @@
     color: var(--color-danger);
     font-size: var(--text-base);
     line-height: 1.5;
+    text-wrap: pretty;
 }

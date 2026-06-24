@@ -16,6 +16,18 @@
     gap: var(--space-3);
     text-align: left;
     overflow: hidden;
+    box-shadow: var(--shadow-surface);
+    transition:
+        box-shadow var(--motion-base) ease,
+        transform var(--motion-fast) ease;
+}
+
+.station-trigger:hover {
+    box-shadow: var(--shadow-surface-hover);
+}
+
+.station-trigger:active {
+    transform: scale(0.96);
 }
 
 .station-trigger.has-action {
@@ -65,9 +77,9 @@
     line-height: 1.2;
     opacity: 1;
     transition:
-        opacity 0.18s ease,
-        transform 0.24s ease,
-        font-size 0.24s ease;
+        opacity var(--motion-base) var(--ease-out),
+        transform var(--motion-panel) var(--ease-out),
+        font-size var(--motion-panel) var(--ease-out);
 }
 
 .station-trigger-value {
@@ -77,8 +89,8 @@
     opacity: 0;
     transform: translateY(var(--space-1));
     transition:
-        opacity 0.18s ease,
-        transform 0.24s ease;
+        opacity var(--motion-base) var(--ease-out),
+        transform var(--motion-panel) var(--ease-out);
 }
 
 .station-trigger.has-value .station-trigger-label {
@@ -206,9 +218,9 @@
     overflow: hidden;
     text-overflow: ellipsis;
     transition:
-        opacity 0.18s ease,
-        transform 0.24s ease,
-        font-size 0.24s ease;
+        opacity var(--motion-base) var(--ease-out),
+        transform var(--motion-panel) var(--ease-out),
+        font-size var(--motion-panel) var(--ease-out);
 }
 
 .station-search-input {
@@ -223,7 +235,7 @@
     line-height: 1.2;
     padding: 0;
     transform: translateY(0);
-    transition: transform 0.24s ease;
+    transition: transform var(--motion-panel) var(--ease-out);
     outline: none;
 }
 

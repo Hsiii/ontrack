@@ -30,9 +30,10 @@
     color: var(--color-text-dim);
     cursor: pointer;
     transition:
-        background 0.2s ease,
-        color 0.2s ease,
-        transform 0.1s ease;
+        background-color var(--motion-base) ease,
+        border-color var(--motion-base) ease,
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
 }
 
 .time-selector-mode-trigger[aria-expanded='true'] {
@@ -42,7 +43,7 @@
 
 .time-selector-mode-trigger:active,
 .time-selector-now-btn:not(:disabled):active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }
 
 .time-selector-now-btn:disabled {
@@ -59,10 +60,9 @@
     flex-direction: column;
     width: 176px;
     overflow: hidden;
-    border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     background: var(--color-bg-light);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-surface);
 }
 
 .time-selector-mode-option {

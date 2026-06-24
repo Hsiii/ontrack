@@ -5,18 +5,20 @@
     padding: var(--space-2);
     border-radius: var(--radius-sm);
     background: var(--color-bg-light);
-    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-surface);
     color: var(--color-text-dim);
     transition:
-        background 0.2s,
-        transform 0.1s;
+        background-color var(--motion-base) ease,
+        box-shadow var(--motion-base) ease,
+        transform var(--motion-fast) ease;
     cursor: pointer;
 }
 
 .icon-button:hover {
     background: var(--color-border);
+    box-shadow: var(--shadow-surface-hover);
 }
 
 .icon-button:active {
-    transform: scale(0.95);
+    transform: scale(0.96);
 }

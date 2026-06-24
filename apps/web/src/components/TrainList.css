@@ -21,7 +21,9 @@
     gap: var(--space-3);
     padding: var(--space-5);
     text-align: center;
-    border: 1px solid rgba(239, 68, 68, 0.28);
+    box-shadow:
+        0 0 0 1px var(--color-danger-ring),
+        var(--shadow-surface);
     background: rgba(239, 68, 68, 0.08);
 }
 
@@ -29,6 +31,7 @@
     color: var(--color-danger);
     font-size: var(--text-base);
     line-height: 1.5;
+    text-wrap: pretty;
 }
 
 .train-list-empty {
@@ -43,16 +46,20 @@
     justify-content: space-between;
     align-items: center;
     background: var(--color-bg-light);
-    transition: all 0.2s ease;
+    transition:
+        background-color var(--motion-base) ease,
+        box-shadow var(--motion-base) ease,
+        transform var(--motion-fast) ease;
     animation: none;
 }
 
 .train-card.selected {
     background: rgba(56, 189, 248, 0.06);
-    border-color: rgba(56, 189, 248, 0.72);
-    box-shadow:
-        inset 0 0 0 1px rgba(56, 189, 248, 0.28),
-        0 0 0 1px rgba(56, 189, 248, 0.12);
+    box-shadow: var(--shadow-surface-selected);
+}
+
+.train-card:active {
+    transform: scale(0.96);
 }
 
 .train-card.skeleton-card {
