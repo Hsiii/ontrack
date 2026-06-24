@@ -635,6 +635,10 @@ private struct TimeEditorSheet: View {
         Binding(
             get: { Formatters.taipeiCalendar.startOfDay(for: draft.date) },
             set: { day in
+                if draft.mode == .now {
+                    draft.mode = .departure
+                }
+
                 let calendar = Formatters.taipeiCalendar
                 let time = calendar.dateComponents([.hour, .minute], from: draft.date)
                 draft.date = calendar.date(
@@ -643,6 +647,19 @@ private struct TimeEditorSheet: View {
                     second: 0,
                     of: day
                 ) ?? day
+            }
+        )
+    }
+
+    private var selectedTime: Binding<Date> {
+        Binding(
+            get: { draft.date },
+            set: { date in
+                if draft.mode == .now {
+                    draft.mode = .departure
+                }
+
+                draft.date = date
             }
         )
     }
@@ -703,7 +720,7 @@ private struct TimeEditorSheet: View {
 
                 DatePicker(
                     AppText.time,
-                    selection: $draft.date,
+                    selection: selectedTime,
                     in: dateRange,
                     displayedComponents: .hourAndMinute
                 )
@@ -712,8 +729,6 @@ private struct TimeEditorSheet: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
             }
-            .disabled(draft.mode == .now)
-            .opacity(draft.mode == .now ? 0.48 : 1)
             .tint(OnTrackTheme.primary)
             .padding(.horizontal, OnTrackTheme.space5)
 
