@@ -1004,17 +1004,12 @@ private struct StationSearchSheet: View {
             return []
         }
 
-        return matchingStations.filter { !featuredStationIDs.contains($0.id) }
+        return matchingStations.filter { !hiddenStationIDs.contains($0.id) }
     }
 
     private var restStations: [Station] {
-        var hiddenIDs = Set(suggestedStations.map(\.id))
-        if let selectedStation {
-            hiddenIDs.insert(selectedStation.id)
-        }
-
-        return stations.filter { station in
-            !hiddenIDs.contains(station.id) && station.name != taipeiCircularStationName
+        stations.filter { station in
+            !hiddenStationIDs.contains(station.id) && station.name != taipeiCircularStationName
         }
     }
 
@@ -1022,7 +1017,7 @@ private struct StationSearchSheet: View {
         suggestedStations.filter { $0.id != selectedStation?.id }
     }
 
-    private var featuredStationIDs: Set<String> {
+    private var hiddenStationIDs: Set<String> {
         var stationIDs = Set(visibleSuggestions.map(\.id))
         if let selectedStation {
             stationIDs.insert(selectedStation.id)
@@ -1115,62 +1110,38 @@ private struct StationSearchSheet: View {
                 .padding(.bottom, OnTrackTheme.space2)
 
                 List {
-                    if let selectedStation {
-                        Section(AppText.selectedStation) {
+                    if isSearching {
+                        ForEach(visibleMatchingStations) { station in
                             StationSearchRow(
-                                station: selectedStation,
-                                role: .selected
+                                station: station,
+                                role: .regular
                             ) {
-                                onSelect(selectedStation)
+                                onSelect(selectedStation(station))
                                 dismiss()
                             }
                         }
                     }
 
                     if !visibleSuggestions.isEmpty {
-                        Section(AppText.recentStations) {
-                            ForEach(visibleSuggestions) { station in
-                                StationSearchRow(
-                                    station: station,
-                                    role: .recent
-                                ) {
-                                    onSelect(selectedStation(station))
-                                    dismiss()
-                                }
+                        ForEach(visibleSuggestions) { station in
+                            StationSearchRow(
+                                station: station,
+                                role: .recent
+                            ) {
+                                onSelect(selectedStation(station))
+                                dismiss()
                             }
                         }
                     }
 
-                    if isSearching {
-                        Section(AppText.matchingStations) {
-                            if visibleMatchingStations.isEmpty {
-                                Text(AppText.noMatchingStations)
-                                    .font(.system(size: 16))
-                                    .foregroundStyle(OnTrackTheme.dimText)
-                                    .frame(minHeight: 44)
-                                    .listRowBackground(OnTrackTheme.panel)
-                            }
-
-                            ForEach(visibleMatchingStations) { station in
-                                StationSearchRow(
-                                    station: station,
-                                    role: .regular
-                                ) {
-                                    onSelect(selectedStation(station))
-                                    dismiss()
-                                }
-                            }
-                        }
-                    } else {
-                        Section(AppText.allStations) {
-                            ForEach(restStations) { station in
-                                StationSearchRow(
-                                    station: station,
-                                    role: .regular
-                                ) {
-                                    onSelect(selectedStation(station))
-                                    dismiss()
-                                }
+                    if !isSearching {
+                        ForEach(restStations) { station in
+                            StationSearchRow(
+                                station: station,
+                                role: .regular
+                            ) {
+                                onSelect(selectedStation(station))
+                                dismiss()
                             }
                         }
                     }
@@ -1211,28 +1182,20 @@ private struct RankedStation {
 }
 
 private enum StationSearchRowRole {
-    case selected
     case recent
     case regular
 
     var iconSystemName: String {
         switch self {
-        case .selected:
-            "checkmark.circle.fill"
         case .recent:
             "clock"
         case .regular:
-            "train.side.front.car"
+            "magnifyingglass"
         }
     }
 
     var iconColor: Color {
-        switch self {
-        case .selected:
-            OnTrackTheme.primary
-        case .recent, .regular:
-            OnTrackTheme.dimText
-        }
+        OnTrackTheme.dimText
     }
 }
 
