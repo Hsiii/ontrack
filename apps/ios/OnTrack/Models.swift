@@ -266,6 +266,11 @@ enum AppText {
     static var cancel: String { isZh ? "取消" : "Cancel" }
     static var clear: String { isZh ? "清除" : "Clear" }
     static var done: String { isZh ? "完成" : "Done" }
+    static var loading: String { isZh ? "載入中" : "Loading" }
+    static var notSelected: String { isZh ? "尚未選擇" : "Not selected" }
+    static var selected: String { isZh ? "已選取" : "Selected" }
+    static var shareMessage: String { isZh ? "分享訊息" : "Share message" }
+    static var swapStations: String { isZh ? "交換出發站和抵達站" : "Swap origin and destination" }
     static var today: String { isZh ? "今天" : "Today" }
     static var tomorrow: String { isZh ? "明天" : "Tomorrow" }
     static var date: String { isZh ? "日期" : "Date" }
@@ -274,5 +279,38 @@ enum AppText {
 
     static func arrivalMessage(time: String, station: String) -> String {
         isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"
+    }
+
+    static func chooseStationHint(_ title: String) -> String {
+        isZh ? "點兩下選擇\(title)" : "Double-tap to choose \(title.lowercased())"
+    }
+
+    static func trainAccessibilityLabel(
+        type: String,
+        number: String,
+        departure: String,
+        arrival: String,
+        duration: String,
+        delay: Int?,
+        isSelected: Bool
+    ) -> String {
+        let status = isSelected ? selected : ""
+        let delayText: String
+
+        if let delay, delay > 0 {
+            delayText = isZh ? "誤點 \(delay) 分鐘" : "Delayed \(delay) minutes"
+        } else {
+            delayText = isZh ? "準點" : "On time"
+        }
+
+        if isZh {
+            return [status, "\(type) \(number)", "\(departure) 出發", "\(arrival) 抵達", "車程 \(duration)", delayText]
+                .filter { !$0.isEmpty }
+                .joined(separator: "，")
+        }
+
+        return [status, "\(type) \(number)", "Departs \(departure)", "Arrives \(arrival)", "Duration \(duration)", delayText]
+            .filter { !$0.isEmpty }
+            .joined(separator: ", ")
     }
 }

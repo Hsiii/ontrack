@@ -607,6 +607,8 @@ private struct TimeSelectorView: View {
             .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
         }
         .buttonStyle(OnTrackPressButtonStyle())
+        .accessibilityLabel(AppText.time)
+        .accessibilityValue(title)
         .sheet(isPresented: $isEditorPresented) {
             TimeEditorSheet(
                 selection: $selection,
@@ -815,6 +817,7 @@ private struct RouteSelectorView: View {
     let onPickOrigin: () -> Void
     let onPickDestination: () -> Void
     let onSwap: () -> Void
+    @State private var swapFeedbackTrigger = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
@@ -850,7 +853,10 @@ private struct RouteSelectorView: View {
                 }
                 .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
 
-                Button(action: onSwap) {
+                Button {
+                    swapFeedbackTrigger += 1
+                    onSwap()
+                } label: {
                     Image(systemName: "arrow.up.arrow.down")
                         .font(OnTrackFont.icon)
                         .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
@@ -859,8 +865,10 @@ private struct RouteSelectorView: View {
                 }
                 .buttonStyle(OnTrackPressButtonStyle())
                 .disabled(origin == nil || destination == nil)
+                .accessibilityLabel(AppText.swapStations)
                 .padding(.trailing, OnTrackTheme.space2)
             }
+            .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
         }
     }
 }
@@ -910,6 +918,18 @@ private struct StationTrigger: View {
         }
         .frame(minHeight: 64)
         .buttonStyle(OnTrackPressButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(title)
+        .accessibilityValue(accessibilityValue)
+        .accessibilityHint(AppText.chooseStationHint(title))
+    }
+
+    private var accessibilityValue: String {
+        if isLoading {
+            return AppText.loading
+        }
+
+        return station?.displayName ?? AppText.notSelected
     }
 }
 
@@ -946,6 +966,7 @@ private struct TrainListView: View {
     let isLoading: Bool
     let canLoadSchedule: Bool
     let onSelect: (TrainInfo) -> Void
+    @State private var selectionFeedbackTrigger = 0
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
@@ -968,12 +989,14 @@ private struct TrainListView: View {
                             train: train,
                             isSelected: selectedTrain?.trainNo == train.trainNo
                         ) {
+                            selectionFeedbackTrigger += 1
                             onSelect(train)
                         }
                     }
                 }
             }
         }
+        .sensoryFeedback(.selection, trigger: selectionFeedbackTrigger)
     }
 }
 
@@ -1061,6 +1084,21 @@ private struct TrainCard: View {
             )
         }
         .buttonStyle(OnTrackPressButtonStyle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityLabel)
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
+    private var accessibilityLabel: String {
+        AppText.trainAccessibilityLabel(
+            type: TrainDisplay.trainType(train.trainType),
+            number: train.trainNo,
+            departure: train.departureTime,
+            arrival: train.arrivalTime,
+            duration: TrainDisplay.tripDuration(departure: train.departureTime, arrival: train.arrivalTime),
+            delay: train.delay,
+            isSelected: isSelected
+        )
     }
 }
 
@@ -1374,6 +1412,7 @@ private struct ShareBar: View {
             ShareLink(item: editableMessage.isEmpty ? message : editableMessage) {
                 IconSquare(systemName: "paperplane.fill")
             }
+            .accessibilityLabel(AppText.shareMessage)
         }
         .padding(.horizontal, OnTrackTheme.space5)
         .padding(.top, OnTrackTheme.space2)
