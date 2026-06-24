@@ -959,7 +959,7 @@ private struct StationSearchSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var searchText = ""
-    @State private var isSearchPresented = true
+    @FocusState private var isSearchFocused: Bool
 
     private var trimmedSearch: String {
         searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -1060,80 +1060,127 @@ private struct StationSearchSheet: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                if let selectedStation {
-                    Section(AppText.selectedStation) {
-                        StationSearchRow(
-                            station: selectedStation,
-                            role: .selected
-                        ) {
-                            onSelect(selectedStation)
-                            dismiss()
-                        }
-                    }
-                }
+            VStack(spacing: 0) {
+                HStack(spacing: 0) {
+                    HStack(spacing: OnTrackTheme.space3) {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundStyle(OnTrackTheme.dimText)
 
-                if !visibleSuggestions.isEmpty {
-                    Section(AppText.recentStations) {
-                        ForEach(visibleSuggestions) { station in
-                            StationSearchRow(
-                                station: station,
-                                role: .recent
-                            ) {
-                                onSelect(selectedStation(station))
-                                dismiss()
-                            }
-                        }
-                    }
-                }
-
-                if isSearching {
-                    Section(AppText.matchingStations) {
-                        if visibleMatchingStations.isEmpty {
-                            Text(AppText.noMatchingStations)
-                                .font(.system(size: 16))
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(placeholder)
+                                .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(OnTrackTheme.dimText)
-                                .frame(minHeight: 44)
-                                .listRowBackground(OnTrackTheme.panel)
-                        }
 
-                        ForEach(visibleMatchingStations) { station in
+                            TextField("", text: $searchText)
+                                .focused($isSearchFocused)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(OnTrackTheme.text)
+                                .keyboardType(.default)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled()
+                                .submitLabel(.search)
+                        }
+                    }
+                    .padding(.leading, OnTrackTheme.space4)
+                    .padding(.trailing, searchText.isEmpty ? OnTrackTheme.space4 : OnTrackTheme.space2)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        isSearchFocused = true
+                    }
+
+                    if !searchText.isEmpty {
+                        Button {
+                            searchText = ""
+                            isSearchFocused = true
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundStyle(OnTrackTheme.dimText)
+                                .frame(width: 48, height: 64)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(AppText.clearSearch)
+                    }
+                }
+                .frame(height: 64)
+                .background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge))
+                .overlay {
+                    RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+                        .stroke(isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border, lineWidth: 1)
+                }
+                .padding(.horizontal, OnTrackTheme.space5)
+                .padding(.top, OnTrackTheme.space3)
+                .padding(.bottom, OnTrackTheme.space2)
+
+                List {
+                    if let selectedStation {
+                        Section(AppText.selectedStation) {
                             StationSearchRow(
-                                station: station,
-                                role: .regular
+                                station: selectedStation,
+                                role: .selected
                             ) {
-                                onSelect(selectedStation(station))
+                                onSelect(selectedStation)
                                 dismiss()
                             }
                         }
                     }
-                } else {
-                    Section(AppText.allStations) {
-                        ForEach(restStations) { station in
-                            StationSearchRow(
-                                station: station,
-                                role: .regular
-                            ) {
-                                onSelect(selectedStation(station))
-                                dismiss()
+
+                    if !visibleSuggestions.isEmpty {
+                        Section(AppText.recentStations) {
+                            ForEach(visibleSuggestions) { station in
+                                StationSearchRow(
+                                    station: station,
+                                    role: .recent
+                                ) {
+                                    onSelect(selectedStation(station))
+                                    dismiss()
+                                }
+                            }
+                        }
+                    }
+
+                    if isSearching {
+                        Section(AppText.matchingStations) {
+                            if visibleMatchingStations.isEmpty {
+                                Text(AppText.noMatchingStations)
+                                    .font(.system(size: 16))
+                                    .foregroundStyle(OnTrackTheme.dimText)
+                                    .frame(minHeight: 44)
+                                    .listRowBackground(OnTrackTheme.panel)
+                            }
+
+                            ForEach(visibleMatchingStations) { station in
+                                StationSearchRow(
+                                    station: station,
+                                    role: .regular
+                                ) {
+                                    onSelect(selectedStation(station))
+                                    dismiss()
+                                }
+                            }
+                        }
+                    } else {
+                        Section(AppText.allStations) {
+                            ForEach(restStations) { station in
+                                StationSearchRow(
+                                    station: station,
+                                    role: .regular
+                                ) {
+                                    onSelect(selectedStation(station))
+                                    dismiss()
+                                }
                             }
                         }
                     }
                 }
+                .listStyle(.insetGrouped)
+                .scrollContentBackground(.hidden)
             }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
             .background(OnTrackTheme.background)
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(
-                text: $searchText,
-                isPresented: $isSearchPresented,
-                placement: .navigationBarDrawer(displayMode: .always),
-                prompt: placeholder
-            )
-            .textInputAutocapitalization(.never)
-            .autocorrectionDisabled()
             .toolbarBackground(OnTrackTheme.background, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
@@ -1152,7 +1199,7 @@ private struct StationSearchSheet: View {
         }
         .tint(OnTrackTheme.primary)
         .onAppear {
-            isSearchPresented = true
+            isSearchFocused = true
         }
     }
 }

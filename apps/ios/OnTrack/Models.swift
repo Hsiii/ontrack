@@ -245,6 +245,7 @@ enum AppText {
     static var matchingStations: String { isZh ? "符合結果" : "Matching results" }
     static var allStations: String { isZh ? "所有車站" : "All stations" }
     static var noMatchingStations: String { isZh ? "找不到符合的車站" : "No stations found" }
+    static var clearSearch: String { isZh ? "清除搜尋" : "Clear search" }
     static var message: String { isZh ? "訊息" : "Message" }
     static var noTrainMessage: String { isZh ? "好像沒車搭了" : "No more trains available" }
     static var enableAutoDetectOrigin: String { isZh ? "開啟定位起點" : "Enable origin auto-detect" }
