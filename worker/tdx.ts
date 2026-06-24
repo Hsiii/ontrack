@@ -65,10 +65,9 @@ async function getAccessToken(env: Env): Promise<string | null> {
 
     if (!response.ok) {
         const errorText = await response.text();
-        console.warn(
-            `Failed to get TDX token: ${response.status} ${errorText}. Falling back to Visitor Mode.`
+        throw new Error(
+            `Failed to get TDX token: ${response.status} ${errorText}. Refusing Visitor Mode because credentials are configured.`
         );
-        return null;
     }
 
     const data = (await response.json()) as {
@@ -77,7 +76,9 @@ async function getAccessToken(env: Env): Promise<string | null> {
     };
 
     if (!data.access_token) {
-        return null;
+        throw new Error(
+            'TDX token response did not include access_token. Refusing Visitor Mode because credentials are configured.'
+        );
     }
 
     cachedToken = data.access_token;
