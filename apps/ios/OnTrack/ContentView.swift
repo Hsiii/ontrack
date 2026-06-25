@@ -143,7 +143,6 @@ struct ContentView: View {
                 if let stationPicker {
                     StationSearchView(
                         title: stationPicker.title,
-                        placeholder: stationPicker.placeholder,
                         stations: stations,
                         selectedStation: stationPicker == .origin ? originStation : destinationStation,
                         suggestedStations: stationPicker == .destination ? recentDestinationStations : [],
@@ -584,14 +583,6 @@ private enum StationPickerRole: String, Identifiable {
         }
     }
 
-    var placeholder: String {
-        switch self {
-        case .origin:
-            AppText.origin
-        case .destination:
-            AppText.destination
-        }
-    }
 }
 
 private struct TimeSelectorView: View {
@@ -958,20 +949,14 @@ private struct StationTrigger: View {
                     showsBottomConnector: showsBottomConnector
                 )
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(title)
-                        .font(OnTrackFont.label)
-                        .foregroundStyle(OnTrackTheme.dimText)
-
-                    if isLoading {
-                        ProgressView()
-                            .controlSize(.small)
-                    } else {
-                        Text(station?.displayName ?? "")
-                            .font(OnTrackFont.control)
-                            .foregroundStyle(OnTrackTheme.text)
-                            .lineLimit(1)
-                    }
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Text(station?.displayName ?? "")
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(OnTrackTheme.text)
+                        .lineLimit(1)
                 }
 
                 Spacer()
@@ -1190,7 +1175,6 @@ private struct TimeColumn: View {
 
 private struct StationSearchView: View {
     let title: String
-    let placeholder: String
     let stations: [Station]
     let selectedStation: Station?
     let suggestedStations: [Station]
@@ -1209,7 +1193,7 @@ private struct StationSearchView: View {
     }
 
     private var searchPlaceholder: String {
-        selectedStation?.displayName ?? placeholder
+        selectedStation?.displayName ?? AppText.searchStation
     }
 
     private var matchingStations: [Station] {
@@ -1335,19 +1319,13 @@ private struct StationSearchView: View {
                     .font(OnTrackFont.icon)
                     .foregroundStyle(OnTrackTheme.dimText)
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(placeholder)
-                        .font(OnTrackFont.label)
-                        .foregroundStyle(OnTrackTheme.dimText)
-
-                    TextField(searchPlaceholder, text: $searchText)
-                        .focused($isSearchFocused)
-                        .font(OnTrackFont.control)
-                        .foregroundStyle(OnTrackTheme.text)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .submitLabel(.search)
-                }
+                TextField(searchPlaceholder, text: $searchText)
+                    .focused($isSearchFocused)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                    .submitLabel(.search)
 
                 if isSearching {
                     Button {
