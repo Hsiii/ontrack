@@ -297,11 +297,8 @@ export function StationSelector({
                 {toast}
             </div>
 
-            <div className='station-route'>
-                <div
-                    className='station-route-marker station-route-origin-marker'
-                    aria-hidden='true'
-                />
+            {/* Origin Station Row */}
+            <div className='station-row'>
                 <div className='station-field'>
                     <StationDropdown
                         stations={stations}
@@ -330,19 +327,23 @@ export function StationSelector({
                         }
                     />
                 </div>
+            </div>
 
-                <div className='station-route-dots' aria-hidden='true'>
-                    <span />
-                    <span />
-                    <span />
-                </div>
-
-                <div
-                    className='station-route-marker station-route-dest-marker'
-                    aria-hidden='true'
+            <div className='station-swap-row'>
+                <button
+                    type='button'
+                    className='station-swap-btn'
+                    onClick={handleSwapStations}
+                    disabled={!originId || !destId}
+                    aria-label={t('station.swap')}
+                    title={t('station.swap')}
                 >
-                    <MapPin />
-                </div>
+                    <ArrowUpDown aria-hidden='true' />
+                </button>
+            </div>
+
+            {/* Destination Station Row */}
+            <div className='station-row'>
                 <div className='station-field'>
                     <StationDropdown
                         stations={stations}
@@ -358,18 +359,6 @@ export function StationSelector({
                         showFrequentDestinations
                         frequentDestinationOriginId={originId}
                         excludedFrequentDestinationId={originId}
-                        triggerAction={
-                            <button
-                                type='button'
-                                className='station-swap-btn'
-                                onClick={handleSwapStations}
-                                disabled={!originId || !destId}
-                                aria-label={t('station.swap')}
-                                title={t('station.swap')}
-                            >
-                                <ArrowUpDown aria-hidden='true' />
-                            </button>
-                        }
                     />
                 </div>
             </div>

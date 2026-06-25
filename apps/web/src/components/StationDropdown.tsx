@@ -273,6 +273,7 @@ export function StationDropdown({
                 aria-haspopup='dialog'
                 aria-expanded={isOpen}
             >
+                <Search className='station-trigger-leading-icon' />
                 <span className='station-trigger-copy'>
                     <span className='station-trigger-label'>{placeholder}</span>
                     <span className='station-trigger-value'>
