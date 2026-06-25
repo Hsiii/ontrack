@@ -71,6 +71,9 @@
     --space-neg-3: -0.75rem; /* -12px */
     --space-neg-5: -1.25rem; /* -20px */
 
+    --splash-icon-size: 100px;
+    --splash-safe-area-offset: calc(env(safe-area-inset-top) / 2);
+
     --motion-fast: 0.12s;
     --motion-base: 0.2s;
     --motion-panel: 0.3s;
@@ -111,6 +114,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+    padding-top: var(--splash-safe-area-offset);
     z-index: 9999;
     pointer-events: none;
     animation: nativeSplashOut var(--motion-panel) var(--ease-out)
@@ -118,6 +122,8 @@ body {
 }
 
 .native-splash svg {
+    width: var(--splash-icon-size);
+    height: var(--splash-icon-size);
     color: var(--color-primary);
 }
 

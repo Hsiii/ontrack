@@ -18,7 +18,7 @@ if (!fs.existsSync(splashDir)) {
     fs.mkdirSync(splashDir, { recursive: true });
 }
 
-// Shared constant: icon size in CSS pixels (must match InitialLoadingScreen.css)
+// Shared constant: icon size in CSS pixels (must match .native-splash svg)
 const ICON_SIZE_CSS = 100;
 
 // SVG template for splash screens
