@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     ArrowRightFromLine,
     ArrowRightToLine,
@@ -11,7 +11,7 @@ import { useI18n } from '../i18n/useI18n';
 
 import './TimeSelector.css';
 
-export type TimeMode = 'departure' | 'arrival';
+export type TimeMode = 'now' | 'departure' | 'arrival';
 
 export interface TimeSelection {
     mode: TimeMode;
@@ -23,6 +23,7 @@ const DATE_DIGIT_COUNT = 4;
 const TIME_DIGIT_COUNT = 4;
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
+type WheelTimePart = 'hour' | 'minute';
 
 function getTodayDigits() {
     const today = new Date();
@@ -114,6 +115,36 @@ function formatTime(hour: number, minute: number) {
     return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
 }
 
+function formatTimeDigits(hour: number, minute: number) {
+    return `${String(hour).padStart(2, '0')}${String(minute).padStart(2, '0')}`;
+}
+
+function getCenteredWheelValue(wheel: HTMLDivElement) {
+    const wheelRect = wheel.getBoundingClientRect();
+    const wheelCenterY = wheelRect.top + wheelRect.height / 2;
+    const options = Array.from(
+        wheel.querySelectorAll<HTMLButtonElement>('[data-time-value]')
+    );
+    let centeredValue: number | null = null;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    for (const option of options) {
+        const optionRect = option.getBoundingClientRect();
+        const optionCenterY = optionRect.top + optionRect.height / 2;
+        const distance = Math.abs(optionCenterY - wheelCenterY);
+        const optionValue = Number(option.dataset.timeValue);
+
+        if (Number.isNaN(optionValue) || distance >= closestDistance) {
+            continue;
+        }
+
+        centeredValue = optionValue;
+        closestDistance = distance;
+    }
+
+    return centeredValue;
+}
+
 function getDateOffset(dateDigits: string) {
     if (dateDigits === getTodayDigits()) return 0;
     if (dateDigits === getTomorrowDigits()) return 1;
@@ -121,11 +152,7 @@ function getDateOffset(dateDigits: string) {
 }
 
 export function getInitialTimeSelection(): TimeSelection {
-    return {
-        mode: 'departure',
-        dateDigits: getTodayDigits(),
-        timeDigits: getCurrentTimeDigits(),
-    };
+    return getCurrentDateTimeSelection('now');
 }
 
 export function getScheduleDate(dateDigits: string) {
@@ -159,14 +186,23 @@ export function TimeSelector({
     onRefreshLive,
 }: TimeSelectorProps) {
     const { t } = useI18n();
-    const [currentTimeSelection, setCurrentTimeSelection] =
-        useState<TimeSelection>(() => getCurrentDateTimeSelection(value.mode));
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [draft, setDraft] = useState<TimeSelection>(() =>
         normalizeSelection(value)
     );
+    const draftRef = useRef(draft);
     const hourListRef = useRef<HTMLDivElement>(null);
     const minuteListRef = useRef<HTMLDivElement>(null);
+    const isAligningWheelRef = useRef(false);
+    const wheelAlignReleaseTimerRef = useRef<number | null>(null);
+    const wheelScrollFrameRef = useRef<Record<WheelTimePart, number | null>>({
+        hour: null,
+        minute: null,
+    });
+
+    useEffect(() => {
+        draftRef.current = draft;
+    }, [draft]);
 
     const modeOptions = useMemo(
         () =>
@@ -193,38 +229,73 @@ export function TimeSelector({
     );
 
     useEffect(() => {
-        const syncCurrentTimeSelection = () => {
-            setCurrentTimeSelection(getCurrentDateTimeSelection(value.mode));
+        const syncNowSelection = () => {
+            if (value.mode === 'now') {
+                onChange(getCurrentDateTimeSelection('now'));
+            }
         };
-        const initialTimer = window.setTimeout(syncCurrentTimeSelection, 0);
-        const interval = window.setInterval(syncCurrentTimeSelection, 60000);
+        const initialTimer = window.setTimeout(syncNowSelection, 0);
+        const interval = window.setInterval(syncNowSelection, 60000);
 
         return () => {
             window.clearTimeout(initialTimer);
             window.clearInterval(interval);
         };
-    }, [value.mode]);
+    }, [onChange, value.mode]);
 
-    useEffect(() => {
-        if (!isEditorOpen) return;
+    const scrollWheelsToTime = useCallback((timeDigits: string) => {
+        isAligningWheelRef.current = true;
 
-        const { hour, minute } = getTimeParts(draft.timeDigits);
+        if (wheelAlignReleaseTimerRef.current !== null) {
+            window.clearTimeout(wheelAlignReleaseTimerRef.current);
+        }
+
+        const { hour, minute } = getTimeParts(timeDigits);
+
         hourListRef.current
             ?.querySelector(`[data-time-value="${hour}"]`)
             ?.scrollIntoView({ block: 'center' });
         minuteListRef.current
             ?.querySelector(`[data-time-value="${minute}"]`)
             ?.scrollIntoView({ block: 'center' });
-    }, [draft.timeDigits, isEditorOpen]);
+
+        wheelAlignReleaseTimerRef.current = window.setTimeout(() => {
+            isAligningWheelRef.current = false;
+            wheelAlignReleaseTimerRef.current = null;
+        }, 120);
+    }, []);
+
+    useEffect(() => {
+        if (!isEditorOpen) return;
+
+        const frame = window.requestAnimationFrame(() => {
+            scrollWheelsToTime(draftRef.current.timeDigits);
+        });
+
+        return () => window.cancelAnimationFrame(frame);
+    }, [isEditorOpen, scrollWheelsToTime]);
+
+    useEffect(
+        () => () => {
+            if (wheelAlignReleaseTimerRef.current !== null) {
+                window.clearTimeout(wheelAlignReleaseTimerRef.current);
+            }
+
+            for (const frame of Object.values(wheelScrollFrameRef.current)) {
+                if (frame !== null) {
+                    window.cancelAnimationFrame(frame);
+                }
+            }
+        },
+        []
+    );
 
     const normalizedValue = normalizeSelection(value);
     const { hour, minute } = getTimeParts(normalizedValue.timeDigits);
     const { hour: draftHour, minute: draftMinute } = getTimeParts(
         draft.timeDigits
     );
-    const isNowSelected =
-        currentTimeSelection.dateDigits === normalizedValue.dateDigits &&
-        currentTimeSelection.timeDigits === normalizedValue.timeDigits;
+    const isNowSelected = normalizedValue.mode === 'now';
     const dateOffset = getDateOffset(normalizedValue.dateDigits);
     const modeLabel =
         modeOptions.find((option) => option.value === normalizedValue.mode)
@@ -249,26 +320,72 @@ export function TimeSelector({
     };
 
     const handleSetNow = () => {
-        const nextSelection = getCurrentDateTimeSelection(draft.mode);
-        setCurrentTimeSelection(nextSelection);
+        const nextSelection = getCurrentDateTimeSelection('now');
         setDraft(nextSelection);
+        window.requestAnimationFrame(() =>
+            scrollWheelsToTime(nextSelection.timeDigits)
+        );
     };
 
-    const handleSetTimePart = (next: { hour?: number; minute?: number }) => {
+    const handleSetTimePart = (
+        next: { hour?: number; minute?: number },
+        options: { alignWheel?: boolean } = {}
+    ) => {
+        const currentParts = getTimeParts(draftRef.current.timeDigits);
+        const nextHour = next.hour ?? currentParts.hour;
+        const nextMinute = next.minute ?? currentParts.minute;
+        const nextTimeDigits = formatTimeDigits(nextHour, nextMinute);
+
         setDraft((current) => {
-            const parts = getTimeParts(current.timeDigits);
-            const nextHour = next.hour ?? parts.hour;
-            const nextMinute = next.minute ?? parts.minute;
+            const nextMode =
+                current.mode === 'now' ? 'departure' : current.mode;
 
             return {
                 ...current,
-                timeDigits: `${String(nextHour).padStart(2, '0')}${String(nextMinute).padStart(2, '0')}`,
+                mode: nextMode,
+                timeDigits: nextTimeDigits,
             };
+        });
+
+        if (options.alignWheel !== false) {
+            window.requestAnimationFrame(() =>
+                scrollWheelsToTime(nextTimeDigits)
+            );
+        }
+    };
+
+    const handleWheelScroll = (part: WheelTimePart) => {
+        if (isAligningWheelRef.current) return;
+
+        const wheel =
+            part === 'hour' ? hourListRef.current : minuteListRef.current;
+
+        if (!wheel) return;
+
+        const pendingFrame = wheelScrollFrameRef.current[part];
+        if (pendingFrame !== null) {
+            window.cancelAnimationFrame(pendingFrame);
+        }
+
+        wheelScrollFrameRef.current[part] = window.requestAnimationFrame(() => {
+            wheelScrollFrameRef.current[part] = null;
+            const centeredValue = getCenteredWheelValue(wheel);
+
+            if (centeredValue === null) return;
+
+            handleSetTimePart(
+                part === 'hour'
+                    ? { hour: centeredValue }
+                    : { minute: centeredValue },
+                { alignWheel: false }
+            );
         });
     };
 
     const handleDone = () => {
-        onChange(draft);
+        onChange(
+            draft.mode === 'now' ? getCurrentDateTimeSelection('now') : draft
+        );
         closeEditor();
     };
 
@@ -340,12 +457,7 @@ export function TimeSelector({
                         <div className='time-editor-primary-row'>
                             <button
                                 type='button'
-                                className={`time-editor-now-btn ${
-                                    draft.dateDigits === getTodayDigits() &&
-                                    draft.timeDigits === getCurrentTimeDigits()
-                                        ? 'active'
-                                        : ''
-                                }`}
+                                className={`time-editor-now-btn ${draft.mode === 'now' ? 'active' : ''}`}
                                 onClick={handleSetNow}
                             >
                                 <TimerReset aria-hidden='true' />
@@ -353,13 +465,17 @@ export function TimeSelector({
                             </button>
 
                             <div
-                                className='time-editor-mode-segmented'
+                                className={`time-editor-mode-segmented ${
+                                    draft.mode === 'now' ? 'is-now-mode' : ''
+                                }`}
                                 role='radiogroup'
                                 aria-label={t('time.mode')}
                             >
                                 {modeOptions.map((option) => {
                                     const isActive =
-                                        draft.mode === option.value;
+                                        (draft.mode === 'now'
+                                            ? 'departure'
+                                            : draft.mode) === option.value;
 
                                     return (
                                         <button
@@ -389,6 +505,7 @@ export function TimeSelector({
                                 className='time-editor-wheel'
                                 role='listbox'
                                 aria-label={t('time.hour')}
+                                onScroll={() => handleWheelScroll('hour')}
                             >
                                 {HOURS.map((optionHour) => (
                                     <button
@@ -422,6 +539,7 @@ export function TimeSelector({
                                 className='time-editor-wheel'
                                 role='listbox'
                                 aria-label={t('time.minute')}
+                                onScroll={() => handleWheelScroll('minute')}
                             >
                                 {MINUTES.map((optionMinute) => (
                                     <button

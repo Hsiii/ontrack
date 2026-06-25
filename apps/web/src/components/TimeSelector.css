@@ -200,6 +200,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
+.time-editor-mode-segmented.is-now-mode {
+    opacity: 0.56;
+}
+
 .time-editor-mode-option {
     display: flex;
     align-items: center;
@@ -223,18 +227,31 @@
 }
 
 .time-editor-wheel {
+    --time-editor-wheel-option-height: var(--space-10);
+    --time-editor-wheel-height: calc(
+        var(--time-editor-wheel-option-height) * 4 + var(--space-4)
+    );
+    --time-editor-wheel-edge-padding: calc(
+        (
+                var(--time-editor-wheel-height) -
+                    var(--time-editor-wheel-option-height)
+            ) /
+            2
+    );
+
     display: flex;
-    max-height: 176px;
+    height: var(--time-editor-wheel-height);
     flex-direction: column;
     gap: var(--space-1);
     overflow-y: auto;
     overscroll-behavior: contain;
-    padding: var(--space-1);
+    padding: var(--time-editor-wheel-edge-padding) var(--space-1);
     border-radius: var(--radius-md);
     background: var(--color-bg-light);
     box-shadow: var(--shadow-surface);
     scrollbar-width: none;
     scroll-snap-type: y mandatory;
+    scroll-padding-block: var(--time-editor-wheel-edge-padding);
 }
 
 .time-editor-wheel::-webkit-scrollbar {
@@ -244,13 +261,17 @@
 }
 
 .time-editor-wheel-option {
-    min-height: 40px;
+    display: flex;
+    flex: 0 0 var(--time-editor-wheel-option-height);
+    align-items: center;
+    justify-content: center;
     border-radius: var(--radius-sm);
     color: var(--color-text-dim);
     font-size: var(--text-base);
     font-weight: var(--font-medium);
     font-variant-numeric: tabular-nums;
     scroll-snap-align: center;
+    scroll-snap-stop: always;
 }
 
 .time-editor-wheel-separator {
