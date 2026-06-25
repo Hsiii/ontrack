@@ -279,7 +279,7 @@ struct ContentView: View {
                     messageFormatRaw: $messageFormatRaw
                 )
                 .presentationDetents([.height(320)])
-                .presentationDragIndicator(.visible)
+                .presentationDragIndicator(.automatic)
             }
         }
         .tint(OnTrackTheme.primary)
@@ -747,7 +747,7 @@ private struct TimeSelectorView: View {
                 dateRange: dateRange
             )
             .presentationDetents([.height(392)])
-            .presentationDragIndicator(.visible)
+            .presentationDragIndicator(.automatic)
         }
         .onAppear {
             syncNowIfNeeded()
