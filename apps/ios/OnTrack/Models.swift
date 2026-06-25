@@ -160,6 +160,8 @@ struct TimeSelection: Equatable {
     var date: Date
 
     static let futureDayLimit = 7
+    static let lastTrainHour = 23
+    static let lastTrainMinute = 59
 
     static func current(mode: TimeMode = .now, date: Date = Date()) -> TimeSelection {
         TimeSelection(
@@ -173,6 +175,10 @@ struct TimeSelection: Equatable {
     }
 
     var scheduleTime: String {
+        if mode == .lastTrain {
+            return String(format: "%02d:%02d", Self.lastTrainHour, Self.lastTrainMinute)
+        }
+
         Formatters.displayTime.string(from: date)
     }
 }

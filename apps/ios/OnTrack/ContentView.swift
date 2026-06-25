@@ -775,9 +775,21 @@ private struct TimeEditorSheet: View {
 
     private var modeSelection: Binding<TimeMode> {
         Binding(
-            get: { draft.mode == .arrival ? .arrival : .departure },
+            get: {
+                switch draft.mode {
+                case .arrival:
+                    .arrival
+                case .lastTrain:
+                    .lastTrain
+                case .now, .departure:
+                    .departure
+                }
+            },
             set: { mode in
                 draft.mode = mode
+                if mode == .lastTrain {
+                    draft.date = lastTrainDate(for: draft.date)
+                }
             }
         )
     }
@@ -786,15 +798,11 @@ private struct TimeEditorSheet: View {
         draft.mode == .now
     }
 
-    private var isLastTrainSelected: Bool {
-        draft.mode == .departure && Formatters.displayTime.string(from: draft.date) == "23:59"
-    }
-
     private func lastTrainDate(for date: Date) -> Date {
         let calendar = Formatters.taipeiCalendar
         return calendar.date(
-            bySettingHour: 23,
-            minute: 59,
+            bySettingHour: TimeSelection.lastTrainHour,
+            minute: TimeSelection.lastTrainMinute,
             second: 0,
             of: date
         ) ?? date
@@ -804,7 +812,12 @@ private struct TimeEditorSheet: View {
         Binding(
             get: { draft.date },
             set: { date in
-                if draft.mode == .now || draft.mode == .lastTrain {
+                if draft.mode == .lastTrain {
+                    draft.date = lastTrainDate(for: date)
+                    return
+                }
+
+                if draft.mode == .now {
                     draft.mode = .departure
                 }
 
@@ -819,67 +832,57 @@ private struct TimeEditorSheet: View {
 
         var initialDraft = selection.wrappedValue
         if initialDraft.mode == .lastTrain {
-            initialDraft.mode = .departure
+            initialDraft.date = lastTrainDate(for: initialDraft.date)
         }
         self._draft = State(initialValue: initialDraft)
     }
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: OnTrackTheme.space2) {
-                HStack(spacing: OnTrackTheme.space2) {
-                    Button {
-                        draft = .current(mode: .now)
-                    } label: {
-                        Text(AppText.now)
-                            .font(OnTrackFont.control)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.82)
-                            .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.text)
-                            .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
-                            .onTrackPanelSurface(
-                                cornerRadius: OnTrackTheme.radiusControl,
-                                ringColor: isNowSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
-                            )
-                    }
-                    .buttonStyle(OnTrackPressButtonStyle())
+            GeometryReader { proxy in
+                ZStack {
+                    HStack {
+                        Button {
+                            draft = .current(mode: .now)
+                        } label: {
+                            Image(systemName: "clock.arrow.circlepath")
+                                .font(OnTrackFont.icon)
+                                .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                                .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                        }
+                        .buttonStyle(OnTrackPressButtonStyle())
+                        .accessibilityLabel(AppText.now)
 
-                    Button {
-                        draft.mode = .departure
-                        draft.date = lastTrainDate(for: draft.date)
-                    } label: {
-                        Text(AppText.lastTrain)
-                            .font(OnTrackFont.control)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.82)
-                            .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.text)
-                            .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
-                            .onTrackPanelSurface(
-                                cornerRadius: OnTrackTheme.radiusControl,
-                                ringColor: isLastTrainSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
-                            )
+                        Spacer()
                     }
-                    .buttonStyle(OnTrackPressButtonStyle())
-                }
-                .frame(maxWidth: .infinity)
 
-                Picker(AppText.timeMode, selection: modeSelection) {
-                    ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
-                        Text(mode.title).tag(mode)
+                    Picker(AppText.timeMode, selection: modeSelection) {
+                        ForEach([TimeMode.departure, TimeMode.arrival, TimeMode.lastTrain]) { mode in
+                            Text(mode.title).tag(mode)
+                        }
                     }
+                    .pickerStyle(.segmented)
+                    .frame(
+                        width: min(
+                            OnTrackTheme.timeModePickerMaxWidth,
+                            max(
+                                OnTrackTheme.timeModePickerMinWidth,
+                                proxy.size.width - OnTrackTheme.controlHeight * 2
+                            )
+                        ),
+                        minHeight: OnTrackTheme.controlHeight
+                    )
                 }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
-                .opacity(draft.mode == .now ? 0.56 : 1)
             }
+            .frame(height: OnTrackTheme.controlHeight)
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.top, OnTrackTheme.space5)
 
             DatePicker(
-                AppText.time,
+                draft.mode == .lastTrain ? AppText.date : AppText.time,
                 selection: selectedTime,
                 in: dateRange,
-                displayedComponents: [.date, .hourAndMinute]
+                displayedComponents: draft.mode == .lastTrain ? [.date] : [.date, .hourAndMinute]
             )
             .labelsHidden()
             .datePickerStyle(.wheel)
@@ -1916,6 +1919,8 @@ private enum OnTrackTheme {
     static let controlHeight: CGFloat = 44
     static let routeDividerHeight: CGFloat = 20
     static let routeRowHeight: CGFloat = 56
+    static let timeModePickerMaxWidth: CGFloat = 260
+    static let timeModePickerMinWidth: CGFloat = 192
 
     static let space1: CGFloat = 4
     static let space2: CGFloat = 8
