@@ -8,6 +8,7 @@ private let scheduleRefreshInterval: TimeInterval = 5 * 60
 private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
 private let manualOriginProtectionInterval: TimeInterval = 10 * 60
+private let stationPickerAnimation = Animation.snappy(duration: 0.28, extraBounce: 0)
 
 private enum ShareMessageFormat: String, CaseIterable, Identifiable {
     case arrivalOnly
@@ -215,7 +216,10 @@ struct ContentView: View {
                         dismissStationPicker()
                     }
                     .zIndex(1)
-                    .transition(.identity)
+                    .transition(.asymmetric(
+                        insertion: .move(edge: .bottom),
+                        removal: .move(edge: .bottom)
+                    ))
                 }
             }
             .toolbar(.hidden, for: .navigationBar)
@@ -294,17 +298,13 @@ struct ContentView: View {
             promptForAutoDetectedOrigin()
         }
 
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
+        withAnimation(stationPickerAnimation) {
             stationPicker = role
         }
     }
 
     private func dismissStationPicker() {
-        var transaction = Transaction()
-        transaction.disablesAnimations = true
-        withTransaction(transaction) {
+        withAnimation(stationPickerAnimation) {
             stationPicker = nil
         }
     }
@@ -1446,7 +1446,6 @@ private struct StationSearchView: View {
                     Rectangle()
                         .fill(OnTrackTheme.border)
                         .frame(height: 1)
-                        .padding(.leading, OnTrackTheme.space4 + 24 + OnTrackTheme.space3)
 
                     ScrollView {
                         LazyVStack(spacing: 0) {
@@ -1463,10 +1462,9 @@ private struct StationSearchView: View {
                     .scrollDismissesKeyboard(.interactively)
                 }
             }
-            .onTrackPanelSurface(
-                ringColor: isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
-            )
+            .onTrackPanelSurface()
             .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.bottom, OnTrackTheme.space2)
             .frame(maxHeight: .infinity, alignment: .top)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
