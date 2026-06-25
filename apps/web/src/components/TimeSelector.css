@@ -42,7 +42,6 @@
 .time-selector-refresh-btn:not(:disabled):active,
 .time-editor-now-btn:not(:disabled):active,
 .time-editor-mode-option:not(.active):active,
-.time-editor-date-tab:not(.active):active,
 .time-editor-wheel-option:not(.active):active,
 .time-editor-actions button:not(:disabled):active {
     transform: scale(0.96);
@@ -149,7 +148,6 @@
 
 .time-editor-now-btn,
 .time-editor-mode-option,
-.time-editor-date-tab,
 .time-editor-wheel-option,
 .time-editor-actions button {
     color: var(--color-text);
@@ -175,7 +173,6 @@
 
 .time-editor-now-btn.active,
 .time-editor-mode-option.active,
-.time-editor-date-tab.active,
 .time-editor-wheel-option.active {
     background: var(--color-primary-subtle);
     color: var(--color-primary);
@@ -188,8 +185,7 @@
     flex: 0 0 20px;
 }
 
-.time-editor-mode-segmented,
-.time-editor-date-tabs {
+.time-editor-mode-segmented {
     display: grid;
     gap: var(--space-1);
     min-height: 44px;
@@ -204,8 +200,7 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.time-editor-mode-option,
-.time-editor-date-tab {
+.time-editor-mode-option {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -219,26 +214,12 @@
     white-space: nowrap;
 }
 
-.time-editor-date-tabs {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    margin: 0 var(--space-5) var(--space-4);
-}
-
-.time-editor-time-display {
-    padding: 0 var(--space-5) var(--space-3);
-    color: var(--color-text);
-    font-size: var(--text-lg);
-    font-weight: var(--font-bold);
-    text-align: center;
-    font-variant-numeric: tabular-nums;
-}
-
 .time-editor-wheels {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 24px minmax(0, 1fr);
     align-items: center;
     gap: var(--space-2);
-    padding: 0 var(--space-5) var(--space-5);
+    padding: var(--space-1) var(--space-5) var(--space-5);
 }
 
 .time-editor-wheel {

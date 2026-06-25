@@ -160,7 +160,7 @@ export function TimeSelector({
 }: TimeSelectorProps) {
     const { t } = useI18n();
     const [currentTimeSelection, setCurrentTimeSelection] =
-        useState<TimeSelection | null>(null);
+        useState<TimeSelection>(() => getCurrentDateTimeSelection(value.mode));
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [draft, setDraft] = useState<TimeSelection>(() =>
         normalizeSelection(value)
@@ -223,10 +223,9 @@ export function TimeSelector({
         draft.timeDigits
     );
     const isNowSelected =
-        currentTimeSelection?.dateDigits === normalizedValue.dateDigits &&
-        currentTimeSelection?.timeDigits === normalizedValue.timeDigits;
+        currentTimeSelection.dateDigits === normalizedValue.dateDigits &&
+        currentTimeSelection.timeDigits === normalizedValue.timeDigits;
     const dateOffset = getDateOffset(normalizedValue.dateDigits);
-    const draftDateOffset = getDateOffset(draft.dateDigits);
     const modeLabel =
         modeOptions.find((option) => option.value === normalizedValue.mode)
             ?.shortLabel ?? t('time.departure');
@@ -253,17 +252,6 @@ export function TimeSelector({
         const nextSelection = getCurrentDateTimeSelection(draft.mode);
         setCurrentTimeSelection(nextSelection);
         setDraft(nextSelection);
-    };
-
-    const handleSetDateOffset = (offset: number) => {
-        const dateDigits =
-            offset === 0
-                ? getTodayDigits()
-                : addDaysToDateDigits(getTodayDigits(), offset);
-        setDraft((current) => ({
-            ...current,
-            dateDigits,
-        }));
     };
 
     const handleSetTimePart = (next: { hour?: number; minute?: number }) => {
@@ -353,7 +341,7 @@ export function TimeSelector({
                             <button
                                 type='button'
                                 className={`time-editor-now-btn ${
-                                    draftDateOffset === 0 &&
+                                    draft.dateDigits === getTodayDigits() &&
                                     draft.timeDigits === getCurrentTimeDigits()
                                         ? 'active'
                                         : ''
@@ -393,29 +381,6 @@ export function TimeSelector({
                                     );
                                 })}
                             </div>
-                        </div>
-
-                        <div className='time-editor-date-tabs'>
-                            {[0, 1].map((offset) => (
-                                <button
-                                    key={offset}
-                                    type='button'
-                                    className={`time-editor-date-tab ${
-                                        draftDateOffset === offset
-                                            ? 'active'
-                                            : ''
-                                    }`}
-                                    onClick={() => handleSetDateOffset(offset)}
-                                >
-                                    {offset === 0
-                                        ? t('time.today')
-                                        : t('time.tomorrow')}
-                                </button>
-                            ))}
-                        </div>
-
-                        <div className='time-editor-time-display'>
-                            {formatTime(draftHour, draftMinute)}
                         </div>
 
                         <div className='time-editor-wheels'>
