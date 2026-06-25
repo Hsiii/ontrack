@@ -20,6 +20,7 @@
         "ie": "scripts/ios-export.sh",
         "ir": "scripts/ios-release.sh",
         "idv": "scripts/ios-run-device.sh",
+        "idm": "scripts/ios-run-mock-device.sh",
         "ios:check": "scripts/ios-check.sh",
         "ios:build": "scripts/ios-build.sh",
         "ios:archive": "scripts/ios-archive.sh",

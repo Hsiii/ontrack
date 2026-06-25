@@ -63,6 +63,7 @@ bun run ia   # ios:archive
 bun run ie   # ios:export
 bun run ir   # ios:release
 bun run idv  # install and launch on a connected device
+bun run idm  # install and launch on a connected device with mock data
 ```
 
 ## Local Checks
