@@ -632,8 +632,6 @@ private struct TimeSelectorView: View {
             .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
         }
         .buttonStyle(OnTrackPressButtonStyle())
-        .accessibilityLabel(AppText.time)
-        .accessibilityValue(title)
         .sheet(isPresented: $isEditorPresented) {
             TimeEditorSheet(
                 selection: $selection,
@@ -876,56 +874,52 @@ private struct RouteSelectorView: View {
     @State private var swapFeedbackTrigger = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
-            SectionLabel(AppText.selectRoute)
+        ZStack(alignment: .trailing) {
+            VStack(spacing: 0) {
+                StationTrigger(
+                    title: AppText.origin,
+                    station: origin,
+                    isLoading: isLoading,
+                    glyphSystemName: "circle.fill",
+                    glyphColor: OnTrackTheme.primary,
+                    showsBottomConnector: true,
+                    onTap: onPickOrigin
+                )
 
-            ZStack(alignment: .trailing) {
-                VStack(spacing: 0) {
-                    StationTrigger(
-                        title: AppText.origin,
-                        station: origin,
-                        isLoading: isLoading,
-                        glyphSystemName: "circle.fill",
-                        glyphColor: OnTrackTheme.primary,
-                        showsBottomConnector: true,
-                        onTap: onPickOrigin
-                    )
+                Rectangle()
+                    .fill(OnTrackTheme.border)
+                    .frame(height: 1)
+                    .padding(.leading, OnTrackTheme.controlHeight + OnTrackTheme.space3)
+                    .padding(.trailing, OnTrackTheme.controlHeight + OnTrackTheme.space4)
 
-                    Rectangle()
-                        .fill(OnTrackTheme.border)
-                        .frame(height: 1)
-                        .padding(.leading, OnTrackTheme.controlHeight + OnTrackTheme.space3)
-                        .padding(.trailing, OnTrackTheme.controlHeight + OnTrackTheme.space4)
-
-                    StationTrigger(
-                        title: AppText.destination,
-                        station: destination,
-                        isLoading: isLoading,
-                        glyphSystemName: "mappin.circle.fill",
-                        glyphColor: OnTrackTheme.danger,
-                        showsTopConnector: true,
-                        onTap: onPickDestination
-                    )
-                }
-                .onTrackPanelSurface()
-
-                Button {
-                    swapFeedbackTrigger += 1
-                    onSwap()
-                } label: {
-                    Image(systemName: "arrow.up.arrow.down")
-                        .font(OnTrackFont.icon)
-                        .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-                        .foregroundStyle(OnTrackTheme.dimText)
-                        .onTrackCircleSurface()
-                }
-                .buttonStyle(OnTrackPressButtonStyle())
-                .disabled(origin == nil || destination == nil)
-                .accessibilityLabel(AppText.swapStations)
-                .padding(.trailing, OnTrackTheme.space2)
+                StationTrigger(
+                    title: AppText.destination,
+                    station: destination,
+                    isLoading: isLoading,
+                    glyphSystemName: "mappin.circle.fill",
+                    glyphColor: OnTrackTheme.danger,
+                    showsTopConnector: true,
+                    onTap: onPickDestination
+                )
             }
-            .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
+            .onTrackPanelSurface()
+
+            Button {
+                swapFeedbackTrigger += 1
+                onSwap()
+            } label: {
+                Image(systemName: "arrow.up.arrow.down")
+                    .font(OnTrackFont.icon)
+                    .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .onTrackCircleSurface()
+            }
+            .buttonStyle(OnTrackPressButtonStyle())
+            .disabled(origin == nil || destination == nil)
+            .accessibilityLabel(AppText.swapStations)
+            .padding(.trailing, OnTrackTheme.space2)
         }
+        .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
     }
 }
 
@@ -971,7 +965,6 @@ private struct StationTrigger: View {
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(title)
         .accessibilityValue(accessibilityValue)
-        .accessibilityHint(AppText.chooseStationHint(title))
     }
 
     private var accessibilityValue: String {
@@ -1019,9 +1012,7 @@ private struct TrainListView: View {
     @State private var selectionFeedbackTrigger = 0
 
     var body: some View {
-        VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
-            SectionLabel(AppText.selectTrain)
-
+        Group {
             if !canLoadSchedule {
                 EmptyPanel(message: AppText.chooseRoute)
             } else if isLoading && trains.isEmpty {
@@ -1473,21 +1464,6 @@ private struct ShareBar: View {
     }
 }
 
-private struct SectionLabel: View {
-    let text: String
-
-    init(_ text: String) {
-        self.text = text
-    }
-
-    var body: some View {
-        Text(text)
-            .font(OnTrackFont.section)
-            .foregroundStyle(OnTrackTheme.dimText)
-            .frame(minHeight: 20)
-    }
-}
-
 private struct IconSquareButton: View {
     let systemName: String
     var isLoading = false
@@ -1567,7 +1543,6 @@ private enum OnTrackFont {
     static let icon = Font.title3.weight(.semibold)
     static let label = Font.caption.weight(.medium)
     static let metadata = Font.subheadline
-    static let section = Font.subheadline.weight(.medium)
     static let symbol = Font.body.weight(.semibold)
     static let time = Font.body.weight(.bold)
     static let title = Font.headline

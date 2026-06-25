@@ -253,8 +253,6 @@ enum AppText {
     static var departure: String { isZh ? "出發" : "Depart" }
     static var arrival: String { isZh ? "抵達" : "Arrive" }
     static var lastTrain: String { isZh ? "末班" : "Last" }
-    static var selectRoute: String { isZh ? "選擇路線" : "Select route" }
-    static var selectTrain: String { isZh ? "選擇班次" : "Select train" }
     static var chooseRoute: String { isZh ? "選擇路線" : "Choose a route" }
     static var noTrainsAvailable: String { isZh ? "查無可搭乘班次" : "No trains available" }
     static var origin: String { isZh ? "出發站" : "Origin" }
@@ -281,10 +279,6 @@ enum AppText {
 
     static func arrivalMessage(time: String, station: String) -> String {
         isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"
-    }
-
-    static func chooseStationHint(_ title: String) -> String {
-        isZh ? "點兩下選擇\(title)" : "Double-tap to choose \(title.lowercased())"
     }
 
     static func trainAccessibilityLabel(
