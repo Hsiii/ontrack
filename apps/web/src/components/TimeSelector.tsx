@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ArrowRightFromLine, ArrowRightToLine, TimerReset } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+    ArrowRightFromLine,
+    ArrowRightToLine,
+    ChevronDown,
+    RefreshCw,
+    TimerReset,
+} from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 
@@ -15,18 +21,8 @@ export interface TimeSelection {
 
 const DATE_DIGIT_COUNT = 4;
 const TIME_DIGIT_COUNT = 4;
-
-function padSlot(value: string | undefined) {
-    return value ?? ' ';
-}
-
-function formatDateDigits(value: string) {
-    return `${padSlot(value[0])}${padSlot(value[1])}/${padSlot(value[2])}${padSlot(value[3])}`;
-}
-
-function formatTimeDigits(value: string) {
-    return `${padSlot(value[0])}${padSlot(value[1])}:${padSlot(value[2])}${padSlot(value[3])}`;
-}
+const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
+const MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
 
 function getTodayDigits() {
     const today = new Date();
@@ -53,14 +49,6 @@ function getCurrentDateTimeSelection(mode: TimeMode): TimeSelection {
         dateDigits: getTodayDigits(),
         timeDigits: getCurrentTimeDigits(),
     };
-}
-
-function appendDigits(value: string, input: string, maxLength: number) {
-    const digits = input.replace(/\D/g, '');
-
-    if (!digits) return value;
-
-    return `${value}${digits}`.slice(0, maxLength);
 }
 
 function parseDateDigits(dateDigits: string) {
@@ -93,32 +81,43 @@ function addDaysToDateDigits(dateDigits: string, dayOffset: number) {
     return `${month}${date}`;
 }
 
-function parseTimeInput(inputValue: string) {
-    const digits = inputValue.replace(/\D/g, '');
+function getTomorrowDigits() {
+    return addDaysToDateDigits(getTodayDigits(), 1);
+}
 
-    if (!digits) return null;
-
-    const normalizedDigits = digits.slice(0, TIME_DIGIT_COUNT);
-    const splitIndex =
-        normalizedDigits.length <= 2
-            ? normalizedDigits.length
-            : normalizedDigits.length - 2;
-    const hours = Number(normalizedDigits.slice(0, splitIndex));
-    const minutes =
-        normalizedDigits.length <= 2
-            ? 0
-            : Number(normalizedDigits.slice(splitIndex));
-
-    if (hours === 24 && minutes === 0) {
-        return { timeDigits: '0000', dayOffset: 1 };
+function normalizeSelection(value: TimeSelection): TimeSelection {
+    if (
+        value.dateDigits.length === DATE_DIGIT_COUNT &&
+        value.timeDigits.length === TIME_DIGIT_COUNT
+    ) {
+        return value;
     }
 
-    if (hours > 23 || minutes > 59) return null;
+    return getCurrentDateTimeSelection(value.mode);
+}
 
-    return {
-        timeDigits: `${String(hours).padStart(2, '0')}${String(minutes).padStart(2, '0')}`,
-        dayOffset: 0,
-    };
+function getTimeParts(timeDigits: string) {
+    const fallback = getCurrentTimeDigits();
+    const digits =
+        timeDigits.length === TIME_DIGIT_COUNT ? timeDigits : fallback;
+    const hour = Number(digits.slice(0, 2));
+    const minute = Number(digits.slice(2, 4));
+
+    if (hour > 23 || minute > 59) {
+        return getTimeParts(fallback);
+    }
+
+    return { hour, minute };
+}
+
+function formatTime(hour: number, minute: number) {
+    return `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
+}
+
+function getDateOffset(dateDigits: string) {
+    if (dateDigits === getTodayDigits()) return 0;
+    if (dateDigits === getTomorrowDigits()) return 1;
+    return null;
 }
 
 export function getInitialTimeSelection(): TimeSelection {
@@ -139,90 +138,35 @@ export function getScheduleDate(dateDigits: string) {
 }
 
 export function getScheduleTime(timeDigits: string) {
-    const hours = Number(timeDigits.slice(0, 2));
-    const minutes = Number(timeDigits.slice(2, 4));
+    const { hour, minute } = getTimeParts(timeDigits);
 
-    if (timeDigits.length !== TIME_DIGIT_COUNT || hours > 23 || minutes > 59) {
-        return getCurrentTimeDigits().replace(/(\d{2})(\d{2})/, '$1:$2');
-    }
-
-    return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-}
-
-interface DigitInputProps {
-    ariaLabel: string;
-    value: string;
-    maxLength: number;
-    formatValue: (value: string) => string;
-    onChange: (value: string) => void;
-    onBlur?: () => void;
-    onInputValue?: (inputValue: string) => boolean;
-}
-
-function DigitInput({
-    ariaLabel,
-    value,
-    maxLength,
-    formatValue,
-    onChange,
-    onBlur,
-    onInputValue,
-}: DigitInputProps) {
-    return (
-        <input
-            className='time-selector-input'
-            type='text'
-            inputMode='numeric'
-            autoComplete='off'
-            aria-label={ariaLabel}
-            value={formatValue(value)}
-            onBeforeInput={(event) => {
-                const input = event.nativeEvent.data ?? '';
-
-                event.preventDefault();
-
-                if (input.length > 1 && onInputValue?.(input)) return;
-
-                onChange(appendDigits(value, input, maxLength));
-            }}
-            onChange={(event) => {
-                const inputValue = event.currentTarget.value;
-
-                if (onInputValue?.(inputValue)) return;
-
-                onChange(inputValue.replace(/\D/g, '').slice(0, maxLength));
-            }}
-            onPaste={(event) => {
-                const inputValue = event.clipboardData.getData('text');
-
-                if (!inputValue) return;
-
-                event.preventDefault();
-
-                if (onInputValue?.(inputValue)) return;
-
-                onChange(appendDigits(value, inputValue, maxLength));
-            }}
-            onKeyDown={(event) => {
-                if (event.key !== 'Backspace') return;
-
-                event.preventDefault();
-                onChange(value.slice(0, -1));
-            }}
-            onBlur={onBlur}
-        />
-    );
+    return formatTime(hour, minute);
 }
 
 interface TimeSelectorProps {
     value: TimeSelection;
     onChange: (value: TimeSelection) => void;
+    canRefreshLive?: boolean;
+    isRefreshingLive?: boolean;
+    onRefreshLive?: () => void;
 }
 
-export function TimeSelector({ value, onChange }: TimeSelectorProps) {
+export function TimeSelector({
+    value,
+    onChange,
+    canRefreshLive = false,
+    isRefreshingLive = false,
+    onRefreshLive,
+}: TimeSelectorProps) {
     const { t } = useI18n();
     const [currentTimeSelection, setCurrentTimeSelection] =
         useState<TimeSelection | null>(null);
+    const [isEditorOpen, setIsEditorOpen] = useState(false);
+    const [draft, setDraft] = useState<TimeSelection>(() =>
+        normalizeSelection(value)
+    );
+    const hourListRef = useRef<HTMLDivElement>(null);
+    const minuteListRef = useRef<HTMLDivElement>(null);
 
     const modeOptions = useMemo(
         () =>
@@ -230,16 +174,19 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                 {
                     value: 'departure' as const,
                     label: t('time.departureTime'),
+                    shortLabel: t('time.departure'),
                     Icon: ArrowRightFromLine,
                 },
                 {
                     value: 'arrival' as const,
                     label: t('time.arrivalTime'),
+                    shortLabel: t('time.arrival'),
                     Icon: ArrowRightToLine,
                 },
             ] satisfies {
                 value: TimeMode;
                 label: string;
+                shortLabel: string;
                 Icon: typeof ArrowRightFromLine;
             }[],
         [t]
@@ -258,54 +205,84 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
         };
     }, [value.mode]);
 
-    const handleTimeCommit = () => {
-        const parsedTime = parseTimeInput(value.timeDigits);
+    useEffect(() => {
+        if (!isEditorOpen) return;
 
-        if (!parsedTime) {
-            onChange({ ...value, timeDigits: getCurrentTimeDigits() });
-            return;
-        }
+        const { hour, minute } = getTimeParts(draft.timeDigits);
+        hourListRef.current
+            ?.querySelector(`[data-time-value="${hour}"]`)
+            ?.scrollIntoView({ block: 'center' });
+        minuteListRef.current
+            ?.querySelector(`[data-time-value="${minute}"]`)
+            ?.scrollIntoView({ block: 'center' });
+    }, [draft.timeDigits, isEditorOpen]);
 
-        onChange({
-            ...value,
-            dateDigits:
-                parsedTime.dayOffset > 0
-                    ? addDaysToDateDigits(
-                          value.dateDigits,
-                          parsedTime.dayOffset
-                      )
-                    : value.dateDigits,
-            timeDigits: parsedTime.timeDigits,
-        });
+    const normalizedValue = normalizeSelection(value);
+    const { hour, minute } = getTimeParts(normalizedValue.timeDigits);
+    const { hour: draftHour, minute: draftMinute } = getTimeParts(
+        draft.timeDigits
+    );
+    const isNowSelected =
+        currentTimeSelection?.dateDigits === normalizedValue.dateDigits &&
+        currentTimeSelection?.timeDigits === normalizedValue.timeDigits;
+    const dateOffset = getDateOffset(normalizedValue.dateDigits);
+    const draftDateOffset = getDateOffset(draft.dateDigits);
+    const modeLabel =
+        modeOptions.find((option) => option.value === normalizedValue.mode)
+            ?.shortLabel ?? t('time.departure');
+    const title = isNowSelected
+        ? t('time.leaveNow')
+        : `${modeLabel} ${formatTime(hour, minute)}`;
+    const dateLabel =
+        dateOffset === 0
+            ? t('time.today')
+            : dateOffset === 1
+              ? t('time.tomorrow')
+              : getScheduleDate(normalizedValue.dateDigits);
+
+    const openEditor = () => {
+        setDraft(normalizedValue);
+        setIsEditorOpen(true);
     };
 
-    const handleTimeInputValue = (inputValue: string) => {
-        const parsedTime = parseTimeInput(inputValue);
-
-        if (!parsedTime) return false;
-
-        onChange({
-            ...value,
-            dateDigits:
-                parsedTime.dayOffset > 0
-                    ? addDaysToDateDigits(
-                          value.dateDigits,
-                          parsedTime.dayOffset
-                      )
-                    : value.dateDigits,
-            timeDigits: parsedTime.timeDigits,
-        });
-
-        return true;
+    const closeEditor = () => {
+        setIsEditorOpen(false);
     };
 
     const handleSetNow = () => {
-        onChange(getCurrentDateTimeSelection(value.mode));
+        const nextSelection = getCurrentDateTimeSelection(draft.mode);
+        setCurrentTimeSelection(nextSelection);
+        setDraft(nextSelection);
     };
 
-    const isNowSelected =
-        currentTimeSelection?.dateDigits === value.dateDigits &&
-        currentTimeSelection?.timeDigits === value.timeDigits;
+    const handleSetDateOffset = (offset: number) => {
+        const dateDigits =
+            offset === 0
+                ? getTodayDigits()
+                : addDaysToDateDigits(getTodayDigits(), offset);
+        setDraft((current) => ({
+            ...current,
+            dateDigits,
+        }));
+    };
+
+    const handleSetTimePart = (next: { hour?: number; minute?: number }) => {
+        setDraft((current) => {
+            const parts = getTimeParts(current.timeDigits);
+            const nextHour = next.hour ?? parts.hour;
+            const nextMinute = next.minute ?? parts.minute;
+
+            return {
+                ...current,
+                timeDigits: `${String(nextHour).padStart(2, '0')}${String(nextMinute).padStart(2, '0')}`,
+            };
+        });
+    };
+
+    const handleDone = () => {
+        onChange(draft);
+        closeEditor();
+    };
 
     return (
         <section
@@ -315,70 +292,209 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
             <h2 id='time-selector-heading' className='label-dim'>
                 {t('time.selectTime')}
             </h2>
-            <div
-                className='time-selector-mode-segmented'
-                role='radiogroup'
-                aria-label={t('time.mode')}
-            >
-                {modeOptions.map((option) => {
-                    const isActive = value.mode === option.value;
-
-                    return (
-                        <button
-                            key={option.value}
-                            type='button'
-                            className={`time-selector-mode-option ${isActive ? 'active' : ''}`}
-                            role='radio'
-                            aria-checked={isActive}
-                            onClick={() => {
-                                if (isActive) return;
-
-                                onChange({
-                                    ...value,
-                                    mode: option.value,
-                                });
-                            }}
-                        >
-                            <option.Icon aria-hidden='true' />
-                            <span>{option.label}</span>
-                        </button>
-                    );
-                })}
-            </div>
             <div className='time-selector-row'>
                 <button
                     type='button'
-                    className='time-selector-now-btn'
-                    onClick={handleSetNow}
-                    aria-label={t('time.now')}
-                    title={t('time.now')}
-                    disabled={isNowSelected}
+                    className='time-selector-trigger'
+                    onClick={openEditor}
+                    aria-label={t('time.selectTime')}
+                    aria-haspopup='dialog'
+                    aria-expanded={isEditorOpen}
                 >
-                    <TimerReset aria-hidden='true' />
+                    <span className='time-selector-trigger-copy'>
+                        <span className='time-selector-trigger-title'>
+                            {title}
+                        </span>
+                        {!isNowSelected && (
+                            <span className='time-selector-trigger-date'>
+                                {dateLabel}
+                            </span>
+                        )}
+                    </span>
+                    <ChevronDown aria-hidden='true' />
                 </button>
-                <div className='time-selector-fields'>
-                    <DigitInput
-                        ariaLabel={t('time.date')}
-                        value={value.dateDigits}
-                        maxLength={DATE_DIGIT_COUNT}
-                        formatValue={formatDateDigits}
-                        onChange={(dateDigits) =>
-                            onChange({ ...value, dateDigits })
+                <button
+                    type='button'
+                    className='time-selector-refresh-btn'
+                    onClick={onRefreshLive}
+                    disabled={!canRefreshLive || isRefreshingLive}
+                    aria-label={t('train.refreshLiveStatus')}
+                    title={t('train.refreshLiveStatus')}
+                >
+                    <RefreshCw
+                        className={
+                            isRefreshingLive
+                                ? 'time-selector-refresh-icon spinning'
+                                : 'time-selector-refresh-icon'
                         }
+                        aria-hidden='true'
                     />
-                    <DigitInput
-                        ariaLabel={t('time.time')}
-                        value={value.timeDigits}
-                        maxLength={TIME_DIGIT_COUNT}
-                        formatValue={formatTimeDigits}
-                        onChange={(timeDigits) =>
-                            onChange({ ...value, timeDigits })
-                        }
-                        onBlur={handleTimeCommit}
-                        onInputValue={handleTimeInputValue}
-                    />
-                </div>
+                </button>
             </div>
+
+            {isEditorOpen && (
+                <div className='time-editor-backdrop' onClick={closeEditor}>
+                    <div
+                        className='time-editor-sheet'
+                        role='dialog'
+                        aria-modal='true'
+                        aria-labelledby='time-editor-title'
+                        onClick={(event) => event.stopPropagation()}
+                    >
+                        <div className='time-editor-handle' />
+                        <h2
+                            id='time-editor-title'
+                            className='time-editor-title'
+                        >
+                            {t('time.selectTime')}
+                        </h2>
+
+                        <div className='time-editor-primary-row'>
+                            <button
+                                type='button'
+                                className={`time-editor-now-btn ${
+                                    draftDateOffset === 0 &&
+                                    draft.timeDigits === getCurrentTimeDigits()
+                                        ? 'active'
+                                        : ''
+                                }`}
+                                onClick={handleSetNow}
+                            >
+                                <TimerReset aria-hidden='true' />
+                                <span>{t('time.now')}</span>
+                            </button>
+
+                            <div
+                                className='time-editor-mode-segmented'
+                                role='radiogroup'
+                                aria-label={t('time.mode')}
+                            >
+                                {modeOptions.map((option) => {
+                                    const isActive =
+                                        draft.mode === option.value;
+
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type='button'
+                                            className={`time-editor-mode-option ${isActive ? 'active' : ''}`}
+                                            role='radio'
+                                            aria-checked={isActive}
+                                            onClick={() =>
+                                                setDraft((current) => ({
+                                                    ...current,
+                                                    mode: option.value,
+                                                }))
+                                            }
+                                        >
+                                            <option.Icon aria-hidden='true' />
+                                            <span>{option.shortLabel}</span>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <div className='time-editor-date-tabs'>
+                            {[0, 1].map((offset) => (
+                                <button
+                                    key={offset}
+                                    type='button'
+                                    className={`time-editor-date-tab ${
+                                        draftDateOffset === offset
+                                            ? 'active'
+                                            : ''
+                                    }`}
+                                    onClick={() => handleSetDateOffset(offset)}
+                                >
+                                    {offset === 0
+                                        ? t('time.today')
+                                        : t('time.tomorrow')}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className='time-editor-time-display'>
+                            {formatTime(draftHour, draftMinute)}
+                        </div>
+
+                        <div className='time-editor-wheels'>
+                            <div
+                                ref={hourListRef}
+                                className='time-editor-wheel'
+                                role='listbox'
+                                aria-label={t('time.hour')}
+                            >
+                                {HOURS.map((optionHour) => (
+                                    <button
+                                        key={optionHour}
+                                        type='button'
+                                        data-time-value={optionHour}
+                                        className={`time-editor-wheel-option ${
+                                            draftHour === optionHour
+                                                ? 'active'
+                                                : ''
+                                        }`}
+                                        role='option'
+                                        aria-selected={draftHour === optionHour}
+                                        onClick={() =>
+                                            handleSetTimePart({
+                                                hour: optionHour,
+                                            })
+                                        }
+                                    >
+                                        {String(optionHour).padStart(2, '0')}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <span className='time-editor-wheel-separator'>
+                                :
+                            </span>
+
+                            <div
+                                ref={minuteListRef}
+                                className='time-editor-wheel'
+                                role='listbox'
+                                aria-label={t('time.minute')}
+                            >
+                                {MINUTES.map((optionMinute) => (
+                                    <button
+                                        key={optionMinute}
+                                        type='button'
+                                        data-time-value={optionMinute}
+                                        className={`time-editor-wheel-option ${
+                                            draftMinute === optionMinute
+                                                ? 'active'
+                                                : ''
+                                        }`}
+                                        role='option'
+                                        aria-selected={
+                                            draftMinute === optionMinute
+                                        }
+                                        onClick={() =>
+                                            handleSetTimePart({
+                                                minute: optionMinute,
+                                            })
+                                        }
+                                    >
+                                        {String(optionMinute).padStart(2, '0')}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className='time-editor-actions'>
+                            <button type='button' onClick={closeEditor}>
+                                {t('common.cancel')}
+                            </button>
+                            <button type='button' onClick={handleDone}>
+                                {t('common.done')}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

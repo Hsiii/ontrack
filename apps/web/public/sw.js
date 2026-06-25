@@ -49,10 +49,15 @@ async function staleWhileRevalidate(request, cacheName) {
 
 async function networkFirst(request, cacheName) {
     const cache = await caches.open(cacheName);
+    const url = new URL(request.url);
 
     try {
         const response = await withTimeout(fetch(request), SCHEDULE_TIMEOUT_MS);
-        if (response.ok && response.status === 200) {
+        if (
+            response.ok &&
+            response.status === 200 &&
+            url.searchParams.get('refreshLive') !== '1'
+        ) {
             await cache.put(request, response.clone());
         }
         return response;

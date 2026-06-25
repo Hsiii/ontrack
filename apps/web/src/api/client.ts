@@ -64,9 +64,15 @@ export const api = {
         return data;
     },
 
-    getSchedule: async (origin: string, dest: string, date?: string) => {
+    getSchedule: async (
+        origin: string,
+        dest: string,
+        date?: string,
+        options: { refreshLive?: boolean } = {}
+    ) => {
         const params = new URLSearchParams({ origin, dest });
         if (date) params.append('date', date);
+        if (options.refreshLive) params.append('refreshLive', '1');
 
         return fetchJson<ScheduleResponse>(
             `/api/schedule?${params.toString()}`

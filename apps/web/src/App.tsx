@@ -49,6 +49,8 @@ function App() {
         useState<TimeSelection>(EMPTY_TIME_SELECTION);
     const [stationsLoading, setStationsLoading] = useState(true);
     const [stationsError, setStationsError] = useState<string | null>(null);
+    const [liveRefreshNonce, setLiveRefreshNonce] = useState(0);
+    const [isRefreshingLive, setIsRefreshingLive] = useState(false);
 
     useEffect(() => {
         api.getStations()
@@ -133,6 +135,7 @@ function App() {
     const isTimeInitialized =
         timeSelection.dateDigits.length === 4 &&
         timeSelection.timeDigits.length === 4;
+    const canRefreshLive = Boolean(isTimeInitialized && originId && destId);
 
     return (
         <>
@@ -142,6 +145,11 @@ function App() {
                     <TimeSelector
                         value={timeSelection}
                         onChange={setTimeSelection}
+                        canRefreshLive={canRefreshLive}
+                        isRefreshingLive={isRefreshingLive}
+                        onRefreshLive={() =>
+                            setLiveRefreshNonce((value) => value + 1)
+                        }
                     />
 
                     <section aria-labelledby='station-selector-heading'>
@@ -179,6 +187,8 @@ function App() {
                             timeMode={timeSelection.mode}
                             onSelect={setSelectedTrain}
                             selectedTrainNo={selectedTrain?.trainNo || null}
+                            refreshLiveNonce={liveRefreshNonce}
+                            onRefreshingLiveChange={setIsRefreshingLive}
                         />
                     )}
 

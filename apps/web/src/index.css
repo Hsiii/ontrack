@@ -6,6 +6,7 @@
     /* Base Colors */
     --color-bg: #0f172a;
     --color-bg-light: rgba(30, 41, 59, 1);
+    --color-overlay: rgba(15, 23, 42, 0.72);
     --color-border: rgba(255, 255, 255, 0.1);
 
     --color-text: #f1f5f9;

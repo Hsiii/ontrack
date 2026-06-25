@@ -127,6 +127,8 @@ interface TrainListProps {
     timeMode: TimeMode;
     onSelect: (train: TrainInfo) => void;
     selectedTrainNo: string | null;
+    refreshLiveNonce?: number;
+    onRefreshingLiveChange?: (isRefreshing: boolean) => void;
 }
 
 export function TrainList({
@@ -137,6 +139,8 @@ export function TrainList({
     timeMode,
     onSelect,
     selectedTrainNo,
+    refreshLiveNonce = 0,
+    onRefreshingLiveChange,
 }: TrainListProps) {
     const { t, language } = useI18n();
     const [allTrains, setAllTrains] = useState<TrainInfo[]>([]);
@@ -146,63 +150,79 @@ export function TrainList({
     const lastFetchTimeRef = useRef<number | null>(null);
     const lastFetchParamsRef = useRef<string>('');
     const requestIdRef = useRef(0);
+    const lastRefreshLiveNonceRef = useRef(refreshLiveNonce);
     const warmingRetryTimerRef = useRef<number | null>(null);
 
-    const fetchSchedule = useCallback(() => {
-        if (!originId || !destId) return;
+    const fetchSchedule = useCallback(
+        (options: { refreshLive?: boolean } = {}) => {
+            if (!originId || !destId) return;
+            const isManualLiveRefresh = options.refreshLive === true;
 
-        if (warmingRetryTimerRef.current) {
-            window.clearTimeout(warmingRetryTimerRef.current);
-            warmingRetryTimerRef.current = null;
-        }
+            if (warmingRetryTimerRef.current) {
+                window.clearTimeout(warmingRetryTimerRef.current);
+                warmingRetryTimerRef.current = null;
+            }
 
-        // Prevent duplicate requests
-        const currentParams = `${originId}-${destId}-${date}`;
-        if (
-            lastFetchParamsRef.current === currentParams &&
-            lastFetchTimeRef.current &&
-            Date.now() - lastFetchTimeRef.current < 3000
-        ) {
-            console.log('Skipping duplicate request within 3 seconds');
-            return;
-        }
+            // Prevent duplicate requests
+            const currentParams = `${originId}-${destId}-${date}`;
+            if (
+                !isManualLiveRefresh &&
+                lastFetchParamsRef.current === currentParams &&
+                lastFetchTimeRef.current &&
+                Date.now() - lastFetchTimeRef.current < 3000
+            ) {
+                console.log('Skipping duplicate request within 3 seconds');
+                return;
+            }
 
-        const requestId = requestIdRef.current + 1;
-        requestIdRef.current = requestId;
-        lastFetchParamsRef.current = currentParams;
-        setLoading(allTrains.length === 0);
-        setError(null);
+            const requestId = requestIdRef.current + 1;
+            requestIdRef.current = requestId;
+            lastFetchParamsRef.current = currentParams;
+            setLoading(allTrains.length === 0);
+            setError(null);
+            if (isManualLiveRefresh) {
+                onRefreshingLiveChange?.(true);
+            }
 
-        api.getSchedule(originId, destId, date)
-            .then((res) => {
-                if (requestId !== requestIdRef.current) {
-                    return;
-                }
-
-                setAllTrains(res.trains);
-                lastFetchTimeRef.current = Date.now();
-
-                if (res.meta?.scheduleCacheStatus === 'warming') {
-                    setLoading(true);
-                    warmingRetryTimerRef.current = window.setTimeout(() => {
-                        warmingRetryTimerRef.current = null;
-                        setWarmingRetryNonce((value) => value + 1);
-                    }, SCHEDULE_WARMING_RETRY_MS);
-                    return;
-                }
-
-                setLoading(false);
+            api.getSchedule(originId, destId, date, {
+                refreshLive: isManualLiveRefresh,
             })
-            .catch((err) => {
-                if (requestId !== requestIdRef.current) {
-                    return;
-                }
+                .then((res) => {
+                    if (requestId !== requestIdRef.current) {
+                        return;
+                    }
 
-                console.error(err);
-                setError(t('error.failedToLoadSchedule'));
-                setLoading(false);
-            });
-    }, [originId, destId, date, allTrains.length, t]);
+                    setAllTrains(res.trains);
+                    lastFetchTimeRef.current = Date.now();
+
+                    if (res.meta?.scheduleCacheStatus === 'warming') {
+                        setLoading(true);
+                        warmingRetryTimerRef.current = window.setTimeout(() => {
+                            warmingRetryTimerRef.current = null;
+                            setWarmingRetryNonce((value) => value + 1);
+                        }, SCHEDULE_WARMING_RETRY_MS);
+                        return;
+                    }
+
+                    setLoading(false);
+                })
+                .catch((err) => {
+                    if (requestId !== requestIdRef.current) {
+                        return;
+                    }
+
+                    console.error(err);
+                    setError(t('error.failedToLoadSchedule'));
+                    setLoading(false);
+                })
+                .finally(() => {
+                    if (isManualLiveRefresh) {
+                        onRefreshingLiveChange?.(false);
+                    }
+                });
+        },
+        [originId, destId, date, allTrains.length, onRefreshingLiveChange, t]
+    );
 
     useEffect(() => {
         const initialFetchTimer = window.setTimeout(() => {
@@ -223,6 +243,19 @@ export function TrainList({
             clearInterval(interval);
         };
     }, [fetchSchedule, warmingRetryNonce]);
+
+    useEffect(() => {
+        if (lastRefreshLiveNonceRef.current === refreshLiveNonce) {
+            return;
+        }
+
+        lastRefreshLiveNonceRef.current = refreshLiveNonce;
+        const refreshTimer = window.setTimeout(() => {
+            fetchSchedule({ refreshLive: true });
+        }, 0);
+
+        return () => window.clearTimeout(refreshTimer);
+    }, [fetchSchedule, refreshLiveNonce]);
 
     const { displayTrains, recommendedTrain } = useMemo(
         () => buildDisplayState(allTrains, time, timeMode),
