@@ -54,6 +54,17 @@ IOS_EXPORT_DESTINATION=upload bun run ios:release
 
 `IOS_EXPORT_METHOD` accepts the current Xcode export method names, including `app-store-connect`, `release-testing`, and `debugging`.
 
+Short iOS aliases:
+
+```sh
+bun run ic   # ios:check
+bun run ib   # ios:build
+bun run ia   # ios:archive
+bun run ie   # ios:export
+bun run ir   # ios:release
+bun run idv  # install and launch on a connected device
+```
+
 ## Local Checks
 
 Run repo checks:
