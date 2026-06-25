@@ -76,7 +76,8 @@ export function StationDropdown({
         showFrequentDestinations
             ? getFrequentDestinationIdsForOrigin(
                   frequentDestinationOriginId,
-                  excludedFrequentDestinationId
+                  excludedFrequentDestinationId,
+                  stations
               )
             : []
     );
@@ -202,7 +203,8 @@ export function StationDropdown({
             setFrequentDestinationIds(
                 persistFrequentDestinationId(
                     frequentDestinationOriginId,
-                    preferredStationId
+                    preferredStationId,
+                    stations
                 )
             );
         }
@@ -216,7 +218,8 @@ export function StationDropdown({
             setFrequentDestinationIds(
                 getFrequentDestinationIdsForOrigin(
                     frequentDestinationOriginId,
-                    excludedFrequentDestinationId
+                    excludedFrequentDestinationId,
+                    stations
                 )
             );
         }

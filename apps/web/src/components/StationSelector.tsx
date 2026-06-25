@@ -3,7 +3,10 @@ import { ArrowUpDown, MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
-import { getFrequentDestinationIdsForOrigin } from './frequentDestinations';
+import {
+    getAutoFillDestinationId,
+    persistFrequentDestinationId,
+} from './frequentDestinations';
 import { StationDropdown } from './StationDropdown';
 import { resolvePreferredStationId } from './stationSearchUtils';
 
@@ -21,6 +24,7 @@ interface StationSelectorProps {
 
 const CACHED_ORIGIN_KEY = 'ontrack_cached_origin';
 type OriginSelectionSource = 'manual' | 'cached' | 'geo' | null;
+type DestinationSelectionSource = 'manual' | 'cached' | 'auto' | null;
 
 export function StationSelector({
     stations,
@@ -45,6 +49,8 @@ export function StationSelector({
     const [originSource, setOriginSource] = useState<OriginSelectionSource>(
         () => (originId ? 'cached' : null)
     );
+    const [destinationSource, setDestinationSource] =
+        useState<DestinationSelectionSource>(() => (destId ? 'cached' : null));
 
     const setOriginWithSource = useCallback(
         (id: string, source: Exclude<OriginSelectionSource, null>) => {
@@ -66,23 +72,35 @@ export function StationSelector({
     }, [originId]);
 
     useEffect(() => {
-        if (
-            originSource !== 'geo' ||
-            !originId ||
-            (destId && destId !== originId)
-        ) {
+        if (!originId || stations.length === 0) return;
+
+        const hasKnownDestination = destId
+            ? stations.some((station) => station.id === destId)
+            : false;
+        const shouldAutoFillDestination =
+            !destId ||
+            destId === originId ||
+            !hasKnownDestination ||
+            destinationSource === 'auto';
+
+        if (!shouldAutoFillDestination) return;
+
+        const autoFillDestinationId = getAutoFillDestinationId(
+            originId,
+            stations
+        );
+
+        if (!autoFillDestinationId || autoFillDestinationId === destId) {
             return;
         }
 
-        const replacementDestinationId =
-            getFrequentDestinationIdsForOrigin(originId, originId).find((id) =>
-                stations.some((station) => station.id === id)
-            ) ?? '';
+        const timer = window.setTimeout(() => {
+            setDestinationSource('auto');
+            setDestId(autoFillDestinationId);
+        }, 0);
 
-        if (replacementDestinationId) {
-            setDestId(replacementDestinationId);
-        }
-    }, [destId, originId, originSource, setDestId, stations]);
+        return () => window.clearTimeout(timer);
+    }, [destId, destinationSource, originId, setDestId, stations]);
 
     // Auto-select nearest station when autoDetectOrigin is enabled.
     // This should only happen once on app start, or once each time the
@@ -218,6 +236,11 @@ export function StationSelector({
         setOriginWithSource(id, 'manual');
     };
 
+    const handleDestinationSelect = (id: string) => {
+        setDestinationSource('manual');
+        setDestId(id);
+    };
+
     const geoToggleIcon = !autoDetectOrigin ? (
         <MapPinOff />
     ) : originSource === 'geo' ? (
@@ -249,8 +272,17 @@ export function StationSelector({
     const handleSwapStations = () => {
         if (!originId || !destId) return;
 
-        setOriginWithSource(destId, 'manual');
-        setDestId(originId);
+        const currentOriginId = originId;
+        const currentDestinationId = destId;
+
+        setOriginWithSource(currentDestinationId, 'manual');
+        setDestinationSource('manual');
+        setDestId(currentOriginId);
+        persistFrequentDestinationId(
+            currentDestinationId,
+            currentOriginId,
+            stations
+        );
     };
 
     return (
@@ -320,7 +352,7 @@ export function StationSelector({
                         isOpen={destDropdownOpen}
                         setIsOpen={handleDestDropdownOpen}
                         selectedId={destId}
-                        onSelect={setDestId}
+                        onSelect={handleDestinationSelect}
                         placeholder={t('station.destination')}
                         title={t('station.selectDestination')}
                         selectedStation={destStation}
