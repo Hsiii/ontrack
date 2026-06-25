@@ -1054,7 +1054,7 @@ private struct RouteGlyph: View {
             case .destination:
                 Image(systemName: "flag.fill")
                     .font(OnTrackFont.routeGlyph)
-                    .foregroundStyle(OnTrackTheme.danger)
+                    .foregroundStyle(OnTrackTheme.dimText)
             }
         }
         .frame(width: 24, height: 24)
