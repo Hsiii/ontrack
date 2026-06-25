@@ -123,19 +123,27 @@ struct ContentView: View {
                             selectedTrain: selectedTrain,
                             isLoading: isLoadingSchedule,
                             canLoadSchedule: canLoadSchedule,
-                            shareMessage: shareMessage,
                             onSelect: { selectedTrain = $0 }
                         )
                     }
                     .frame(maxWidth: 480)
                     .padding(.horizontal, OnTrackTheme.space5)
                     .padding(.top, OnTrackTheme.space3)
-                    .padding(.bottom, OnTrackTheme.space6)
+                    .padding(.bottom, shareMessage == nil ? OnTrackTheme.space6 : OnTrackTheme.space2)
                     .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
                 .refreshable {
                     await loadSchedule(refreshLive: true)
+                }
+                .safeAreaInset(edge: .bottom, spacing: 0) {
+                    if let shareMessage {
+                        SharePanel(message: shareMessage)
+                            .frame(maxWidth: 480)
+                            .padding(.horizontal, OnTrackTheme.space5)
+                            .padding(.top, OnTrackTheme.space2)
+                            .padding(.bottom, OnTrackTheme.space3)
+                    }
                 }
 
                 if let stationPicker {
@@ -635,7 +643,7 @@ private struct TimeSelectorView: View {
                 selection: $selection,
                 dateRange: dateRange
             )
-            .presentationDetents([.height(360)])
+            .presentationDetents([.height(392)])
             .presentationDragIndicator(.visible)
         }
         .onAppear {
@@ -680,34 +688,26 @@ private struct TimeEditorSheet: View {
 
     private var modeSelection: Binding<TimeMode> {
         Binding(
-            get: { draft.mode == .now ? .departure : draft.mode },
+            get: { draft.mode == .arrival ? .arrival : .departure },
             set: { mode in
                 draft.mode = mode
-
-                if mode == .lastTrain {
-                    draft.date = lastTrainDate(for: draft.date)
-                }
             }
         )
     }
 
-    private var shortcutTitle: String {
-        draft.mode == .lastTrain ? AppText.today : AppText.now
+    private var isNowSelected: Bool {
+        draft.mode == .now
     }
 
-    private var isShortcutSelected: Bool {
-        if draft.mode == .lastTrain {
-            return Formatters.taipeiCalendar.isDate(draft.date, inSameDayAs: Date())
-        }
-
-        return draft.mode == .now
+    private var isLastTrainSelected: Bool {
+        draft.mode == .departure && Formatters.displayTime.string(from: draft.date) == "23:59"
     }
 
     private var selectedDay: Binding<Date> {
         Binding(
             get: { Formatters.taipeiCalendar.startOfDay(for: draft.date) },
             set: { day in
-                if draft.mode == .now {
+                if draft.mode == .now || draft.mode == .lastTrain {
                     draft.mode = .departure
                 }
 
@@ -737,7 +737,7 @@ private struct TimeEditorSheet: View {
         Binding(
             get: { draft.date },
             set: { date in
-                if draft.mode == .now {
+                if draft.mode == .now || draft.mode == .lastTrain {
                     draft.mode = .departure
                 }
 
@@ -757,67 +757,83 @@ private struct TimeEditorSheet: View {
     init(selection: Binding<TimeSelection>, dateRange: ClosedRange<Date>) {
         self._selection = selection
         self.dateRange = dateRange
-        self._draft = State(initialValue: selection.wrappedValue)
+
+        var initialDraft = selection.wrappedValue
+        if initialDraft.mode == .lastTrain {
+            initialDraft.mode = .departure
+        }
+        self._draft = State(initialValue: initialDraft)
     }
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: OnTrackTheme.space2) {
                 Button {
-                    if draft.mode == .lastTrain {
-                        draft.date = lastTrainDate(for: Date())
-                    } else {
-                        draft.date = Date()
-                    }
+                    draft = .current(mode: .now)
                 } label: {
-                    Text(shortcutTitle)
+                    Label(AppText.now, systemImage: "clock.arrow.circlepath")
                         .font(OnTrackFont.control)
-                        .foregroundStyle(isShortcutSelected ? OnTrackTheme.primary : OnTrackTheme.text)
-                        .frame(minWidth: 72, minHeight: OnTrackTheme.controlHeight)
+                        .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.text)
+                        .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
                         .onTrackPanelSurface(
                             cornerRadius: OnTrackTheme.radiusControl,
-                            ringColor: isShortcutSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                            ringColor: isNowSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
                         )
                 }
                 .buttonStyle(OnTrackPressButtonStyle())
 
-                Picker(AppText.timeMode, selection: modeSelection) {
-                    ForEach([TimeMode.departure, TimeMode.arrival, TimeMode.lastTrain]) { mode in
-                        Text(mode.title).tag(mode)
-                    }
+                Button {
+                    draft.mode = .departure
+                    draft.date = lastTrainDate(for: draft.date)
+                } label: {
+                    Label(AppText.lastTrain, systemImage: "tram.fill")
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.text)
+                        .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+                        .onTrackPanelSurface(
+                            cornerRadius: OnTrackTheme.radiusControl,
+                            ringColor: isLastTrainSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                        )
                 }
-                .pickerStyle(.segmented)
-                .frame(minHeight: OnTrackTheme.controlHeight)
-                .opacity(draft.mode == .now ? 0.56 : 1)
+                .buttonStyle(OnTrackPressButtonStyle())
             }
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.top, OnTrackTheme.space5)
 
-            HStack(spacing: OnTrackTheme.space3) {
+            Picker(AppText.timeMode, selection: modeSelection) {
+                ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
+                    Text(mode.title).tag(mode)
+                }
+            }
+            .pickerStyle(.segmented)
+            .frame(minHeight: OnTrackTheme.controlHeight)
+            .opacity(draft.mode == .now ? 0.56 : 1)
+            .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.top, OnTrackTheme.space3)
+
+            VStack(spacing: OnTrackTheme.space2) {
                 Picker(AppText.date, selection: selectedDay) {
                     ForEach(availableDates, id: \.self) { date in
                         Text(dateTitle(date)).tag(date)
                     }
                 }
-                .pickerStyle(.wheel)
+                .pickerStyle(.segmented)
+                .frame(maxWidth: 240)
+
+                DatePicker(
+                    AppText.time,
+                    selection: selectedTime,
+                    in: dateRange,
+                    displayedComponents: .hourAndMinute
+                )
+                .labelsHidden()
+                .datePickerStyle(.wheel)
                 .frame(maxWidth: .infinity)
                 .clipped()
-
-                if draft.mode != .lastTrain {
-                    DatePicker(
-                        AppText.time,
-                        selection: selectedTime,
-                        in: dateRange,
-                        displayedComponents: .hourAndMinute
-                    )
-                    .labelsHidden()
-                    .datePickerStyle(.wheel)
-                    .frame(maxWidth: .infinity)
-                    .clipped()
-                }
             }
             .tint(OnTrackTheme.primary)
             .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.top, OnTrackTheme.space3)
 
             HStack(spacing: 0) {
                 Button(AppText.cancel) {
@@ -1002,13 +1018,10 @@ private struct RouteGlyph: View {
 }
 
 private struct TrainListView: View {
-    private static let sharePanelInsertionIndex = 3
-
     let trains: [TrainInfo]
     let selectedTrain: TrainInfo?
     let isLoading: Bool
     let canLoadSchedule: Bool
-    let shareMessage: String?
     let onSelect: (TrainInfo) -> Void
     @State private var selectionFeedbackTrigger = 0
 
@@ -1026,11 +1039,7 @@ private struct TrainListView: View {
                 EmptyPanel(message: AppText.noTrainsAvailable)
             } else {
                 VStack(spacing: OnTrackTheme.space2) {
-                    ForEach(Array(trains.enumerated()), id: \.element.id) { index, train in
-                        if index == Self.sharePanelInsertionIndex, let shareMessage {
-                            SharePanel(message: shareMessage)
-                        }
-
+                    ForEach(trains) { train in
                         TrainCard(
                             train: train,
                             isSelected: selectedTrain?.trainNo == train.trainNo
@@ -1038,10 +1047,6 @@ private struct TrainListView: View {
                             selectionFeedbackTrigger += 1
                             onSelect(train)
                         }
-                    }
-
-                    if trains.count <= Self.sharePanelInsertionIndex, let shareMessage {
-                        SharePanel(message: shareMessage)
                     }
                 }
             }
@@ -1182,7 +1187,14 @@ private struct TimeColumn: View {
     let adjustedTime: String?
 
     var body: some View {
-        VStack(spacing: 0) {
+        ZStack {
+            Text(time)
+                .font(OnTrackFont.time)
+                .foregroundStyle(OnTrackTheme.text)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+
             if let adjustedTime {
                 Text(adjustedTime)
                     .font(OnTrackFont.captionStrong)
@@ -1190,16 +1202,10 @@ private struct TimeColumn: View {
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
+                    .offset(y: -OnTrackTheme.space4)
             }
-
-            Text(time)
-                .font(OnTrackFont.time)
-                .foregroundStyle(OnTrackTheme.text)
-                .monospacedDigit()
-                .lineLimit(1)
-                .minimumScaleFactor(0.85)
         }
-        .frame(width: 56)
+        .frame(width: 56, height: OnTrackTheme.space6)
     }
 }
 
@@ -1494,14 +1500,7 @@ private struct SharePanel: View {
             .accessibilityLabel(didCopy ? AppText.copied : AppText.copyMessage)
 
             ShareLink(item: message) {
-                Image(systemName: "square.and.arrow.up")
-                    .font(OnTrackFont.icon)
-                    .foregroundStyle(OnTrackTheme.text)
-                    .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-                .onTrackPanelSurface(
-                    cornerRadius: OnTrackTheme.radiusControl,
-                    ringColor: OnTrackTheme.primary.opacity(0.72)
-                )
+                IconSquare(systemName: "square.and.arrow.up")
             }
             .accessibilityLabel(AppText.shareVia)
         }
