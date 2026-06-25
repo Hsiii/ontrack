@@ -638,7 +638,7 @@ private struct TimeSelectorView: View {
             }
             .padding(.horizontal, OnTrackTheme.space4)
             .frame(minHeight: OnTrackTheme.controlHeight)
-            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
+            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
         }
         .buttonStyle(OnTrackPressButtonStyle())
         .accessibilityLabel(AppText.time)
@@ -788,7 +788,7 @@ private struct TimeEditorSheet: View {
                         .foregroundStyle(isShortcutSelected ? OnTrackTheme.primary : OnTrackTheme.text)
                         .frame(minWidth: 72, minHeight: OnTrackTheme.controlHeight)
                         .onTrackPanelSurface(
-                            cornerRadius: OnTrackTheme.radiusSmall,
+                            cornerRadius: OnTrackTheme.radiusControl,
                             ringColor: isShortcutSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
                         )
                 }
@@ -916,7 +916,7 @@ private struct RouteSelectorView: View {
                         onTap: onPickDestination
                     )
                 }
-                .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
+                .onTrackPanelSurface()
 
                 Button {
                     swapFeedbackTrigger += 1
@@ -1141,10 +1141,9 @@ private struct TrainCard: View {
             .padding(.vertical, OnTrackTheme.space3)
             .background(
                 isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
-                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             )
             .onTrackSurfaceRing(
-                cornerRadius: OnTrackTheme.radiusLarge,
                 ringColor: isSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
             )
         }
@@ -1367,7 +1366,6 @@ private struct StationSearchView: View {
             .padding(.trailing, OnTrackTheme.space2)
             .frame(minHeight: 64)
             .onTrackPanelSurface(
-                cornerRadius: OnTrackTheme.radiusLarge,
                 ringColor: isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
             )
             .padding(.horizontal, OnTrackTheme.space5)
@@ -1472,7 +1470,7 @@ private struct ShareBar: View {
                 .foregroundStyle(OnTrackTheme.text)
                 .padding(.horizontal, OnTrackTheme.space3)
                 .frame(minHeight: OnTrackTheme.controlHeight)
-                .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusSmall)
+                .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
 
             ShareLink(item: editableMessage.isEmpty ? message : editableMessage) {
                 IconSquare(systemName: "paperplane.fill")
@@ -1542,7 +1540,7 @@ private struct IconSquare: View {
             }
         }
             .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusSmall)
+            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
     }
 }
 
@@ -1555,15 +1553,15 @@ private struct EmptyPanel: View {
             .foregroundStyle(OnTrackTheme.dimText)
             .frame(maxWidth: .infinity)
             .padding(OnTrackTheme.space5)
-            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusLarge)
+            .onTrackPanelSurface()
     }
 }
 
 private struct SkeletonTrainCard: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: OnTrackTheme.radiusLarge)
+        RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             .fill(OnTrackTheme.panel)
-            .onTrackSurfaceRing(cornerRadius: OnTrackTheme.radiusLarge)
+            .onTrackSurfaceRing()
             .frame(height: 72)
             .opacity(0.7)
     }
@@ -1599,7 +1597,7 @@ private enum OnTrackFont {
 
 private extension View {
     func onTrackPanelSurface(
-        cornerRadius: CGFloat,
+        cornerRadius: CGFloat = OnTrackTheme.radiusPanel,
         ringColor: Color = OnTrackTheme.border
     ) -> some View {
         background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: cornerRadius))
@@ -1607,7 +1605,7 @@ private extension View {
     }
 
     func onTrackSurfaceRing(
-        cornerRadius: CGFloat,
+        cornerRadius: CGFloat = OnTrackTheme.radiusPanel,
         ringColor: Color = OnTrackTheme.border
     ) -> some View {
         overlay {
@@ -1638,8 +1636,8 @@ private enum OnTrackTheme {
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
     static let surfaceShadow = Color.black.opacity(0.12)
 
-    static let radiusSmall: CGFloat = 8
-    static let radiusLarge: CGFloat = 16
+    static let radiusControl: CGFloat = 8
+    static let radiusPanel: CGFloat = 12
     static let controlHeight: CGFloat = 44
 
     static let space1: CGFloat = 4
