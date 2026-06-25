@@ -109,17 +109,16 @@ struct ContentView: View {
                 ScrollView {
                     VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
                         HStack(spacing: OnTrackTheme.space2) {
-                            TimeSelectorView(selection: $timeSelection)
-
-                            Spacer(minLength: OnTrackTheme.space2)
-
-                            IconSquareButton(
+                            IconPlainButton(
                                 systemName: "arrow.clockwise",
                                 isLoading: isRefreshingLive,
                                 action: refreshLiveSchedule
                             )
                             .disabled(!canLoadSchedule || isLoadingSchedule || isRefreshingLive)
                             .accessibilityLabel(AppText.refreshLiveStatus)
+
+                            TimeSelectorView(selection: $timeSelection)
+                                .frame(maxWidth: .infinity)
                         }
 
                         RouteSelectorView(
@@ -869,97 +868,113 @@ private struct RouteSelectorView: View {
     @State private var swapFeedbackTrigger = 0
 
     var body: some View {
-        ZStack(alignment: .trailing) {
-            VStack(spacing: 0) {
-                StationTrigger(
-                    title: AppText.origin,
-                    station: origin,
-                    isLoading: isLoading,
-                    glyphSystemName: "circle.fill",
-                    glyphColor: OnTrackTheme.primary,
-                    showsBottomConnector: true,
-                    onTap: onPickOrigin
-                )
+        VStack(spacing: 0) {
+            StationTrigger(
+                title: AppText.origin,
+                station: origin,
+                isLoading: isLoading,
+                glyph: .origin,
+                onTap: onPickOrigin
+            )
+
+            HStack(spacing: OnTrackTheme.space3) {
+                RouteDots()
+                    .frame(width: 24)
 
                 Rectangle()
                     .fill(OnTrackTheme.border)
                     .frame(height: 1)
-                    .padding(.leading, OnTrackTheme.controlHeight + OnTrackTheme.space3)
-                    .padding(.trailing, OnTrackTheme.controlHeight + OnTrackTheme.space4)
-
-                StationTrigger(
-                    title: AppText.destination,
-                    station: destination,
-                    isLoading: isLoading,
-                    glyphSystemName: "mappin.and.ellipse",
-                    glyphColor: OnTrackTheme.danger,
-                    showsTopConnector: true,
-                    onTap: onPickDestination
-                )
             }
-            .onTrackPanelSurface()
+            .padding(.leading, OnTrackTheme.space4)
+            .padding(.trailing, OnTrackTheme.space4)
 
-            Button {
-                swapFeedbackTrigger += 1
-                onSwap()
-            } label: {
-                Image(systemName: "arrow.up.arrow.down")
-                    .font(OnTrackFont.icon)
-                    .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-                    .foregroundStyle(OnTrackTheme.dimText)
-                    .onTrackCircleSurface()
-            }
-            .buttonStyle(OnTrackPressButtonStyle())
-            .disabled(origin == nil || destination == nil)
-            .accessibilityLabel(AppText.swapStations)
-            .padding(.trailing, OnTrackTheme.space2)
+            StationTrigger(
+                title: AppText.destination,
+                station: destination,
+                isLoading: isLoading,
+                glyph: .destination,
+                trailingAction: AnyView(
+                    IconPlainButton(
+                        systemName: "arrow.up.arrow.down",
+                        action: {
+                            swapFeedbackTrigger += 1
+                            onSwap()
+                        }
+                    )
+                    .disabled(origin == nil || destination == nil)
+                    .accessibilityLabel(AppText.swapStations)
+                ),
+                onTap: onPickDestination
+            )
         }
+        .onTrackPanelSurface()
         .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
     }
+}
+
+private enum RouteGlyphKind {
+    case origin
+    case destination
 }
 
 private struct StationTrigger: View {
     let title: String
     let station: Station?
     let isLoading: Bool
-    let glyphSystemName: String
-    let glyphColor: Color
-    var showsTopConnector = false
-    var showsBottomConnector = false
+    let glyph: RouteGlyphKind
+    var trailingAction: AnyView?
     let onTap: () -> Void
 
+    init(
+        title: String,
+        station: Station?,
+        isLoading: Bool,
+        glyph: RouteGlyphKind,
+        trailingAction: AnyView? = nil,
+        onTap: @escaping () -> Void
+    ) {
+        self.title = title
+        self.station = station
+        self.isLoading = isLoading
+        self.glyph = glyph
+        self.trailingAction = trailingAction
+        self.onTap = onTap
+    }
+
     var body: some View {
-        Button(action: onTap) {
-            HStack(spacing: OnTrackTheme.space3) {
-                RouteGlyph(
-                    systemName: glyphSystemName,
-                    color: glyphColor,
-                    showsTopConnector: showsTopConnector,
-                    showsBottomConnector: showsBottomConnector
-                )
+        HStack(spacing: 0) {
+            Button(action: onTap) {
+                HStack(spacing: OnTrackTheme.space3) {
+                    RouteGlyph(kind: glyph)
 
-                if isLoading {
-                    ProgressView()
-                        .controlSize(.small)
-                } else {
-                    Text(station?.displayName ?? "")
-                        .font(OnTrackFont.control)
-                        .foregroundStyle(OnTrackTheme.text)
-                        .lineLimit(1)
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                    } else {
+                        Text(station?.displayName ?? "")
+                            .font(OnTrackFont.control)
+                            .foregroundStyle(OnTrackTheme.text)
+                            .lineLimit(1)
+                    }
+
+                    Spacer()
                 }
-
-                Spacer()
+                .padding(.leading, OnTrackTheme.space4)
+                .padding(.trailing, OnTrackTheme.space4)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .padding(.leading, OnTrackTheme.space4)
-            .padding(.trailing, OnTrackTheme.controlHeight + OnTrackTheme.space4)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+            .buttonStyle(OnTrackPressButtonStyle())
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(title)
+            .accessibilityValue(accessibilityValue)
+
+            if let trailingAction {
+                trailingAction
+                    .padding(.trailing, OnTrackTheme.space2)
+            }
         }
         .frame(minHeight: 64)
-        .buttonStyle(OnTrackPressButtonStyle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(title)
-        .accessibilityValue(accessibilityValue)
     }
 
     private var accessibilityValue: String {
@@ -972,29 +987,34 @@ private struct StationTrigger: View {
 }
 
 private struct RouteGlyph: View {
-    let systemName: String
-    let color: Color
-    let showsTopConnector: Bool
-    let showsBottomConnector: Bool
+    let kind: RouteGlyphKind
 
     var body: some View {
-        VStack(spacing: 0) {
-            connector(isVisible: showsTopConnector)
-
-            Image(systemName: systemName)
-                .font(OnTrackFont.icon)
-                .foregroundStyle(color)
-                .frame(width: 24, height: 24)
-
-            connector(isVisible: showsBottomConnector)
+        Group {
+            switch kind {
+            case .origin:
+                Circle()
+                    .fill(OnTrackTheme.dimText)
+                    .frame(width: OnTrackTheme.space2, height: OnTrackTheme.space2)
+            case .destination:
+                Image(systemName: "mappin.and.ellipse")
+                    .font(OnTrackFont.icon)
+                    .foregroundStyle(OnTrackTheme.danger)
+            }
         }
-        .frame(width: 24, height: 64)
+        .frame(width: 24, height: 24)
     }
+}
 
-    private func connector(isVisible: Bool) -> some View {
-        Rectangle()
-            .fill(isVisible ? OnTrackTheme.border : Color.clear)
-            .frame(width: 2, height: 20)
+private struct RouteDots: View {
+    var body: some View {
+        VStack(spacing: OnTrackTheme.space1) {
+            ForEach(0..<3, id: \.self) { _ in
+                Circle()
+                    .fill(OnTrackTheme.dimText.opacity(0.72))
+                    .frame(width: OnTrackTheme.space1, height: OnTrackTheme.space1)
+            }
+        }
     }
 }
 
@@ -1331,59 +1351,68 @@ private struct StationSearchView: View {
             .frame(minHeight: 52)
             .padding(.horizontal, OnTrackTheme.space3)
 
-            HStack(spacing: OnTrackTheme.space3) {
-                Image(systemName: "magnifyingglass")
-                    .font(OnTrackFont.icon)
-                    .foregroundStyle(OnTrackTheme.dimText)
+            VStack(spacing: 0) {
+                HStack(spacing: OnTrackTheme.space3) {
+                    Image(systemName: "magnifyingglass")
+                        .font(OnTrackFont.icon)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .frame(width: 24)
 
-                TextField(searchPlaceholder, text: $searchText)
-                    .focused($isSearchFocused)
-                    .font(OnTrackFont.control)
-                    .foregroundStyle(OnTrackTheme.text)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .submitLabel(.search)
+                    TextField(searchPlaceholder, text: $searchText)
+                        .focused($isSearchFocused)
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(OnTrackTheme.text)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .submitLabel(.search)
 
-                if isSearching {
-                    Button {
-                        searchText = ""
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(OnTrackFont.symbol)
-                            .foregroundStyle(OnTrackTheme.dimText)
-                            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                    if isSearching {
+                        Button {
+                            searchText = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(OnTrackFont.symbol)
+                                .foregroundStyle(OnTrackTheme.dimText)
+                                .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                        }
+                        .buttonStyle(OnTrackPressButtonStyle())
+                        .accessibilityLabel(AppText.clear)
                     }
-                    .buttonStyle(OnTrackPressButtonStyle())
-                    .accessibilityLabel(AppText.clear)
+                }
+                .padding(.leading, OnTrackTheme.space4)
+                .padding(.trailing, OnTrackTheme.space2)
+                .frame(minHeight: 64)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    isSearchFocused = true
+                }
+
+                if !resultRows.isEmpty {
+                    Rectangle()
+                        .fill(OnTrackTheme.border)
+                        .frame(height: 1)
+                        .padding(.leading, OnTrackTheme.space4 + 24 + OnTrackTheme.space3)
+
+                    ScrollView {
+                        LazyVStack(spacing: 0) {
+                            ForEach(resultRows) { row in
+                                StationSearchRow(
+                                    station: row.station,
+                                    role: row.role
+                                ) {
+                                    onSelect(selectedStation(row.station))
+                                }
+                            }
+                        }
+                    }
+                    .scrollDismissesKeyboard(.interactively)
                 }
             }
-            .padding(.leading, OnTrackTheme.space4)
-            .padding(.trailing, OnTrackTheme.space2)
-            .frame(minHeight: 64)
             .onTrackPanelSurface(
                 ringColor: isSearchFocused ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
             )
             .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.bottom, OnTrackTheme.space2)
-            .contentShape(Rectangle())
-            .onTapGesture {
-                isSearchFocused = true
-            }
-
-            List {
-                ForEach(resultRows) { row in
-                    StationSearchRow(
-                        station: row.station,
-                        role: row.role
-                    ) {
-                        onSelect(selectedStation(row.station))
-                    }
-                }
-            }
-            .listStyle(.insetGrouped)
-            .scrollContentBackground(.hidden)
-            .scrollDismissesKeyboard(.interactively)
-            .background(OnTrackTheme.background)
+            .frame(maxHeight: .infinity, alignment: .top)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnTrackTheme.background.ignoresSafeArea())
@@ -1447,10 +1476,11 @@ private struct StationSearchRow: View {
                 Spacer()
             }
             .frame(minHeight: 44)
+            .padding(.horizontal, OnTrackTheme.space4)
+            .padding(.vertical, OnTrackTheme.space2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .listRowBackground(OnTrackTheme.panel)
     }
 }
 
@@ -1514,6 +1544,30 @@ private struct IconSquareButton: View {
     var body: some View {
         Button(action: action) {
             IconSquare(systemName: systemName, isLoading: isLoading)
+        }
+        .buttonStyle(OnTrackPressButtonStyle())
+    }
+}
+
+private struct IconPlainButton: View {
+    let systemName: String
+    var isLoading = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Group {
+                if isLoading {
+                    ProgressView()
+                        .controlSize(.small)
+                        .tint(OnTrackTheme.dimText)
+                } else {
+                    Image(systemName: systemName)
+                        .font(OnTrackFont.icon)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                }
+            }
+            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
         }
         .buttonStyle(OnTrackPressButtonStyle())
     }
