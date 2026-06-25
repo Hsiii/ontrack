@@ -1094,8 +1094,6 @@ private struct TrainCard: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .layoutPriority(1)
 
-                Spacer(minLength: OnTrackTheme.space2)
-
                 HStack(spacing: OnTrackTheme.space1) {
                     Text(TrainDisplay.trainType(train.trainType))
                         .font(OnTrackFont.metadata)
@@ -1116,6 +1114,7 @@ private struct TrainCard: View {
                         .fill(statusColor)
                         .frame(width: 6, height: 6)
                 }
+                .fixedSize(horizontal: true, vertical: false)
             }
             .padding(.horizontal, OnTrackTheme.space4)
             .padding(.vertical, OnTrackTheme.space3)
@@ -1162,7 +1161,8 @@ private struct TripSeparator: View {
                 .foregroundStyle(OnTrackTheme.dimText)
                 .monospacedDigit()
                 .lineLimit(1)
-                .minimumScaleFactor(0.85)
+                .fixedSize(horizontal: true, vertical: false)
+                .layoutPriority(1)
 
             separatorLine
         }
