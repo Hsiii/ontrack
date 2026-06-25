@@ -666,6 +666,22 @@ private struct TimeSelectorView: View {
 
         selection = .current(mode: .now)
     }
+
+    private func dateTitle(_ date: Date) -> String {
+        let calendar = Formatters.taipeiCalendar
+        let today = calendar.startOfDay(for: Date())
+
+        if calendar.isDate(date, inSameDayAs: today) {
+            return AppText.today
+        }
+
+        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
+           calendar.isDate(date, inSameDayAs: tomorrow) {
+            return AppText.tomorrow
+        }
+
+        return Formatters.scheduleDate.string(from: date)
+    }
 }
 
 private struct TimeEditorSheet: View {
