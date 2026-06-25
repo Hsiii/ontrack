@@ -1079,27 +1079,20 @@ private struct TrainCard: View {
                         adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.departureTime, delay: train.delay) : nil
                     )
 
-                    VStack(spacing: OnTrackTheme.space1) {
-                        Rectangle()
-                            .fill(OnTrackTheme.border)
-                            .frame(height: 1)
-
-                        Text(TrainDisplay.tripDuration(departure: train.departureTime, arrival: train.arrivalTime))
-                            .font(OnTrackFont.caption)
-                            .foregroundStyle(OnTrackTheme.dimText)
-                            .monospacedDigit()
-
-                        Rectangle()
-                            .fill(OnTrackTheme.border)
-                            .frame(height: 1)
-                    }
-                    .frame(minWidth: 56)
+                    TripSeparator(
+                        duration: TrainDisplay.tripDuration(
+                            departure: train.departureTime,
+                            arrival: train.arrivalTime
+                        )
+                    )
 
                     TimeColumn(
                         time: train.arrivalTime,
                         adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.arrivalTime, delay: train.delay) : nil
                     )
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .layoutPriority(1)
 
                 Spacer(minLength: OnTrackTheme.space2)
 
@@ -1151,6 +1144,36 @@ private struct TrainCard: View {
             delay: train.delay,
             isSelected: isSelected
         )
+    }
+}
+
+private struct TripSeparator: View {
+    private static let minimumLineWidth: CGFloat = 4
+    private static let minimumWidth: CGFloat = 68
+
+    let duration: String
+
+    var body: some View {
+        HStack(spacing: OnTrackTheme.space2) {
+            separatorLine
+
+            Text(duration)
+                .font(OnTrackFont.caption)
+                .foregroundStyle(OnTrackTheme.dimText)
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+
+            separatorLine
+        }
+        .frame(minWidth: Self.minimumWidth, maxWidth: .infinity)
+    }
+
+    private var separatorLine: some View {
+        Rectangle()
+            .fill(OnTrackTheme.border)
+            .frame(height: 1)
+            .frame(minWidth: Self.minimumLineWidth, maxWidth: .infinity)
     }
 }
 
