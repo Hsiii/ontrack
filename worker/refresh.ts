@@ -22,7 +22,6 @@ export const LIVE_BOARD_FRESH_SECONDS = 5 * 60;
 const ROUTE_TIMETABLE_RETENTION_DAYS = 2;
 const FULL_TIMETABLE_RETENTION_DAYS = 2;
 const POPULAR_ROUTE_PREWARM_LIMIT = 12;
-const routeTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
 const dailyTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
 let liveBoardRefresh: Promise<DelaySnapshot> | null = null;
 
@@ -161,34 +160,6 @@ export function filterRouteTimetables(
     }
 
     return routeTimetables;
-}
-
-export async function refreshRouteTimetable(
-    env: Env,
-    date: string,
-    origin: string,
-    dest: string
-) {
-    const data = await fetchTDX<TDXTimetableResponse>(
-        env,
-        `v3/Rail/TRA/DailyTrainTimetable/OD/${origin}/to/${dest}/${date}`,
-        {
-            searchParams: {
-                $select: 'TrainInfo,StopTimes',
-            },
-            tier: 'basic',
-            caller: 'route-cache-miss',
-        }
-    );
-    const timetables = data.TrainTimetables ?? [];
-
-    await upsertSnapshot(
-        env,
-        routeTimetableKey(date, origin, dest),
-        timetables,
-        null
-    );
-    return timetables;
 }
 
 async function refreshLiveBoardUncached(env: Env) {
@@ -353,33 +324,19 @@ export async function ensureRouteTimetable(
         return cached.timetables;
     }
 
-    if (date === getTaipeiDate() || date === getNextTaipeiDate()) {
-        const dailyTimetables = await ensureTimetable(env, date);
-        const routeTimetables = filterRouteTimetables(
-            dailyTimetables,
-            origin,
-            dest
-        );
-        await upsertSnapshot(
-            env,
-            routeTimetableKey(date, origin, dest),
-            routeTimetables,
-            null
-        );
-        return routeTimetables;
-    }
-
-    const key = routeTimetableKey(date, origin, dest);
-    const existingRefresh = routeTimetableRefreshes.get(key);
-    if (existingRefresh) {
-        return existingRefresh;
-    }
-
-    const refresh = refreshRouteTimetable(env, date, origin, dest).finally(() =>
-        routeTimetableRefreshes.delete(key)
+    const dailyTimetables = await ensureTimetable(env, date);
+    const routeTimetables = filterRouteTimetables(
+        dailyTimetables,
+        origin,
+        dest
     );
-    routeTimetableRefreshes.set(key, refresh);
-    return refresh;
+    await upsertSnapshot(
+        env,
+        routeTimetableKey(date, origin, dest),
+        routeTimetables,
+        null
+    );
+    return routeTimetables;
 }
 
 export async function getLiveBoard(env: Env) {

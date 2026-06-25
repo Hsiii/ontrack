@@ -2,7 +2,6 @@ export type TDXFormat = 'JSON' | 'XML';
 export type TDXTier = 'basic' | 'advanced';
 export type TDXCaller =
     | 'station-refresh'
-    | 'route-cache-miss'
     | 'daily-timetable-refresh'
     | 'live-board-refresh';
 

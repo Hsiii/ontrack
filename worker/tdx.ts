@@ -97,7 +97,7 @@ export async function fetchTDXWithCache<T>(
         tier = 'basic',
         format = 'JSON',
         ifModifiedSince,
-        caller = 'route-cache-miss',
+        caller = 'daily-timetable-refresh',
     } = options;
 
     const token = await getAccessToken(env);
