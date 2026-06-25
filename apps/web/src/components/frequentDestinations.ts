@@ -1,37 +1,12 @@
+import destinationAutofillConfig from '../../../../lib/destination-autofill/config.json';
+
 const FREQUENT_DESTINATIONS_KEY = 'ontrack_frequent_destinations';
 const LEGACY_RECENT_STATIONS_KEY = 'ontrack_recent_stations';
 const LEGACY_RECENT_DEPARTURE_STATIONS_KEY =
     'ontrack_recent_departure_stations';
-const MAX_FREQUENT_DESTINATIONS = 24;
-const DECAY_DAYS = 45;
-
-const HOUR_BUCKETS = [
-    { key: '0-5', start: 0, end: 5 },
-    { key: '6-9', start: 6, end: 9 },
-    { key: '10-15', start: 10, end: 15 },
-    { key: '16-19', start: 16, end: 19 },
-    { key: '20-23', start: 20, end: 23 },
-] as const;
-
-const PRIOR_STATION_NAMES = [
-    '新竹',
-    '臺北',
-    '台北',
-    '板橋',
-    '桃園',
-    '臺中',
-    '台中',
-    '臺南',
-    '台南',
-    '高雄',
-    '新左營',
-    '松山',
-    '彰化',
-    '嘉義',
-];
 
 type DayType = 'weekday' | 'weekend';
-type HourBucket = (typeof HOUR_BUCKETS)[number]['key'];
+type HourBucket = string;
 type TimeContextKey = `${DayType}:${HourBucket}`;
 
 interface FrequentDestination {
@@ -185,23 +160,31 @@ function readTimeContexts(value: unknown) {
 }
 
 function isTimeContextKey(value: string): value is TimeContextKey {
-    return /^(weekday|weekend):(0-5|6-9|10-15|16-19|20-23)$/.test(value);
+    return destinationAutofillConfig.hourBuckets.some(
+        (bucket) =>
+            value === `weekday:${bucket.key}` ||
+            value === `weekend:${bucket.key}`
+    );
 }
 
 function getTimeContext(date: Date): TimeContextKey {
     const dayType: DayType =
         date.getDay() === 0 || date.getDay() === 6 ? 'weekend' : 'weekday';
     const hour = date.getHours();
-    const bucket = HOUR_BUCKETS.find(
-        ({ start, end }) => hour >= start && hour <= end
+    const bucket = destinationAutofillConfig.hourBuckets.find(
+        ({ startHour, endHour }) => hour >= startHour && hour <= endHour
     );
+    const fallbackBucket =
+        destinationAutofillConfig.hourBuckets[
+            destinationAutofillConfig.hourBuckets.length - 1
+        ]?.key ?? '';
 
-    return `${dayType}:${bucket?.key ?? '20-23'}`;
+    return `${dayType}:${bucket?.key ?? fallbackBucket}`;
 }
 
 function getDecayedCount(count: number, updatedAt: number, now: number) {
     const ageDays = Math.max(0, now - updatedAt) / 86_400_000;
-    return count * Math.exp(-ageDays / DECAY_DAYS);
+    return count * Math.exp(-ageDays / destinationAutofillConfig.decayDays);
 }
 
 function getMaxValue(values: Map<string, number>) {
@@ -221,14 +204,21 @@ function normalizeStationName(name?: string) {
 
 function getPriorScore(candidate: DestinationCandidate, index: number) {
     const normalizedName = normalizeStationName(candidate.name);
-    const priorIndex =
-        PRIOR_STATION_NAMES.map(normalizeStationName).indexOf(normalizedName);
+    const priorIndex = destinationAutofillConfig.priorStationNames
+        .map(normalizeStationName)
+        .indexOf(normalizedName);
 
     if (priorIndex >= 0) {
-        return 1 - priorIndex / PRIOR_STATION_NAMES.length;
+        return (
+            1 - priorIndex / destinationAutofillConfig.priorStationNames.length
+        );
     }
 
-    return Math.max(0, 0.1 - index * 0.002);
+    return Math.max(
+        0,
+        destinationAutofillConfig.unknownStationPrior.base -
+            index * destinationAutofillConfig.unknownStationPrior.indexPenalty
+    );
 }
 
 function incrementScore(
@@ -261,30 +251,21 @@ function getDestinationCandidates(
 }
 
 function getWeighting(originSamples: number, globalSamples: number) {
-    if (originSamples >= 3) {
-        return {
-            userOD: 0.55,
-            timeContext: 0.2,
-            userGlobal: 0.18,
-            prior: 0.07,
-        };
+    if (
+        originSamples >=
+        destinationAutofillConfig.scoreProfiles.origin.minOriginSamples
+    ) {
+        return destinationAutofillConfig.scoreProfiles.origin.weights;
     }
 
-    if (globalSamples >= 3) {
-        return {
-            userOD: 0.2,
-            timeContext: 0.15,
-            userGlobal: 0.5,
-            prior: 0.15,
-        };
+    if (
+        globalSamples >=
+        destinationAutofillConfig.scoreProfiles.global.minGlobalSamples
+    ) {
+        return destinationAutofillConfig.scoreProfiles.global.weights;
     }
 
-    return {
-        userOD: 0,
-        timeContext: 0,
-        userGlobal: 0.35,
-        prior: 0.65,
-    };
+    return destinationAutofillConfig.scoreProfiles.coldStart.weights;
 }
 
 function scoreDestinationIds(
@@ -490,7 +471,7 @@ export function persistFrequentDestinationId(
 
     const sortedDestinations = sortDestinations(nextDestinations).slice(
         0,
-        MAX_FREQUENT_DESTINATIONS
+        destinationAutofillConfig.maxFrequentDestinations
     );
 
     localStorage.setItem(

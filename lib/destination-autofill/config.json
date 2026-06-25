@@ -1,0 +1,59 @@
+{
+    "maxFrequentDestinations": 24,
+    "decayDays": 45,
+    "hourBuckets": [
+        { "key": "0-5", "startHour": 0, "endHour": 5 },
+        { "key": "6-9", "startHour": 6, "endHour": 9 },
+        { "key": "10-15", "startHour": 10, "endHour": 15 },
+        { "key": "16-19", "startHour": 16, "endHour": 19 },
+        { "key": "20-23", "startHour": 20, "endHour": 23 }
+    ],
+    "scoreProfiles": {
+        "origin": {
+            "minOriginSamples": 3,
+            "weights": {
+                "userOD": 0.55,
+                "timeContext": 0.2,
+                "userGlobal": 0.18,
+                "prior": 0.07
+            }
+        },
+        "global": {
+            "minGlobalSamples": 3,
+            "weights": {
+                "userOD": 0.2,
+                "timeContext": 0.15,
+                "userGlobal": 0.5,
+                "prior": 0.15
+            }
+        },
+        "coldStart": {
+            "weights": {
+                "userOD": 0,
+                "timeContext": 0,
+                "userGlobal": 0.35,
+                "prior": 0.65
+            }
+        }
+    },
+    "unknownStationPrior": {
+        "base": 0.1,
+        "indexPenalty": 0.002
+    },
+    "priorStationNames": [
+        "新竹",
+        "臺北",
+        "台北",
+        "板橋",
+        "桃園",
+        "臺中",
+        "台中",
+        "臺南",
+        "台南",
+        "高雄",
+        "新左營",
+        "松山",
+        "彰化",
+        "嘉義"
+    ]
+}
