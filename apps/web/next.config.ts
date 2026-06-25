@@ -8,7 +8,8 @@ const nextConfig = (phase: string): NextConfig => {
     const isDevServer = phase === PHASE_DEVELOPMENT_SERVER;
 
     return {
-        output: 'export',
+        allowedDevOrigins: ['127.0.0.1'],
+        ...(isDevServer ? {} : { output: 'export' as const }),
         reactCompiler: true,
         ...(isDevServer
             ? {
