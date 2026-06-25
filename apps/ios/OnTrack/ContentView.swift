@@ -894,7 +894,7 @@ private struct RouteSelectorView: View {
                     title: AppText.destination,
                     station: destination,
                     isLoading: isLoading,
-                    glyphSystemName: "mappin.circle.fill",
+                    glyphSystemName: "mappin.and.ellipse",
                     glyphColor: OnTrackTheme.danger,
                     showsTopConnector: true,
                     onTap: onPickDestination
