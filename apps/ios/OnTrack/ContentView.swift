@@ -938,7 +938,7 @@ private struct RouteSelectorView: View {
 
             HStack(spacing: OnTrackTheme.space3) {
                 RouteDots()
-                    .frame(width: 24)
+                    .frame(width: 24, height: OnTrackTheme.routeDividerHeight)
 
                 Rectangle()
                     .fill(OnTrackTheme.border)
@@ -946,6 +946,7 @@ private struct RouteSelectorView: View {
             }
             .padding(.leading, OnTrackTheme.space4)
             .padding(.trailing, OnTrackTheme.space4)
+            .frame(height: OnTrackTheme.routeDividerHeight)
 
             StationTrigger(
                 title: AppText.destination,
@@ -1033,7 +1034,7 @@ private struct StationTrigger: View {
                     .padding(.trailing, OnTrackTheme.space2)
             }
         }
-        .frame(minHeight: 64)
+        .frame(minHeight: OnTrackTheme.routeRowHeight)
     }
 
     private var accessibilityValue: String {
@@ -1067,7 +1068,7 @@ private struct RouteGlyph: View {
 
 private struct RouteDots: View {
     var body: some View {
-        VStack(spacing: OnTrackTheme.space1) {
+        VStack(spacing: 0) {
             ForEach(0..<3, id: \.self) { _ in
                 Circle()
                     .fill(OnTrackTheme.dimText.opacity(0.72))
@@ -1913,6 +1914,8 @@ private enum OnTrackTheme {
     static let radiusControl: CGFloat = 8
     static let radiusPanel: CGFloat = 12
     static let controlHeight: CGFloat = 44
+    static let routeDividerHeight: CGFloat = 12
+    static let routeRowHeight: CGFloat = 56
 
     static let space1: CGFloat = 4
     static let space2: CGFloat = 8
