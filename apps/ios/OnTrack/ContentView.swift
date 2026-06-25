@@ -616,7 +616,7 @@ private struct TimeSelectorView: View {
         case .departure, .arrival:
             "\(selection.mode.title) \(Formatters.displayTime.string(from: selection.date))"
         case .lastTrain:
-            "\(selection.mode.title) \(dateTitle(selection.date))"
+            "\(selection.mode.title) \(Formatters.scheduleDate.string(from: selection.date))"
         }
     }
 
@@ -661,22 +661,6 @@ private struct TimeSelectorView: View {
 
         selection = .current(mode: .now)
     }
-
-    private func dateTitle(_ date: Date) -> String {
-        let calendar = Formatters.taipeiCalendar
-        let today = calendar.startOfDay(for: Date())
-
-        if calendar.isDate(date, inSameDayAs: today) {
-            return AppText.today
-        }
-
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
-           calendar.isDate(date, inSameDayAs: tomorrow) {
-            return AppText.tomorrow
-        }
-
-        return Formatters.scheduleDate.string(from: date)
-    }
 }
 
 private struct TimeEditorSheet: View {
@@ -703,26 +687,6 @@ private struct TimeEditorSheet: View {
         draft.mode == .departure && Formatters.displayTime.string(from: draft.date) == "23:59"
     }
 
-    private var selectedDay: Binding<Date> {
-        Binding(
-            get: { Formatters.taipeiCalendar.startOfDay(for: draft.date) },
-            set: { day in
-                if draft.mode == .now || draft.mode == .lastTrain {
-                    draft.mode = .departure
-                }
-
-                let calendar = Formatters.taipeiCalendar
-                let time = calendar.dateComponents([.hour, .minute], from: draft.date)
-                draft.date = calendar.date(
-                    bySettingHour: time.hour ?? 0,
-                    minute: time.minute ?? 0,
-                    second: 0,
-                    of: day
-                ) ?? day
-            }
-        )
-    }
-
     private func lastTrainDate(for date: Date) -> Date {
         let calendar = Formatters.taipeiCalendar
         return calendar.date(
@@ -746,14 +710,6 @@ private struct TimeEditorSheet: View {
         )
     }
 
-    private var availableDates: [Date] {
-        let calendar = Formatters.taipeiCalendar
-        let today = calendar.startOfDay(for: Date())
-        return (0...TimeSelection.futureDayLimit).compactMap {
-            calendar.date(byAdding: .day, value: $0, to: today)
-        }
-    }
-
     init(selection: Binding<TimeSelection>, dateRange: ClosedRange<Date>) {
         self._selection = selection
         self.dateRange = dateRange
@@ -768,69 +724,64 @@ private struct TimeEditorSheet: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: OnTrackTheme.space2) {
-                Button {
-                    draft = .current(mode: .now)
-                } label: {
-                    Label(AppText.now, systemImage: "clock.arrow.circlepath")
-                        .font(OnTrackFont.control)
-                        .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.text)
-                        .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
-                        .onTrackPanelSurface(
-                            cornerRadius: OnTrackTheme.radiusControl,
-                            ringColor: isNowSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
-                        )
-                }
-                .buttonStyle(OnTrackPressButtonStyle())
+                HStack(spacing: OnTrackTheme.space2) {
+                    Button {
+                        draft = .current(mode: .now)
+                    } label: {
+                        Text(AppText.now)
+                            .font(OnTrackFont.control)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+                            .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.text)
+                            .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+                            .onTrackPanelSurface(
+                                cornerRadius: OnTrackTheme.radiusControl,
+                                ringColor: isNowSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                            )
+                    }
+                    .buttonStyle(OnTrackPressButtonStyle())
 
-                Button {
-                    draft.mode = .departure
-                    draft.date = lastTrainDate(for: draft.date)
-                } label: {
-                    Label(AppText.lastTrain, systemImage: "tram.fill")
-                        .font(OnTrackFont.control)
-                        .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.text)
-                        .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
-                        .onTrackPanelSurface(
-                            cornerRadius: OnTrackTheme.radiusControl,
-                            ringColor: isLastTrainSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
-                        )
+                    Button {
+                        draft.mode = .departure
+                        draft.date = lastTrainDate(for: draft.date)
+                    } label: {
+                        Text(AppText.lastTrain)
+                            .font(OnTrackFont.control)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.82)
+                            .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.text)
+                            .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+                            .onTrackPanelSurface(
+                                cornerRadius: OnTrackTheme.radiusControl,
+                                ringColor: isLastTrainSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                            )
+                    }
+                    .buttonStyle(OnTrackPressButtonStyle())
                 }
-                .buttonStyle(OnTrackPressButtonStyle())
+                .frame(maxWidth: .infinity)
+
+                Picker(AppText.timeMode, selection: modeSelection) {
+                    ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
+                        Text(mode.title).tag(mode)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+                .opacity(draft.mode == .now ? 0.56 : 1)
             }
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.top, OnTrackTheme.space5)
 
-            Picker(AppText.timeMode, selection: modeSelection) {
-                ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
-                    Text(mode.title).tag(mode)
-                }
-            }
-            .pickerStyle(.segmented)
-            .frame(minHeight: OnTrackTheme.controlHeight)
-            .opacity(draft.mode == .now ? 0.56 : 1)
-            .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.top, OnTrackTheme.space3)
-
-            VStack(spacing: OnTrackTheme.space2) {
-                Picker(AppText.date, selection: selectedDay) {
-                    ForEach(availableDates, id: \.self) { date in
-                        Text(dateTitle(date)).tag(date)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .frame(maxWidth: 240)
-
-                DatePicker(
-                    AppText.time,
-                    selection: selectedTime,
-                    in: dateRange,
-                    displayedComponents: .hourAndMinute
-                )
-                .labelsHidden()
-                .datePickerStyle(.wheel)
-                .frame(maxWidth: .infinity)
-                .clipped()
-            }
+            DatePicker(
+                AppText.time,
+                selection: selectedTime,
+                in: dateRange,
+                displayedComponents: [.date, .hourAndMinute]
+            )
+            .labelsHidden()
+            .datePickerStyle(.wheel)
+            .frame(maxWidth: .infinity)
+            .clipped()
             .tint(OnTrackTheme.primary)
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.top, OnTrackTheme.space3)
@@ -861,21 +812,6 @@ private struct TimeEditorSheet: View {
         .presentationBackground(OnTrackTheme.background)
     }
 
-    private func dateTitle(_ date: Date) -> String {
-        let calendar = Formatters.taipeiCalendar
-        let today = calendar.startOfDay(for: Date())
-
-        if calendar.isDate(date, inSameDayAs: today) {
-            return AppText.today
-        }
-
-        if let tomorrow = calendar.date(byAdding: .day, value: 1, to: today),
-           calendar.isDate(date, inSameDayAs: tomorrow) {
-            return AppText.tomorrow
-        }
-
-        return Formatters.scheduleDate.string(from: date)
-    }
 }
 
 private struct RouteSelectorView: View {
