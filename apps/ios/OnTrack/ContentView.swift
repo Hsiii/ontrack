@@ -16,6 +16,7 @@ struct ContentView: View {
     @AppStorage("ontrack_destination_id") private var destinationId = ""
     @AppStorage("ontrack_cached_origin_id") private var cachedOriginId = ""
     @AppStorage("ontrack_manual_origin_selected_at") private var manualOriginSelectedAt = 0.0
+    @AppStorage("ontrack_frequent_destinations") private var frequentDestinationRecordsData = ""
     @AppStorage("ontrack_recent_destination_ids") private var recentDestinationIDs = ""
 
     @StateObject private var locationService = LocationService()
@@ -29,6 +30,7 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
+    @State private var destinationSource: DestinationSelectionSource = .cached
 
     private let scheduleRefreshTimer = Timer.publish(
         every: scheduleRefreshInterval,
@@ -55,10 +57,21 @@ struct ContentView: View {
     }
 
     private var recentDestinationStations: [Station] {
+        DestinationAutofill.rankedDestinationIDs(
+            originId: originId,
+            excludedId: originId,
+            recordsData: frequentDestinationRecordsData,
+            legacyDestinationIDs: legacyRecentDestinationIDs,
+            stations: stations
+        )
+        .prefix(3)
+        .compactMap { stationMap[$0] }
+    }
+
+    private var legacyRecentDestinationIDs: [String] {
         recentDestinationIDs
             .split(separator: ",")
-            .compactMap { stationMap[String($0)] }
-            .filter { $0.id != originId }
+            .map(String.init)
     }
 
     private var canLoadSchedule: Bool {
@@ -332,11 +345,10 @@ struct ContentView: View {
         switch role {
         case .origin:
             setOrigin(station.id, source: .manual, selectedAt: Date())
-            if destinationId == station.id {
-                destinationId = ""
-            }
+            autoFillDestinationIfNeeded()
         case .destination:
             destinationId = station.id
+            destinationSource = .manual
             rememberDestination(station.id)
         }
     }
@@ -346,9 +358,13 @@ struct ContentView: View {
             return
         }
 
-        let currentOrigin = originId
-        setOrigin(destinationId, source: .manual, selectedAt: Date())
-        destinationId = currentOrigin
+        let currentOriginId = originId
+        let currentDestinationId = destinationId
+
+        setOrigin(currentDestinationId, source: .manual, selectedAt: Date())
+        destinationId = currentOriginId
+        destinationSource = .manual
+        rememberDestination(currentOriginId)
     }
 
     private func resolveInitialStations(_ loadedStations: [Station]) {
@@ -367,11 +383,7 @@ struct ContentView: View {
             originSource = .manual
         }
 
-        if destinationId.isEmpty || destinationId == originId {
-            destinationId = loadedStations.first(where: { $0.name == "新竹" })?.id
-                ?? loadedStations.first(where: { $0.id != originId })?.id
-                ?? ""
-        }
+        autoFillDestinationIfNeeded(in: loadedStations)
     }
 
     private func promptForAutoDetectedOrigin() {
@@ -419,7 +431,7 @@ struct ContentView: View {
         }
 
         setOrigin(resolvePreferredStationId(nearestStation.id), source: .geo)
-        replaceDestinationIfNeeded()
+        autoFillDestinationIfNeeded()
     }
 
     private func fallbackToCachedOrigin() {
@@ -447,12 +459,36 @@ struct ContentView: View {
         }
     }
 
-    private func replaceDestinationIfNeeded() {
-        guard originSource == .geo, !originId.isEmpty, (destinationId.isEmpty || destinationId == originId) else {
+    private func autoFillDestinationIfNeeded(in candidateStations: [Station]? = nil) {
+        let availableStations = candidateStations ?? stations
+        guard !originId.isEmpty, !availableStations.isEmpty else {
             return
         }
 
-        destinationId = stations.first(where: { $0.id != originId })?.id ?? ""
+        let hasKnownDestination = !destinationId.isEmpty && availableStations.contains { $0.id == destinationId }
+        let shouldAutoFillDestination = destinationId.isEmpty
+            || destinationId == originId
+            || !hasKnownDestination
+            || destinationSource == .auto
+
+        guard shouldAutoFillDestination else {
+            return
+        }
+
+        let autoFillDestinationId = DestinationAutofill.autoFillDestinationID(
+            originId: originId,
+            recordsData: frequentDestinationRecordsData,
+            legacyDestinationIDs: legacyRecentDestinationIDs,
+            stations: availableStations
+        )
+
+        guard !autoFillDestinationId.isEmpty else {
+            destinationId = ""
+            return
+        }
+
+        destinationId = autoFillDestinationId
+        destinationSource = .auto
     }
 
     private func resolvePreferredStationId(_ stationId: String) -> String {
@@ -476,14 +512,17 @@ struct ContentView: View {
     }
 
     private func rememberDestination(_ id: String) {
-        let previousIDs = recentDestinationIDs
-            .split(separator: ",")
-            .map(String.init)
-            .filter { $0 != id }
+        guard !originId.isEmpty else {
+            return
+        }
 
-        recentDestinationIDs = ([id] + previousIDs)
-            .prefix(12)
-            .joined(separator: ",")
+        frequentDestinationRecordsData = DestinationAutofill.recordDestination(
+            originId: originId,
+            stationId: id,
+            recordsData: frequentDestinationRecordsData,
+            legacyDestinationIDs: legacyRecentDestinationIDs
+        )
+        recentDestinationIDs = ""
     }
 }
 
@@ -491,6 +530,12 @@ private enum OriginSelectionSource {
     case manual
     case cached
     case geo
+}
+
+private enum DestinationSelectionSource {
+    case manual
+    case cached
+    case auto
 }
 
 private struct UserCoordinate: Equatable, Sendable {

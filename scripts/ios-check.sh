@@ -14,6 +14,7 @@ xcrun swiftc \
     -parse \
     "$ROOT_DIR/apps/ios/OnTrack/APIClient.swift" \
     "$ROOT_DIR/apps/ios/OnTrack/ContentView.swift" \
+    "$ROOT_DIR/apps/ios/OnTrack/DestinationAutofill.swift" \
     "$ROOT_DIR/apps/ios/OnTrack/Models.swift" \
     "$ROOT_DIR/apps/ios/OnTrack/OnTrackApp.swift"
 
