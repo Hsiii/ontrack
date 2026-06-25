@@ -56,7 +56,10 @@ export function getNextTaipeiDate(date = new Date()) {
     return getTaipeiDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
 }
 
-export function shouldRefreshLiveBoard(date = new Date()) {
+export function shouldRefreshLiveBoard(
+    date = new Date(),
+    mode: 'auto' | 'manual' = 'auto'
+) {
     const hour = Number(
         date.toLocaleTimeString('en-CA', {
             hour: '2-digit',
@@ -65,7 +68,11 @@ export function shouldRefreshLiveBoard(date = new Date()) {
         })
     );
 
-    return hour === 0 || hour >= 4;
+    if (mode === 'manual') {
+        return hour === 0 || hour >= 4;
+    }
+
+    return hour === 0 || hour >= 6;
 }
 
 export function timetableKey(date: string) {

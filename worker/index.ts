@@ -28,8 +28,8 @@ const SECURITY_HEADERS = {
     'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
 };
 const LIVE_BOARD_REFRESH_CRONS = new Set([
-    '*/5 0-15,21-23 * * *',
-    '*/10 16,20 * * *',
+    '*/5 0-15,22-23 * * *',
+    '*/10 16 * * *',
 ]);
 const DAILY_REFRESH_CRON = '50 19 * * *';
 
@@ -159,6 +159,7 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
     const origin = url.searchParams.get('origin');
     const dest = url.searchParams.get('dest');
     const date = url.searchParams.get('date');
+    const forceLiveRefresh = url.searchParams.get('refreshLive') === '1';
 
     if (!origin || !dest) {
         return json(
@@ -186,11 +187,12 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
         'Route interest update'
     );
 
-    const [routeResult, liveBoard] = await Promise.all([
+    const [routeResult, liveBoardSnapshot] = await Promise.all([
         getCachedRouteTimetable(env, queryDate, origin, dest),
         isToday ? getLiveBoardSnapshot(env) : Promise.resolve(null),
     ]);
-    const liveData = getLiveDataStatus(isToday, liveBoard);
+    let liveBoard = liveBoardSnapshot;
+    let liveData = getLiveDataStatus(isToday, liveBoard);
 
     if (routeResult.cacheStatus === 'warming') {
         waitUntilLogged(
@@ -200,9 +202,24 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
         );
     }
 
+    const shouldAttemptLiveRefresh =
+        liveData.status === 'stale' || liveData.status === 'unavailable';
     if (
-        (liveData.status === 'stale' || liveData.status === 'unavailable') &&
-        shouldRefreshLiveBoard()
+        forceLiveRefresh &&
+        isToday &&
+        shouldAttemptLiveRefresh &&
+        shouldRefreshLiveBoard(new Date(), 'manual')
+    ) {
+        try {
+            await refreshLiveBoard(env);
+            liveBoard = await getLiveBoardSnapshot(env);
+            liveData = getLiveDataStatus(isToday, liveBoard);
+        } catch (error) {
+            console.error('Manual live board refresh failed:', error);
+        }
+    } else if (
+        shouldAttemptLiveRefresh &&
+        shouldRefreshLiveBoard(new Date(), 'auto')
     ) {
         waitUntilLogged(ctx, refreshLiveBoard(env), 'Live board refresh');
     }
@@ -235,7 +252,7 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
             status: routeResult.cacheStatus === 'warming' ? 202 : 200,
             headers: {
                 'Cache-Control':
-                    routeResult.cacheStatus === 'warming'
+                    forceLiveRefresh || routeResult.cacheStatus === 'warming'
                         ? 'no-store'
                         : 'public, s-maxage=60, stale-while-revalidate=300',
             },
