@@ -616,8 +616,10 @@ private struct TimeSelectorView: View {
         switch selection.mode {
         case .now:
             AppText.leaveNow
-        case .departure, .arrival, .lastTrain:
+        case .departure, .arrival:
             "\(selection.mode.title) \(Formatters.displayTime.string(from: selection.date))"
+        case .lastTrain:
+            "\(selection.mode.title) \(dateTitle(selection.date))"
         }
     }
 
@@ -680,10 +682,22 @@ private struct TimeEditorSheet: View {
                 draft.mode = mode
 
                 if mode == .lastTrain {
-                    draft.date = lastTrainDate()
+                    draft.date = lastTrainDate(for: draft.date)
                 }
             }
         )
+    }
+
+    private var shortcutTitle: String {
+        draft.mode == .lastTrain ? AppText.today : AppText.now
+    }
+
+    private var isShortcutSelected: Bool {
+        if draft.mode == .lastTrain {
+            return Formatters.taipeiCalendar.isDate(draft.date, inSameDayAs: Date())
+        }
+
+        return draft.mode == .now
     }
 
     private var selectedDay: Binding<Date> {
@@ -706,14 +720,14 @@ private struct TimeEditorSheet: View {
         )
     }
 
-    private func lastTrainDate() -> Date {
+    private func lastTrainDate(for date: Date) -> Date {
         let calendar = Formatters.taipeiCalendar
         return calendar.date(
             bySettingHour: 23,
             minute: 59,
             second: 0,
-            of: Date()
-        ) ?? Date()
+            of: date
+        ) ?? date
     }
 
     private var selectedTime: Binding<Date> {
@@ -747,19 +761,22 @@ private struct TimeEditorSheet: View {
         VStack(spacing: 0) {
             HStack(spacing: OnTrackTheme.space2) {
                 Button {
-                    draft.date = Date()
+                    if draft.mode == .lastTrain {
+                        draft.date = lastTrainDate(for: Date())
+                    } else {
+                        draft.date = Date()
+                    }
                 } label: {
-                    Text(AppText.now)
+                    Text(shortcutTitle)
                         .font(OnTrackFont.control)
-                        .foregroundStyle(draft.mode == .now ? OnTrackTheme.primary : OnTrackTheme.text)
+                        .foregroundStyle(isShortcutSelected ? OnTrackTheme.primary : OnTrackTheme.text)
                         .frame(minWidth: 72, minHeight: OnTrackTheme.controlHeight)
                         .onTrackPanelSurface(
                             cornerRadius: OnTrackTheme.radiusSmall,
-                            ringColor: draft.mode == .now ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                            ringColor: isShortcutSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
                         )
                 }
                 .buttonStyle(OnTrackPressButtonStyle())
-                .disabled(draft.mode == .lastTrain)
 
                 Picker(AppText.timeMode, selection: modeSelection) {
                     ForEach([TimeMode.departure, TimeMode.arrival, TimeMode.lastTrain]) { mode in
@@ -783,19 +800,19 @@ private struct TimeEditorSheet: View {
                 .frame(maxWidth: .infinity)
                 .clipped()
 
-                DatePicker(
-                    AppText.time,
-                    selection: selectedTime,
-                    in: dateRange,
-                    displayedComponents: .hourAndMinute
-                )
-                .labelsHidden()
-                .datePickerStyle(.wheel)
-                .frame(maxWidth: .infinity)
-                .clipped()
+                if draft.mode != .lastTrain {
+                    DatePicker(
+                        AppText.time,
+                        selection: selectedTime,
+                        in: dateRange,
+                        displayedComponents: .hourAndMinute
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.wheel)
+                    .frame(maxWidth: .infinity)
+                    .clipped()
+                }
             }
-            .disabled(draft.mode == .lastTrain)
-            .opacity(draft.mode == .lastTrain ? 0.48 : 1)
             .tint(OnTrackTheme.primary)
             .padding(.horizontal, OnTrackTheme.space5)
 

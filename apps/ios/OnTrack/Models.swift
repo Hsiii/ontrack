@@ -97,7 +97,7 @@ struct TimeSelection: Equatable {
     var mode: TimeMode
     var date: Date
 
-    static let futureDayLimit = 59
+    static let futureDayLimit = 7
 
     static func current(mode: TimeMode = .now, date: Date = Date()) -> TimeSelection {
         TimeSelection(
