@@ -1002,7 +1002,7 @@ private struct StationTrigger: View {
     }
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(alignment: .center, spacing: 0) {
             Button(action: onTap) {
                 HStack(spacing: OnTrackTheme.space3) {
                     RouteGlyph(kind: glyph)
@@ -1021,7 +1021,7 @@ private struct StationTrigger: View {
                 }
                 .padding(.leading, OnTrackTheme.space4)
                 .padding(.trailing, OnTrackTheme.space4)
-                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, height: OnTrackTheme.routeRowHeight, alignment: .leading)
                 .contentShape(Rectangle())
             }
             .buttonStyle(OnTrackPressButtonStyle())
@@ -1034,7 +1034,7 @@ private struct StationTrigger: View {
                     .padding(.trailing, OnTrackTheme.space2)
             }
         }
-        .frame(minHeight: OnTrackTheme.routeRowHeight)
+        .frame(height: OnTrackTheme.routeRowHeight)
     }
 
     private var accessibilityValue: String {
@@ -1068,7 +1068,7 @@ private struct RouteGlyph: View {
 
 private struct RouteDots: View {
     var body: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: OnTrackTheme.space1) {
             ForEach(0..<3, id: \.self) { _ in
                 Circle()
                     .fill(OnTrackTheme.dimText.opacity(0.72))
@@ -1914,7 +1914,7 @@ private enum OnTrackTheme {
     static let radiusControl: CGFloat = 8
     static let radiusPanel: CGFloat = 12
     static let controlHeight: CGFloat = 44
-    static let routeDividerHeight: CGFloat = 12
+    static let routeDividerHeight: CGFloat = 20
     static let routeRowHeight: CGFloat = 56
 
     static let space1: CGFloat = 4
