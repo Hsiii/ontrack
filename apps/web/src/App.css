@@ -2,6 +2,9 @@
     width: 100%;
     padding-inline: var(--space-5);
     padding-top: var(--space-3);
+    padding-bottom: calc(
+        var(--space-15) + var(--space-6) + env(safe-area-inset-bottom)
+    );
 }
 
 .app-main {

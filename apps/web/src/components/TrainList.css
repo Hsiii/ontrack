@@ -86,9 +86,11 @@
 
 .train-card-time-cell {
     display: inline-flex;
-    flex-direction: column;
     align-items: center;
+    justify-content: center;
     position: relative;
+    min-width: 5ch;
+    min-height: var(--space-6);
     flex-shrink: 0;
 }
 
@@ -101,12 +103,13 @@
 
 .train-card-delayed-time {
     position: absolute;
-    top: var(--space-neg-2);
+    top: 50%;
+    transform: translateY(calc(-50% - var(--space-4)));
     font-size: var(--text-xs);
     font-weight: var(--font-bold);
     color: var(--color-danger);
     line-height: 1;
-    letter-spacing: 0.02em;
+    letter-spacing: 0;
     white-space: nowrap;
     font-variant-numeric: tabular-nums;
 }

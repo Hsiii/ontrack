@@ -73,24 +73,20 @@
 .share-card-button {
     width: 44px;
     height: 44px;
-    border-radius: 50%;
+    border-radius: var(--radius-sm);
     flex-shrink: 0;
-    background: var(--color-primary);
-    border-color: transparent;
-    color: var(--color-bg-light);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-surface);
+    color: var(--color-text-dim);
     transition:
-        filter var(--motion-base) ease,
+        background-color var(--motion-base) ease,
+        box-shadow var(--motion-base) ease,
         transform var(--motion-fast) ease;
 }
 
 .share-card-button:hover {
-    background: var(--color-primary);
-    filter: brightness(1.06);
-}
-
-.share-card-button:focus-visible {
-    outline: 2px solid rgba(56, 189, 248, 0.42);
-    outline-offset: 2px;
+    background: var(--color-border);
+    box-shadow: var(--shadow-surface-hover);
 }
 
 .share-card-button:active {

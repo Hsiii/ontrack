@@ -7,18 +7,22 @@
     width: 44px;
     height: 44px;
     padding: var(--space-2);
-    border-radius: 50%;
-    border: none;
-    background: none;
+    border-radius: var(--radius-sm);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-surface);
     color: var(--color-text-dim);
     cursor: pointer;
     line-height: 1;
     transition:
+        background-color var(--motion-base) ease,
         color var(--motion-base) ease,
+        box-shadow var(--motion-base) ease,
         transform var(--motion-fast) ease;
 }
 
 .language-dropdown-trigger:hover {
+    background: var(--color-border);
+    box-shadow: var(--shadow-surface-hover);
     color: var(--color-text-dim);
 }
 
