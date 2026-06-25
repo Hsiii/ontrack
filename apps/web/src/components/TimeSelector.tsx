@@ -5,6 +5,7 @@ import {
     ChevronDown,
     RefreshCw,
     TimerReset,
+    TrainFront,
 } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
@@ -21,6 +22,7 @@ export interface TimeSelection {
 
 const DATE_DIGIT_COUNT = 4;
 const TIME_DIGIT_COUNT = 4;
+const LAST_TRAIN_TIME_DIGITS = '2359';
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
 type WheelTimePart = 'hour' | 'minute';
@@ -87,8 +89,12 @@ function getTomorrowDigits() {
 }
 
 function normalizeSelection(value: TimeSelection): TimeSelection {
+    const todayDigits = getTodayDigits();
+    const tomorrowDigits = getTomorrowDigits();
+
     if (
-        value.dateDigits.length === DATE_DIGIT_COUNT &&
+        (value.dateDigits === todayDigits ||
+            value.dateDigits === tomorrowDigits) &&
         value.timeDigits.length === TIME_DIGIT_COUNT
     ) {
         return value;
@@ -297,6 +303,10 @@ export function TimeSelector({
     );
     const isNowSelected = normalizedValue.mode === 'now';
     const dateOffset = getDateOffset(normalizedValue.dateDigits);
+    const dayOptions = [
+        { value: getTodayDigits(), label: t('time.today') },
+        { value: getTomorrowDigits(), label: t('time.tomorrow') },
+    ];
     const modeLabel =
         modeOptions.find((option) => option.value === normalizedValue.mode)
             ?.shortLabel ?? t('time.departure');
@@ -325,6 +335,31 @@ export function TimeSelector({
         window.requestAnimationFrame(() =>
             scrollWheelsToTime(nextSelection.timeDigits)
         );
+    };
+
+    const handleSetLastTrain = () => {
+        const nextSelection: TimeSelection = {
+            ...draftRef.current,
+            mode: 'departure',
+            dateDigits:
+                getDateOffset(draftRef.current.dateDigits) === null
+                    ? getTodayDigits()
+                    : draftRef.current.dateDigits,
+            timeDigits: LAST_TRAIN_TIME_DIGITS,
+        };
+
+        setDraft(nextSelection);
+        window.requestAnimationFrame(() =>
+            scrollWheelsToTime(nextSelection.timeDigits)
+        );
+    };
+
+    const handleSetDate = (dateDigits: string) => {
+        setDraft((current) => ({
+            ...current,
+            mode: current.mode === 'now' ? 'departure' : current.mode,
+            dateDigits,
+        }));
     };
 
     const handleSetTimePart = (
@@ -454,49 +489,93 @@ export function TimeSelector({
                             {t('time.selectTime')}
                         </h2>
 
-                        <div className='time-editor-primary-row'>
+                        <div
+                            className='time-editor-shortcuts'
+                            role='group'
+                            aria-label={t('time.time')}
+                        >
                             <button
                                 type='button'
-                                className={`time-editor-now-btn ${draft.mode === 'now' ? 'active' : ''}`}
+                                className={`time-editor-shortcut-btn ${draft.mode === 'now' ? 'active' : ''}`}
                                 onClick={handleSetNow}
                             >
                                 <TimerReset aria-hidden='true' />
                                 <span>{t('time.now')}</span>
                             </button>
 
-                            <div
-                                className={`time-editor-mode-segmented ${
-                                    draft.mode === 'now' ? 'is-now-mode' : ''
+                            <button
+                                type='button'
+                                className={`time-editor-shortcut-btn ${
+                                    draft.mode === 'departure' &&
+                                    draft.timeDigits === LAST_TRAIN_TIME_DIGITS
+                                        ? 'active'
+                                        : ''
                                 }`}
-                                role='radiogroup'
-                                aria-label={t('time.mode')}
+                                onClick={handleSetLastTrain}
                             >
-                                {modeOptions.map((option) => {
-                                    const isActive =
-                                        (draft.mode === 'now'
-                                            ? 'departure'
-                                            : draft.mode) === option.value;
+                                <TrainFront aria-hidden='true' />
+                                <span>{t('time.lastTrain')}</span>
+                            </button>
+                        </div>
 
-                                    return (
-                                        <button
-                                            key={option.value}
-                                            type='button'
-                                            className={`time-editor-mode-option ${isActive ? 'active' : ''}`}
-                                            role='radio'
-                                            aria-checked={isActive}
-                                            onClick={() =>
-                                                setDraft((current) => ({
-                                                    ...current,
-                                                    mode: option.value,
-                                                }))
-                                            }
-                                        >
-                                            <option.Icon aria-hidden='true' />
-                                            <span>{option.shortLabel}</span>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+                        <div
+                            className={`time-editor-mode-segmented ${
+                                draft.mode === 'now' ? 'is-now-mode' : ''
+                            }`}
+                            role='radiogroup'
+                            aria-label={t('time.mode')}
+                        >
+                            {modeOptions.map((option) => {
+                                const isActive =
+                                    (draft.mode === 'now'
+                                        ? 'departure'
+                                        : draft.mode) === option.value;
+
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type='button'
+                                        className={`time-editor-mode-option ${isActive ? 'active' : ''}`}
+                                        role='radio'
+                                        aria-checked={isActive}
+                                        onClick={() =>
+                                            setDraft((current) => ({
+                                                ...current,
+                                                mode: option.value,
+                                            }))
+                                        }
+                                    >
+                                        <option.Icon aria-hidden='true' />
+                                        <span>{option.shortLabel}</span>
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        <div
+                            className='time-editor-date-segmented'
+                            role='radiogroup'
+                            aria-label={t('time.date')}
+                        >
+                            {dayOptions.map((option) => {
+                                const isActive =
+                                    draft.dateDigits === option.value;
+
+                                return (
+                                    <button
+                                        key={option.value}
+                                        type='button'
+                                        className={`time-editor-date-option ${isActive ? 'active' : ''}`}
+                                        role='radio'
+                                        aria-checked={isActive}
+                                        onClick={() =>
+                                            handleSetDate(option.value)
+                                        }
+                                    >
+                                        {option.label}
+                                    </button>
+                                );
+                            })}
                         </div>
 
                         <div className='time-editor-wheels'>
