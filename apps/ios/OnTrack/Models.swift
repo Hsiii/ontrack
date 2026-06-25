@@ -269,6 +269,7 @@ enum AppText {
     static var loading: String { isZh ? "載入中" : "Loading" }
     static var notSelected: String { isZh ? "尚未選擇" : "Not selected" }
     static var selected: String { isZh ? "已選取" : "Selected" }
+    static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
     static var shareMessage: String { isZh ? "分享訊息" : "Share message" }
     static var swapStations: String { isZh ? "交換出發站和抵達站" : "Swap origin and destination" }
     static var today: String { isZh ? "今天" : "Today" }

@@ -24,6 +24,7 @@ struct ContentView: View {
     @State private var selectedTrain: TrainInfo?
     @State private var isLoadingStations = false
     @State private var isLoadingSchedule = false
+    @State private var isRefreshingLive = false
     @State private var errorMessage: String?
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
@@ -93,7 +94,19 @@ struct ContentView: View {
 
                 ScrollView {
                     VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
-                        TimeSelectorView(selection: $timeSelection)
+                        HStack(spacing: OnTrackTheme.space2) {
+                            TimeSelectorView(selection: $timeSelection)
+
+                            Spacer(minLength: OnTrackTheme.space2)
+
+                            IconSquareButton(
+                                systemName: "arrow.clockwise",
+                                isLoading: isRefreshingLive,
+                                action: refreshLiveSchedule
+                            )
+                            .disabled(!canLoadSchedule || isLoadingSchedule || isRefreshingLive)
+                            .accessibilityLabel(AppText.refreshLiveStatus)
+                        }
 
                         RouteSelectorView(
                             origin: originStation,
@@ -122,7 +135,7 @@ struct ContentView: View {
                 }
                 .scrollIndicators(.hidden)
                 .refreshable {
-                    await loadSchedule()
+                    await loadSchedule(refreshLive: true)
                 }
 
                 ShareBar(message: shareMessage)
@@ -243,13 +256,21 @@ struct ContentView: View {
         }
     }
 
-    private func loadSchedule() async {
+    private func loadSchedule(refreshLive: Bool = false) async {
         guard canLoadSchedule, let originStation, let destinationStation else {
             return
         }
 
         isLoadingSchedule = true
-        defer { isLoadingSchedule = false }
+        if refreshLive {
+            isRefreshingLive = true
+        }
+        defer {
+            isLoadingSchedule = false
+            if refreshLive {
+                isRefreshingLive = false
+            }
+        }
 
         do {
             var response: ScheduleResponse?
@@ -257,7 +278,8 @@ struct ContentView: View {
                 let candidate = try await APIClient.shared.schedule(
                     origin: originStation,
                     destination: destinationStation,
-                    date: timeSelection.scheduleDate
+                    date: timeSelection.scheduleDate,
+                    refreshLive: refreshLive && attempt == 0
                 )
                 response = candidate
 
@@ -288,6 +310,16 @@ struct ContentView: View {
             trains = []
             selectedTrain = nil
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func refreshLiveSchedule() {
+        guard canLoadSchedule, !isLoadingSchedule, !isRefreshingLive else {
+            return
+        }
+
+        Task {
+            await loadSchedule(refreshLive: true)
         }
     }
 
@@ -1449,11 +1481,12 @@ private struct SectionLabel: View {
 
 private struct IconSquareButton: View {
     let systemName: String
+    var isLoading = false
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
-            IconSquare(systemName: systemName)
+            IconSquare(systemName: systemName, isLoading: isLoading)
         }
         .buttonStyle(OnTrackPressButtonStyle())
     }
@@ -1461,11 +1494,20 @@ private struct IconSquareButton: View {
 
 private struct IconSquare: View {
     let systemName: String
+    var isLoading = false
 
     var body: some View {
-        Image(systemName: systemName)
-            .font(OnTrackFont.icon)
-            .foregroundStyle(OnTrackTheme.dimText)
+        Group {
+            if isLoading {
+                ProgressView()
+                    .controlSize(.small)
+                    .tint(OnTrackTheme.dimText)
+            } else {
+                Image(systemName: systemName)
+                    .font(OnTrackFont.icon)
+                    .foregroundStyle(OnTrackTheme.dimText)
+            }
+        }
             .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
             .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusSmall)
     }

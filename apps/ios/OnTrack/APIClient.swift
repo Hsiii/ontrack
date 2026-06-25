@@ -10,7 +10,12 @@ actor APIClient {
         try await get("/api/stations")
     }
 
-    func schedule(origin: Station, destination: Station, date: Date = Date()) async throws -> ScheduleResponse {
+    func schedule(
+        origin: Station,
+        destination: Station,
+        date: Date = Date(),
+        refreshLive: Bool = false
+    ) async throws -> ScheduleResponse {
         var components = URLComponents()
         components.path = "/api/schedule"
         components.queryItems = [
@@ -18,6 +23,9 @@ actor APIClient {
             URLQueryItem(name: "dest", value: destination.id),
             URLQueryItem(name: "date", value: Formatters.scheduleDate.string(from: date)),
         ]
+        if refreshLive {
+            components.queryItems?.append(URLQueryItem(name: "refreshLive", value: "1"))
+        }
 
         guard let url = components.url(relativeTo: baseURL)?.absoluteURL else {
             throw APIError.invalidURL
