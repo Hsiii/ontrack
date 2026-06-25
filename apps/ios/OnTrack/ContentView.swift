@@ -9,6 +9,40 @@ private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
 private let manualOriginProtectionInterval: TimeInterval = 10 * 60
 
+private enum ShareMessageFormat: String, CaseIterable, Identifiable {
+    case arrivalOnly
+    case routeArrival
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .arrivalOnly:
+            AppText.arrivalOnlyMessageFormat
+        case .routeArrival:
+            AppText.routeArrivalMessageFormat
+        }
+    }
+
+    func message(train: TrainInfo, origin: Station?, destination: Station) -> String {
+        let arrivalTime = TrainDisplay.adjustedTime(
+            train.arrivalTime,
+            delay: train.delay
+        )
+
+        switch self {
+        case .arrivalOnly:
+            return AppText.arrivalMessage(time: arrivalTime, station: destination.displayName)
+        case .routeArrival:
+            return AppText.routeArrivalMessage(
+                origin: origin?.displayName ?? AppText.origin,
+                destination: destination.displayName,
+                time: arrivalTime
+            )
+        }
+    }
+}
+
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
@@ -18,6 +52,9 @@ struct ContentView: View {
     @AppStorage("ontrack_manual_origin_selected_at") private var manualOriginSelectedAt = 0.0
     @AppStorage("ontrack_frequent_destinations") private var frequentDestinationRecordsData = ""
     @AppStorage("ontrack_recent_destination_ids") private var recentDestinationIDs = ""
+    @AppStorage(AppPreferenceKey.language) private var languageCode = AppLanguageSetting.system.rawValue
+    @AppStorage(AppPreferenceKey.darkMode) private var isDarkMode = true
+    @AppStorage(AppPreferenceKey.messageFormat) private var messageFormatRaw = ShareMessageFormat.arrivalOnly.rawValue
 
     @StateObject private var locationService = LocationService()
     @State private var stations: [Station] = []
@@ -31,6 +68,7 @@ struct ContentView: View {
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
     @State private var destinationSource: DestinationSelectionSource = .cached
+    @State private var isSettingsPresented = false
 
     private let scheduleRefreshTimer = Timer.publish(
         every: scheduleRefreshInterval,
@@ -83,11 +121,12 @@ struct ContentView: View {
             return nil
         }
 
-        let arrivalTime = TrainDisplay.adjustedTime(
-            selectedTrain.arrivalTime,
-            delay: selectedTrain.delay
+        let messageFormat = ShareMessageFormat(rawValue: messageFormatRaw) ?? .arrivalOnly
+        return messageFormat.message(
+            train: selectedTrain,
+            origin: originStation,
+            destination: destinationStation
         )
-        return AppText.arrivalMessage(time: arrivalTime, station: destinationStation.displayName)
     }
 
     private var scheduleTaskID: String {
@@ -119,6 +158,12 @@ struct ContentView: View {
 
                             TimeSelectorView(selection: $timeSelection)
                                 .frame(maxWidth: .infinity)
+
+                            IconPlainButton(
+                                systemName: "gearshape",
+                                action: { isSettingsPresented = true }
+                            )
+                            .accessibilityLabel(AppText.settings)
                         }
 
                         RouteSelectorView(
@@ -223,8 +268,18 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
+            .sheet(isPresented: $isSettingsPresented) {
+                SettingsSheet(
+                    languageCode: $languageCode,
+                    isDarkMode: $isDarkMode,
+                    messageFormatRaw: $messageFormatRaw
+                )
+                .presentationDetents([.height(320)])
+                .presentationDragIndicator(.visible)
+            }
         }
         .tint(OnTrackTheme.primary)
+        .preferredColorScheme(isDarkMode ? .dark : .light)
     }
 
     private var hasError: Binding<Bool> {
@@ -1536,6 +1591,114 @@ private struct SharePanel: View {
     }
 }
 
+private struct SettingsSheet: View {
+    @Binding var languageCode: String
+    @Binding var isDarkMode: Bool
+    @Binding var messageFormatRaw: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
+            Text(AppText.settings)
+                .font(OnTrackFont.title)
+                .foregroundStyle(OnTrackTheme.text)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            VStack(spacing: 0) {
+                SettingsPickerRow(
+                    title: AppText.language,
+                    selection: $languageCode,
+                    options: AppLanguageSetting.allCases.map {
+                        SettingOption(id: $0.rawValue, title: languageTitle($0))
+                    }
+                )
+
+                SettingsDivider()
+
+                Toggle(isOn: $isDarkMode) {
+                    Text(AppText.darkMode)
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(OnTrackTheme.text)
+                }
+                .tint(OnTrackTheme.primary)
+                .padding(.horizontal, OnTrackTheme.space4)
+                .frame(minHeight: OnTrackTheme.controlHeight)
+
+                SettingsDivider()
+
+                SettingsPickerRow(
+                    title: AppText.defaultMessageFormat,
+                    selection: $messageFormatRaw,
+                    options: ShareMessageFormat.allCases.map {
+                        SettingOption(id: $0.rawValue, title: $0.title)
+                    }
+                )
+            }
+            .onTrackPanelSurface()
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, OnTrackTheme.space5)
+        .padding(.top, OnTrackTheme.space5)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(OnTrackTheme.background)
+        .presentationBackground(OnTrackTheme.background)
+        .tint(OnTrackTheme.primary)
+    }
+
+    private func languageTitle(_ setting: AppLanguageSetting) -> String {
+        switch setting {
+        case .system:
+            AppText.systemLanguage
+        case .zhTW:
+            AppText.traditionalChinese
+        case .en:
+            AppText.english
+        }
+    }
+}
+
+private struct SettingOption: Identifiable {
+    let id: String
+    let title: String
+}
+
+private struct SettingsPickerRow: View {
+    let title: String
+    @Binding var selection: String
+    let options: [SettingOption]
+
+    var body: some View {
+        HStack(spacing: OnTrackTheme.space3) {
+            Text(title)
+                .font(OnTrackFont.control)
+                .foregroundStyle(OnTrackTheme.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+
+            Spacer()
+
+            Picker(title, selection: $selection) {
+                ForEach(options) { option in
+                    Text(option.title).tag(option.id)
+                }
+            }
+            .pickerStyle(.menu)
+            .labelsHidden()
+        }
+        .padding(.horizontal, OnTrackTheme.space4)
+        .frame(minHeight: OnTrackTheme.controlHeight)
+    }
+}
+
+private struct SettingsDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(OnTrackTheme.border)
+            .frame(height: 1)
+            .padding(.leading, OnTrackTheme.space4)
+    }
+}
+
 private struct IconSquareButton: View {
     let systemName: String
     var isLoading = false
@@ -1675,15 +1838,47 @@ private extension View {
 }
 
 private enum OnTrackTheme {
-    static let background = Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
-    static let panel = Color(red: 30 / 255, green: 41 / 255, blue: 59 / 255)
-    static let border = Color.white.opacity(0.10)
-    static let text = Color(red: 241 / 255, green: 245 / 255, blue: 249 / 255)
-    static let dimText = Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
+    static var background: Color {
+        isDarkMode
+            ? Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
+            : Color(red: 248 / 255, green: 250 / 255, blue: 252 / 255)
+    }
+
+    static var panel: Color {
+        isDarkMode ? Color(red: 30 / 255, green: 41 / 255, blue: 59 / 255) : .white
+    }
+
+    static var border: Color {
+        isDarkMode ? Color.white.opacity(0.10) : Color.black.opacity(0.10)
+    }
+
+    static var text: Color {
+        isDarkMode
+            ? Color(red: 241 / 255, green: 245 / 255, blue: 249 / 255)
+            : Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
+    }
+
+    static var dimText: Color {
+        isDarkMode
+            ? Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
+            : Color(red: 71 / 255, green: 85 / 255, blue: 105 / 255)
+    }
+
     static let primary = Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
-    static let surfaceShadow = Color.black.opacity(0.12)
+
+    static var surfaceShadow: Color {
+        Color.black.opacity(isDarkMode ? 0.12 : 0.08)
+    }
+
+    private static var isDarkMode: Bool {
+        guard UserDefaults.standard.object(forKey: AppPreferenceKey.darkMode) != nil else {
+            return true
+        }
+
+        return UserDefaults.standard.bool(forKey: AppPreferenceKey.darkMode)
+    }
 
     static let radiusControl: CGFloat = 8
     static let radiusPanel: CGFloat = 12

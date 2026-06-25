@@ -1,8 +1,42 @@
 import Foundation
 
+enum AppPreferenceKey {
+    static let darkMode = "ontrack_dark_mode"
+    static let language = "ontrack_language"
+    static let messageFormat = "ontrack_message_format"
+}
+
+enum AppLanguageSetting: String, CaseIterable, Identifiable {
+    case system
+    case zhTW
+    case en
+
+    var id: String { rawValue }
+
+    static var current: AppLanguageSetting {
+        guard let rawValue = UserDefaults.standard.string(forKey: AppPreferenceKey.language),
+              let setting = AppLanguageSetting(rawValue: rawValue) else {
+            return .system
+        }
+
+        return setting
+    }
+
+    var isZh: Bool {
+        switch self {
+        case .system:
+            Locale.current.language.languageCode?.identifier == "zh"
+        case .zhTW:
+            true
+        case .en:
+            false
+        }
+    }
+}
+
 private enum AppLanguage {
     static var isZh: Bool {
-        Locale.current.language.languageCode?.identifier == "zh"
+        AppLanguageSetting.current.isZh
     }
 }
 
@@ -287,9 +321,22 @@ enum AppText {
     static var date: String { isZh ? "日期" : "Date" }
     static var time: String { isZh ? "時間" : "Time" }
     static var timeMode: String { isZh ? "時間類型" : "Time mode" }
+    static var settings: String { isZh ? "設定" : "Settings" }
+    static var language: String { isZh ? "語言" : "Language" }
+    static var systemLanguage: String { isZh ? "跟隨系統" : "System" }
+    static var traditionalChinese: String { "繁體中文" }
+    static var english: String { "English" }
+    static var darkMode: String { isZh ? "深色模式" : "Dark mode" }
+    static var defaultMessageFormat: String { isZh ? "預設訊息格式" : "Default message format" }
+    static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
+    static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }
 
     static func arrivalMessage(time: String, station: String) -> String {
         isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"
+    }
+
+    static func routeArrivalMessage(origin: String, destination: String, time: String) -> String {
+        isZh ? "\(origin)→\(destination) \(time)到" : "\(origin) to \(destination), arrive by \(time)"
     }
 
     static func trainAccessibilityLabel(
