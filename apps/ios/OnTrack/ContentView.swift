@@ -1109,21 +1109,24 @@ private struct TrainCard: View {
                         .foregroundStyle(OnTrackTheme.dimText)
                         .frame(width: 56, alignment: .trailing)
                         .lineLimit(1)
+                        .minimumScaleFactor(0.85)
 
                     Text(train.trainNo)
                         .font(OnTrackFont.caption)
                         .foregroundStyle(OnTrackTheme.dimText)
                         .monospacedDigit()
                         .frame(width: 36)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
 
                     Circle()
                         .fill(statusColor)
                         .frame(width: 6, height: 6)
                 }
             }
-            .frame(minHeight: 64)
             .padding(.horizontal, OnTrackTheme.space4)
             .padding(.vertical, OnTrackTheme.space3)
+            .frame(maxWidth: .infinity, minHeight: 64)
             .background(
                 isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
@@ -1162,14 +1165,18 @@ private struct TimeColumn: View {
                     .font(OnTrackFont.captionStrong)
                     .foregroundStyle(OnTrackTheme.danger)
                     .monospacedDigit()
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
 
             Text(time)
                 .font(OnTrackFont.time)
                 .foregroundStyle(OnTrackTheme.text)
                 .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
         }
-        .frame(width: 48)
+        .frame(width: 56)
     }
 }
 
@@ -1464,17 +1471,10 @@ private struct SharePanel: View {
             .accessibilityLabel(didCopy ? AppText.copied : AppText.copyMessage)
 
             ShareLink(item: message) {
-                HStack(spacing: OnTrackTheme.space2) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(OnTrackFont.symbol)
-
-                    Text(AppText.shareVia)
-                        .font(OnTrackFont.action)
-                        .lineLimit(1)
-                }
-                .foregroundStyle(OnTrackTheme.text)
-                .padding(.horizontal, OnTrackTheme.space3)
-                .frame(minWidth: 96, minHeight: OnTrackTheme.controlHeight)
+                Image(systemName: "square.and.arrow.up")
+                    .font(OnTrackFont.icon)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
                 .onTrackPanelSurface(
                     cornerRadius: OnTrackTheme.radiusControl,
                     ringColor: OnTrackTheme.primary.opacity(0.72)
@@ -1555,7 +1555,7 @@ private struct SkeletonTrainCard: View {
         RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             .fill(OnTrackTheme.panel)
             .onTrackSurfaceRing()
-            .frame(height: 72)
+            .frame(height: 64)
             .opacity(0.7)
     }
 }

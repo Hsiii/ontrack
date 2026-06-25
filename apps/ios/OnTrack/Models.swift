@@ -1,5 +1,11 @@
 import Foundation
 
+private enum AppLanguage {
+    static var isZh: Bool {
+        Locale.current.language.languageCode?.identifier == "zh"
+    }
+}
+
 struct Station: Decodable, Identifiable, Hashable {
     let id: String
     let name: String
@@ -8,7 +14,7 @@ struct Station: Decodable, Identifiable, Hashable {
     let lon: Double?
 
     var displayName: String {
-        Locale.current.language.languageCode?.identifier == "zh" ? name : nameEn.replacingOccurrences(of: "_", with: " ")
+        AppLanguage.isZh ? name : nameEn.replacingOccurrences(of: "_", with: " ")
     }
 }
 
@@ -138,6 +144,10 @@ enum TrainDisplay {
             .map(String.init)?
             .replacingOccurrences(of: "號", with: "") ?? trainType
 
+        if AppLanguage.isZh {
+            return base
+        }
+
         return trainTypeEN[base] ?? base
     }
 
@@ -245,7 +255,7 @@ enum Formatters {
 
 enum AppText {
     private static var isZh: Bool {
-        Locale.current.language.languageCode?.identifier == "zh"
+        AppLanguage.isZh
     }
 
     static var now: String { isZh ? "現在" : "Now" }
@@ -269,8 +279,8 @@ enum AppText {
     static var notSelected: String { isZh ? "尚未選擇" : "Not selected" }
     static var selected: String { isZh ? "已選取" : "Selected" }
     static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
-    static var shareText: String { isZh ? "分享內容" : "Share text" }
-    static var shareVia: String { isZh ? "分享到..." : "Share..." }
+    static var shareText: String { isZh ? "分享到站資訊" : "Share arrival info" }
+    static var shareVia: String { isZh ? "分享" : "Share" }
     static var swapStations: String { isZh ? "交換出發站和抵達站" : "Swap origin and destination" }
     static var today: String { isZh ? "今天" : "Today" }
     static var tomorrow: String { isZh ? "明天" : "Tomorrow" }
