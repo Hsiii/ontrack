@@ -1470,10 +1470,11 @@ private struct SharePanel: View {
 
                     Text(AppText.shareVia)
                         .font(OnTrackFont.action)
+                        .lineLimit(1)
                 }
                 .foregroundStyle(OnTrackTheme.text)
                 .padding(.horizontal, OnTrackTheme.space3)
-                .frame(minHeight: OnTrackTheme.controlHeight)
+                .frame(minWidth: 96, minHeight: OnTrackTheme.controlHeight)
                 .onTrackPanelSurface(
                     cornerRadius: OnTrackTheme.radiusControl,
                     ringColor: OnTrackTheme.primary.opacity(0.72)
