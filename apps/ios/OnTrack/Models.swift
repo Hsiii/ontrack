@@ -1,6 +1,7 @@
 import Foundation
 
 enum AppPreferenceKey {
+    static let appearance = "ontrack_appearance"
     static let darkMode = "ontrack_dark_mode"
     static let language = "ontrack_language"
     static let messageFormat = "ontrack_message_format"
@@ -31,6 +32,27 @@ enum AppLanguageSetting: String, CaseIterable, Identifiable {
         case .en:
             false
         }
+    }
+}
+
+enum AppAppearanceSetting: String, CaseIterable, Identifiable {
+    case system
+    case light
+    case dark
+
+    var id: String { rawValue }
+
+    static var current: AppAppearanceSetting {
+        if let rawValue = UserDefaults.standard.string(forKey: AppPreferenceKey.appearance),
+           let setting = AppAppearanceSetting(rawValue: rawValue) {
+            return setting
+        }
+
+        if UserDefaults.standard.object(forKey: AppPreferenceKey.darkMode) != nil {
+            return UserDefaults.standard.bool(forKey: AppPreferenceKey.darkMode) ? .dark : .light
+        }
+
+        return .dark
     }
 }
 
@@ -323,10 +345,13 @@ enum AppText {
     static var timeMode: String { isZh ? "時間類型" : "Time mode" }
     static var settings: String { isZh ? "設定" : "Settings" }
     static var language: String { isZh ? "語言" : "Language" }
-    static var systemLanguage: String { isZh ? "跟隨系統" : "System" }
+    static var systemLanguage: String { isZh ? "系統" : "System" }
     static var traditionalChinese: String { "繁體中文" }
     static var english: String { "English" }
     static var darkMode: String { isZh ? "深色模式" : "Dark mode" }
+    static var systemAppearance: String { isZh ? "系統" : "System" }
+    static var lightAppearance: String { isZh ? "亮色" : "Light" }
+    static var darkAppearance: String { isZh ? "暗色" : "Dark" }
     static var defaultMessageFormat: String { isZh ? "預設訊息格式" : "Default message format" }
     static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
     static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }

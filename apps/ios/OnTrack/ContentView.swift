@@ -54,7 +54,7 @@ struct ContentView: View {
     @AppStorage("ontrack_frequent_destinations") private var frequentDestinationRecordsData = ""
     @AppStorage("ontrack_recent_destination_ids") private var recentDestinationIDs = ""
     @AppStorage(AppPreferenceKey.language) private var languageCode = AppLanguageSetting.system.rawValue
-    @AppStorage(AppPreferenceKey.darkMode) private var isDarkMode = true
+    @AppStorage(AppPreferenceKey.appearance) private var appearanceRaw = AppAppearanceSetting.current.rawValue
     @AppStorage(AppPreferenceKey.messageFormat) private var messageFormatRaw = ShareMessageFormat.arrivalOnly.rawValue
 
     @StateObject private var locationService = LocationService()
@@ -275,7 +275,7 @@ struct ContentView: View {
             .sheet(isPresented: $isSettingsPresented) {
                 SettingsSheet(
                     languageCode: $languageCode,
-                    isDarkMode: $isDarkMode,
+                    appearanceRaw: $appearanceRaw,
                     messageFormatRaw: $messageFormatRaw
                 )
                 .presentationDetents([.height(320)])
@@ -283,7 +283,11 @@ struct ContentView: View {
             }
         }
         .tint(OnTrackTheme.primary)
-        .preferredColorScheme(isDarkMode ? .dark : .light)
+        .preferredColorScheme(appearanceSetting.preferredColorScheme)
+    }
+
+    private var appearanceSetting: AppAppearanceSetting {
+        AppAppearanceSetting(rawValue: appearanceRaw) ?? AppAppearanceSetting.current
     }
 
     private var hasError: Binding<Bool> {
@@ -1591,7 +1595,7 @@ private struct SharePanel: View {
 
 private struct SettingsSheet: View {
     @Binding var languageCode: String
-    @Binding var isDarkMode: Bool
+    @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
 
     var body: some View {
@@ -1612,14 +1616,13 @@ private struct SettingsSheet: View {
 
                 SettingsDivider()
 
-                Toggle(isOn: $isDarkMode) {
-                    Text(AppText.darkMode)
-                        .font(OnTrackFont.control)
-                        .foregroundStyle(OnTrackTheme.text)
-                }
-                .tint(OnTrackTheme.primary)
-                .padding(.horizontal, OnTrackTheme.space4)
-                .frame(minHeight: OnTrackTheme.controlHeight)
+                SettingsPickerRow(
+                    title: AppText.darkMode,
+                    selection: $appearanceRaw,
+                    options: AppAppearanceSetting.allCases.map {
+                        SettingOption(id: $0.rawValue, title: appearanceTitle($0))
+                    }
+                )
 
                 SettingsDivider()
 
@@ -1651,6 +1654,17 @@ private struct SettingsSheet: View {
             AppText.traditionalChinese
         case .en:
             AppText.english
+        }
+    }
+
+    private func appearanceTitle(_ setting: AppAppearanceSetting) -> String {
+        switch setting {
+        case .system:
+            AppText.systemAppearance
+        case .light:
+            AppText.lightAppearance
+        case .dark:
+            AppText.darkAppearance
         }
     }
 }
@@ -1836,31 +1850,53 @@ private extension View {
     }
 }
 
+private extension AppAppearanceSetting {
+    var preferredColorScheme: ColorScheme? {
+        switch self {
+        case .system:
+            nil
+        case .light:
+            .light
+        case .dark:
+            .dark
+        }
+    }
+}
+
 private enum OnTrackTheme {
     static var background: Color {
-        isDarkMode
-            ? Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
-            : Color(red: 248 / 255, green: 250 / 255, blue: 252 / 255)
+        adaptiveColor(
+            light: UIColor(red: 248 / 255, green: 250 / 255, blue: 252 / 255, alpha: 1),
+            dark: UIColor(red: 15 / 255, green: 23 / 255, blue: 42 / 255, alpha: 1)
+        )
     }
 
     static var panel: Color {
-        isDarkMode ? Color(red: 30 / 255, green: 41 / 255, blue: 59 / 255) : .white
+        adaptiveColor(
+            light: .white,
+            dark: UIColor(red: 30 / 255, green: 41 / 255, blue: 59 / 255, alpha: 1)
+        )
     }
 
     static var border: Color {
-        isDarkMode ? Color.white.opacity(0.10) : Color.black.opacity(0.10)
+        adaptiveColor(
+            light: UIColor.black.withAlphaComponent(0.10),
+            dark: UIColor.white.withAlphaComponent(0.10)
+        )
     }
 
     static var text: Color {
-        isDarkMode
-            ? Color(red: 241 / 255, green: 245 / 255, blue: 249 / 255)
-            : Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
+        adaptiveColor(
+            light: UIColor(red: 15 / 255, green: 23 / 255, blue: 42 / 255, alpha: 1),
+            dark: UIColor(red: 241 / 255, green: 245 / 255, blue: 249 / 255, alpha: 1)
+        )
     }
 
     static var dimText: Color {
-        isDarkMode
-            ? Color(red: 148 / 255, green: 163 / 255, blue: 184 / 255)
-            : Color(red: 71 / 255, green: 85 / 255, blue: 105 / 255)
+        adaptiveColor(
+            light: UIColor(red: 71 / 255, green: 85 / 255, blue: 105 / 255, alpha: 1),
+            dark: UIColor(red: 148 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
+        )
     }
 
     static let primary = Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
@@ -1868,15 +1904,10 @@ private enum OnTrackTheme {
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
 
     static var surfaceShadow: Color {
-        Color.black.opacity(isDarkMode ? 0.12 : 0.08)
-    }
-
-    private static var isDarkMode: Bool {
-        guard UserDefaults.standard.object(forKey: AppPreferenceKey.darkMode) != nil else {
-            return true
-        }
-
-        return UserDefaults.standard.bool(forKey: AppPreferenceKey.darkMode)
+        adaptiveColor(
+            light: UIColor.black.withAlphaComponent(0.08),
+            dark: UIColor.black.withAlphaComponent(0.12)
+        )
     }
 
     static let radiusControl: CGFloat = 8
@@ -1889,6 +1920,19 @@ private enum OnTrackTheme {
     static let space4: CGFloat = 16
     static let space5: CGFloat = 20
     static let space6: CGFloat = 24
+
+    private static func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
+        switch AppAppearanceSetting.current {
+        case .system:
+            Color(UIColor { traitCollection in
+                traitCollection.userInterfaceStyle == .dark ? dark : light
+            })
+        case .light:
+            Color(light)
+        case .dark:
+            Color(dark)
+        }
+    }
 }
 
 #Preview {
