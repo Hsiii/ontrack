@@ -1,5 +1,6 @@
 import CoreLocation
 import SwiftUI
+import UIKit
 
 private let taipeiMainStationName = "臺北"
 private let taipeiCircularStationName = "臺北(環島)"
@@ -64,9 +65,9 @@ struct ContentView: View {
         originStation != nil && destinationStation != nil
     }
 
-    private var shareMessage: String {
+    private var shareMessage: String? {
         guard let selectedTrain, let destinationStation else {
-            return AppText.noTrainMessage
+            return nil
         }
 
         let arrivalTime = TrainDisplay.adjustedTime(
@@ -88,7 +89,7 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            ZStack(alignment: .bottom) {
+            ZStack {
                 OnTrackTheme.background
                     .ignoresSafeArea()
 
@@ -122,10 +123,9 @@ struct ContentView: View {
                             selectedTrain: selectedTrain,
                             isLoading: isLoadingSchedule,
                             canLoadSchedule: canLoadSchedule,
+                            shareMessage: shareMessage,
                             onSelect: { selectedTrain = $0 }
                         )
-
-                        Spacer(minLength: 72)
                     }
                     .frame(maxWidth: 480)
                     .padding(.horizontal, OnTrackTheme.space5)
@@ -137,8 +137,6 @@ struct ContentView: View {
                 .refreshable {
                     await loadSchedule(refreshLive: true)
                 }
-
-                ShareBar(message: shareMessage)
 
                 if let stationPicker {
                     StationSearchView(
@@ -1004,10 +1002,13 @@ private struct RouteGlyph: View {
 }
 
 private struct TrainListView: View {
+    private static let sharePanelInsertionIndex = 3
+
     let trains: [TrainInfo]
     let selectedTrain: TrainInfo?
     let isLoading: Bool
     let canLoadSchedule: Bool
+    let shareMessage: String?
     let onSelect: (TrainInfo) -> Void
     @State private var selectionFeedbackTrigger = 0
 
@@ -1025,7 +1026,11 @@ private struct TrainListView: View {
                 EmptyPanel(message: AppText.noTrainsAvailable)
             } else {
                 VStack(spacing: OnTrackTheme.space2) {
-                    ForEach(trains) { train in
+                    ForEach(Array(trains.enumerated()), id: \.element.id) { index, train in
+                        if index == Self.sharePanelInsertionIndex, let shareMessage {
+                            SharePanel(message: shareMessage)
+                        }
+
                         TrainCard(
                             train: train,
                             isSelected: selectedTrain?.trainNo == train.trainNo
@@ -1033,6 +1038,10 @@ private struct TrainListView: View {
                             selectionFeedbackTrigger += 1
                             onSelect(train)
                         }
+                    }
+
+                    if trains.count <= Self.sharePanelInsertionIndex, let shareMessage {
+                        SharePanel(message: shareMessage)
                     }
                 }
             }
@@ -1428,38 +1437,67 @@ private struct StationSearchRow: View {
     }
 }
 
-private struct ShareBar: View {
-    @State private var editableMessage: String = ""
+private struct SharePanel: View {
     let message: String
+    @State private var didCopy = false
+    @State private var copyFeedbackTrigger = 0
 
     var body: some View {
-        HStack(spacing: OnTrackTheme.space2) {
-            TextField(AppText.message, text: $editableMessage)
-                .font(OnTrackFont.body)
+        HStack(spacing: OnTrackTheme.space3) {
+            VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+                Text(AppText.shareText)
+                    .font(OnTrackFont.label)
+                    .foregroundStyle(OnTrackTheme.dimText)
+
+                Text(message)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .lineLimit(2)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
+
+            Button(action: copyMessage) {
+                IconSquare(systemName: didCopy ? "checkmark" : "doc.on.doc")
+            }
+            .buttonStyle(OnTrackPressButtonStyle())
+            .accessibilityLabel(didCopy ? AppText.copied : AppText.copyMessage)
+
+            ShareLink(item: message) {
+                HStack(spacing: OnTrackTheme.space2) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(OnTrackFont.symbol)
+
+                    Text(AppText.shareVia)
+                        .font(OnTrackFont.action)
+                }
                 .foregroundStyle(OnTrackTheme.text)
                 .padding(.horizontal, OnTrackTheme.space3)
                 .frame(minHeight: OnTrackTheme.controlHeight)
-                .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
-
-            ShareLink(item: editableMessage.isEmpty ? message : editableMessage) {
-                IconSquare(systemName: "paperplane.fill")
+                .onTrackPanelSurface(
+                    cornerRadius: OnTrackTheme.radiusControl,
+                    ringColor: OnTrackTheme.primary.opacity(0.72)
+                )
             }
-            .accessibilityLabel(AppText.shareMessage)
+            .accessibilityLabel(AppText.shareVia)
         }
-        .padding(.horizontal, OnTrackTheme.space5)
-        .padding(.top, OnTrackTheme.space2)
-        .padding(.bottom, OnTrackTheme.space2)
-        .background(OnTrackTheme.background)
-        .overlay(alignment: .top) {
-            Rectangle()
-                .fill(OnTrackTheme.border)
-                .frame(height: 1)
-        }
-        .onAppear {
-            editableMessage = message
-        }
-        .onChange(of: message) { _, newValue in
-            editableMessage = newValue
+        .padding(.leading, OnTrackTheme.space4)
+        .padding(.trailing, OnTrackTheme.space3)
+        .padding(.vertical, OnTrackTheme.space3)
+        .onTrackPanelSurface()
+        .sensoryFeedback(.success, trigger: copyFeedbackTrigger)
+    }
+
+    private func copyMessage() {
+        UIPasteboard.general.string = message
+        copyFeedbackTrigger += 1
+        didCopy = true
+
+        Task {
+            try? await Task.sleep(nanoseconds: 1_200_000_000)
+            await MainActor.run {
+                didCopy = false
+            }
         }
     }
 }

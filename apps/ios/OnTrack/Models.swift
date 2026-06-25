@@ -260,16 +260,17 @@ enum AppText {
     static var selectOrigin: String { isZh ? "選擇出發站" : "Select origin" }
     static var selectDestination: String { isZh ? "選擇抵達站" : "Select destination" }
     static var searchStation: String { isZh ? "搜尋車站" : "Search stations" }
-    static var message: String { isZh ? "訊息" : "Message" }
-    static var noTrainMessage: String { isZh ? "好像沒車搭了" : "No more trains available" }
     static var cancel: String { isZh ? "取消" : "Cancel" }
     static var clear: String { isZh ? "清除" : "Clear" }
+    static var copyMessage: String { isZh ? "複製訊息" : "Copy message" }
+    static var copied: String { isZh ? "已複製" : "Copied" }
     static var done: String { isZh ? "完成" : "Done" }
     static var loading: String { isZh ? "載入中" : "Loading" }
     static var notSelected: String { isZh ? "尚未選擇" : "Not selected" }
     static var selected: String { isZh ? "已選取" : "Selected" }
     static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
-    static var shareMessage: String { isZh ? "分享訊息" : "Share message" }
+    static var shareText: String { isZh ? "分享內容" : "Share text" }
+    static var shareVia: String { isZh ? "分享到..." : "Share..." }
     static var swapStations: String { isZh ? "交換出發站和抵達站" : "Swap origin and destination" }
     static var today: String { isZh ? "今天" : "Today" }
     static var tomorrow: String { isZh ? "明天" : "Tomorrow" }
