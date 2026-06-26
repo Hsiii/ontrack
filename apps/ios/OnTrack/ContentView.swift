@@ -1699,8 +1699,6 @@ private struct TrainBoardingPanel: View {
     var body: some View {
         VStack(spacing: 0) {
             panelHandle
-                .padding(.top, OnTrackTheme.space2)
-                .padding(.bottom, OnTrackTheme.space2)
 
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space4)
@@ -1710,21 +1708,22 @@ private struct TrainBoardingPanel: View {
                 .fill(OnTrackTheme.border)
                 .frame(height: 1)
 
-            ScrollView {
-                TrainListView(
-                    trains: trains,
-                    selectedTrain: selectedTrain,
-                    isLoading: isLoading,
-                    canLoadSchedule: canLoadSchedule,
-                    usePlainEmptyState: true
-                ) { train in
-                    onSelect(train)
-                }
-                .padding(.horizontal, OnTrackTheme.space4)
-                .padding(.vertical, OnTrackTheme.space3)
+            TrainListView(
+                trains: trains,
+                selectedTrain: selectedTrain,
+                isLoading: isLoading,
+                canLoadSchedule: canLoadSchedule,
+                usePlainEmptyState: true
+            ) { train in
+                onSelect(train)
             }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .padding(.vertical, OnTrackTheme.space3)
             .frame(height: trainListViewportHeight)
-            .scrollIndicators(isExpanded ? .automatic : .hidden)
+            .frame(maxWidth: .infinity, alignment: .top)
+            .clipped()
+            .contentShape(Rectangle())
+            .simultaneousGesture(panelDragGesture)
         }
         .padding(.bottom, bottomSafeAreaInset)
         .frame(maxWidth: .infinity)
@@ -1776,7 +1775,7 @@ private struct TrainBoardingPanel: View {
             Capsule()
                 .fill(OnTrackTheme.border)
                 .frame(width: 40, height: 4)
-                .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+                .frame(maxWidth: .infinity, minHeight: OnTrackTheme.space6)
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -1800,9 +1799,12 @@ private struct TrainBoardingPanel: View {
     private var trainListViewportHeight: CGFloat {
         let contentHeight = trainListContentHeight + OnTrackTheme.space6
         if isExpanded {
-            return max(
-                OnTrackTheme.controlHeight,
-                maxHeight - TrainPanelLayout.expandedNonListHeight - bottomSafeAreaInset
+            return min(
+                contentHeight,
+                max(
+                    OnTrackTheme.controlHeight,
+                    maxHeight - TrainPanelLayout.expandedNonListHeight - bottomSafeAreaInset
+                )
             )
         }
 
