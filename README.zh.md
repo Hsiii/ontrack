@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/apps/web/public/demo.PNG" width="280" />
+  <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/apps/web/public/demo.png" width="280" />
 </p>
 
 ## 功能
