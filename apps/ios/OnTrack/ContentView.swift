@@ -1719,7 +1719,7 @@ private struct TrainBoardingPanel: View {
             }
             .padding(.horizontal, OnTrackTheme.space4)
             .padding(.vertical, OnTrackTheme.space3)
-            .frame(height: trainListViewportHeight)
+            .frame(height: trainListViewportHeight, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .top)
             .clipped()
             .contentShape(Rectangle())
