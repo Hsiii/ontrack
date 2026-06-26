@@ -1328,7 +1328,7 @@ private struct TrainCard: View {
                 }
                 .fixedSize(horizontal: true, vertical: false)
             }
-            .padding(.horizontal, OnTrackTheme.space4)
+            .padding(.horizontal, OnTrackTheme.space5)
             .frame(
                 maxWidth: .infinity,
                 minHeight: TrainPanelLayout.cardHeight,
@@ -1759,7 +1759,7 @@ private struct TrainBoardingPanel: View {
             panelHandle
 
             expectedBoardingSection
-                .padding(.horizontal, OnTrackTheme.space4)
+                .padding(.horizontal, OnTrackTheme.space5)
                 .padding(.bottom, TrainPanelLayout.expectedSectionBottomPadding)
 
             Rectangle()
