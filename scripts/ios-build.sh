@@ -7,7 +7,7 @@ SCHEME="${IOS_SCHEME:-OnTrack}"
 CONFIGURATION="${IOS_CONFIGURATION:-Debug}"
 SDK="${IOS_SDK:-iphonesimulator}"
 DESTINATION="${IOS_DESTINATION:-generic/platform=iOS Simulator}"
-DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$ROOT_DIR/build/ios/DerivedData}"
+DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$ROOT_DIR/build/DerivedData}"
 
 xcodebuild \
     -project "$PROJECT" \

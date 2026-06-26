@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARCHIVE_PATH="${IOS_ARCHIVE_PATH:-$ROOT_DIR/build/ios/archive/OnTrack.xcarchive}"
-EXPORT_PATH="${IOS_EXPORT_PATH:-$ROOT_DIR/build/ios/export}"
+ARCHIVE_PATH="${IOS_ARCHIVE_PATH:-$ROOT_DIR/build/archive/OnTrack.xcarchive}"
+EXPORT_PATH="${IOS_EXPORT_PATH:-$ROOT_DIR/build/export}"
 EXPORT_METHOD="${IOS_EXPORT_METHOD:-app-store-connect}"
 EXPORT_DESTINATION="${IOS_EXPORT_DESTINATION:-export}"
 SIGNING_STYLE="${IOS_SIGNING_STYLE:-automatic}"

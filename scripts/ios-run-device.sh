@@ -5,7 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PROJECT="${IOS_PROJECT:-$ROOT_DIR/apps/ios/OnTrack.xcodeproj}"
 SCHEME="${IOS_SCHEME:-OnTrack}"
 CONFIGURATION="${IOS_CONFIGURATION:-Debug}"
-DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$ROOT_DIR/build/ios/DeviceDerivedData}"
+DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$ROOT_DIR/build/DeviceDerivedData}"
 BUNDLE_ID="${IOS_BUNDLE_ID:-dev.hsichen.ontrack}"
 
 detect_device_id() {
