@@ -1,10 +1,21 @@
 import {
     getSnapshot,
     getTopRouteInterests,
+    hasAnyRecentRouteTimeInterest,
+    hasRecentRelatedRouteTimeInterest,
+    hasRecentRouteTimeInterest,
     pruneSnapshots,
+    reserveLiveRefreshCall,
     upsertSnapshot,
 } from './d1';
 import { fetchTDX, fetchTDXWithCache } from './tdx';
+import {
+    getLookbackIso,
+    getNextTaipeiDate,
+    getTaipeiDate,
+    getTaipeiHour,
+    isTaipeiWeekend,
+} from './time';
 import type {
     DelaySnapshot,
     Env,
@@ -16,14 +27,27 @@ import type {
     TDXTimetableResponse,
 } from './types';
 
+export { getTaipeiDate } from './time';
+
 export const STATIONS_KEY = 'stations';
 export const LIVE_BOARD_KEY = 'train-live-board';
-export const LIVE_BOARD_FRESH_SECONDS = 5 * 60;
 const ROUTE_TIMETABLE_RETENTION_DAYS = 2;
 const FULL_TIMETABLE_RETENTION_DAYS = 2;
 const POPULAR_ROUTE_PREWARM_LIMIT = 12;
+const LIVE_BOARD_DEMAND_LOOKBACK_DAYS = 30;
+const LIVE_BOARD_BACKGROUND_DAILY_LIMIT = 125;
+const LIVE_BOARD_MANUAL_DAILY_LIMIT = 15;
+const LIVE_BOARD_MAX_AGE_SECONDS = {
+    'peak': 10 * 60,
+    'shoulder': 30 * 60,
+    'non-active': 60 * 60,
+} satisfies Record<LiveBoardActivityWindow, number>;
 const dailyTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
 let liveBoardRefresh: Promise<DelaySnapshot> | null = null;
+let liveBoardAdmission: Promise<DelaySnapshot | null> | null = null;
+
+type LiveBoardActivityWindow = 'peak' | 'shoulder' | 'non-active';
+type LiveBoardBudgetBucket = 'background' | 'manual';
 
 export interface CachedRouteTimetable {
     timetables: TDXFullTimetable[];
@@ -31,8 +55,10 @@ export interface CachedRouteTimetable {
     snapshotFetchedAt: string | null;
 }
 
-export function getTaipeiDate(date = new Date()) {
-    return date.toLocaleDateString('en-CA', { timeZone: 'Asia/Taipei' });
+export interface LiveBoardPolicy {
+    activityWindow: LiveBoardActivityWindow;
+    maxAgeSeconds: number;
+    taipeiHour: number;
 }
 
 function getRoutePruneCutoffDate(date = new Date()) {
@@ -52,27 +78,32 @@ function getFullTimetablePruneCutoffDate(date = new Date()) {
     );
 }
 
-export function getNextTaipeiDate(date = new Date()) {
-    return getTaipeiDate(new Date(date.getTime() + 24 * 60 * 60 * 1000));
-}
+export function getLiveBoardPolicy(date = new Date()): LiveBoardPolicy {
+    const taipeiHour = getTaipeiHour(date);
+    let activityWindow: LiveBoardActivityWindow;
 
-export function shouldRefreshLiveBoard(
-    date = new Date(),
-    mode: 'auto' | 'manual' = 'auto'
-) {
-    const hour = Number(
-        date.toLocaleTimeString('en-CA', {
-            hour: '2-digit',
-            hour12: false,
-            timeZone: 'Asia/Taipei',
-        })
-    );
-
-    if (mode === 'manual') {
-        return hour === 0 || hour >= 4;
+    if (isTaipeiWeekend(date)) {
+        activityWindow =
+            taipeiHour >= 9 && taipeiHour < 20 ? 'shoulder' : 'non-active';
+    } else if (
+        (taipeiHour >= 6 && taipeiHour < 9) ||
+        (taipeiHour >= 16 && taipeiHour < 20)
+    ) {
+        activityWindow = 'peak';
+    } else if (
+        (taipeiHour >= 9 && taipeiHour < 16) ||
+        (taipeiHour >= 20 && taipeiHour < 23)
+    ) {
+        activityWindow = 'shoulder';
+    } else {
+        activityWindow = 'non-active';
     }
 
-    return hour === 0 || hour >= 6;
+    return {
+        activityWindow,
+        maxAgeSeconds: LIVE_BOARD_MAX_AGE_SECONDS[activityWindow],
+        taipeiHour,
+    };
 }
 
 export function timetableKey(date: string) {
@@ -216,6 +247,121 @@ export async function refreshLiveBoard(env: Env) {
         liveBoardRefresh = null;
     });
     return liveBoardRefresh;
+}
+
+function logLiveBoardRefreshSkipped(
+    reason: string,
+    mode: LiveBoardBudgetBucket | 'cron-demand' | 'auto-demand',
+    policy: LiveBoardPolicy
+) {
+    console.info(
+        JSON.stringify({
+            event: 'live_board_refresh_skipped',
+            reason,
+            mode,
+            activityWindow: policy.activityWindow,
+            taipeiHour: policy.taipeiHour,
+            maxAgeSeconds: policy.maxAgeSeconds,
+        })
+    );
+}
+
+async function refreshLiveBoardWithBudget(
+    env: Env,
+    bucket: LiveBoardBudgetBucket,
+    date = new Date()
+) {
+    if (liveBoardRefresh) {
+        return liveBoardRefresh;
+    }
+
+    if (liveBoardAdmission) {
+        return liveBoardAdmission;
+    }
+
+    liveBoardAdmission = (async () => {
+        if (liveBoardRefresh) {
+            return liveBoardRefresh;
+        }
+
+        const limit =
+            bucket === 'manual'
+                ? LIVE_BOARD_MANUAL_DAILY_LIMIT
+                : LIVE_BOARD_BACKGROUND_DAILY_LIMIT;
+        const reserved = await reserveLiveRefreshCall(env, bucket, limit, date);
+
+        if (!reserved) {
+            logLiveBoardRefreshSkipped(
+                'daily-budget-exhausted',
+                bucket,
+                getLiveBoardPolicy(date)
+            );
+            return null;
+        }
+
+        return refreshLiveBoard(env);
+    })().finally(() => {
+        liveBoardAdmission = null;
+    });
+
+    return liveBoardAdmission;
+}
+
+export async function refreshLiveBoardForManual(env: Env, date = new Date()) {
+    return refreshLiveBoardWithBudget(env, 'manual', date);
+}
+
+export async function refreshLiveBoardForAuto(
+    env: Env,
+    origin: string,
+    dest: string,
+    date = new Date()
+) {
+    const policy = getLiveBoardPolicy(date);
+    const sinceIso = getLookbackIso(LIVE_BOARD_DEMAND_LOOKBACK_DAYS, date);
+    const hasAnyDemand = await hasAnyRecentRouteTimeInterest(env, sinceIso);
+    const hasRelatedDemand =
+        !hasAnyDemand ||
+        (await hasRecentRelatedRouteTimeInterest(
+            env,
+            origin,
+            dest,
+            policy.taipeiHour,
+            sinceIso
+        ));
+
+    if (!hasRelatedDemand) {
+        logLiveBoardRefreshSkipped(
+            'no-related-route-hour-demand',
+            'auto-demand',
+            policy
+        );
+        return null;
+    }
+
+    return refreshLiveBoardWithBudget(env, 'background', date);
+}
+
+export async function refreshLiveBoardForCron(env: Env, date = new Date()) {
+    const policy = getLiveBoardPolicy(date);
+    const snapshot = await getLiveBoardSnapshot(env);
+    if (snapshot && getSnapshotAgeSeconds(snapshot) <= policy.maxAgeSeconds) {
+        logLiveBoardRefreshSkipped('fresh-enough', 'cron-demand', policy);
+        return null;
+    }
+
+    const sinceIso = getLookbackIso(LIVE_BOARD_DEMAND_LOOKBACK_DAYS, date);
+    const hasAnyDemand = await hasAnyRecentRouteTimeInterest(env, sinceIso);
+    const hasTimeDemand =
+        !hasAnyDemand ||
+        (await hasRecentRouteTimeInterest(env, policy.taipeiHour, sinceIso));
+
+    if (!hasTimeDemand) {
+        logLiveBoardRefreshSkipped('no-hour-demand', 'cron-demand', policy);
+        return null;
+    }
+
+    return refreshLiveBoardWithBudget(env, 'background', date);
 }
 
 export async function ensureStations(env: Env) {

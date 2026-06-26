@@ -3,13 +3,14 @@ import {
     ensureRouteTimetable,
     ensureStations,
     getCachedRouteTimetable,
+    getLiveBoardPolicy,
     getLiveBoardSnapshot,
     getSnapshotAgeSeconds,
     getTaipeiDate,
-    LIVE_BOARD_FRESH_SECONDS,
     refreshDailySnapshots,
-    refreshLiveBoard,
-    shouldRefreshLiveBoard,
+    refreshLiveBoardForAuto,
+    refreshLiveBoardForCron,
+    refreshLiveBoardForManual,
 } from './refresh';
 import type {
     Env,
@@ -28,8 +29,9 @@ const SECURITY_HEADERS = {
     'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
 };
 const LIVE_BOARD_REFRESH_CRONS = new Set([
-    '*/5 0-15,22-23 * * *',
-    '*/10 16 * * *',
+    '*/10 6-8,16-19 * * *',
+    '*/30 9-15,20-22 * * *',
+    '0 0-5,23 * * *',
 ]);
 const DAILY_REFRESH_CRON = '50 19 * * *';
 
@@ -125,7 +127,8 @@ async function handleStations(env: Env) {
 
 function getLiveDataStatus(
     isToday: boolean,
-    liveBoard: Awaited<ReturnType<typeof getLiveBoardSnapshot>>
+    liveBoard: Awaited<ReturnType<typeof getLiveBoardSnapshot>>,
+    maxAgeSeconds: number
 ): {
     status: LiveDataStatus;
     fetchedAt: string | null;
@@ -149,7 +152,7 @@ function getLiveDataStatus(
 
     const ageSeconds = getSnapshotAgeSeconds(liveBoard);
     return {
-        status: ageSeconds <= LIVE_BOARD_FRESH_SECONDS ? 'fresh' : 'stale',
+        status: ageSeconds <= maxAgeSeconds ? 'fresh' : 'stale',
         fetchedAt: liveBoard.fetched_at,
         ageSeconds,
     };
@@ -181,9 +184,11 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
 
     const queryDate = date || getTaipeiDate();
     const isToday = queryDate === getTaipeiDate();
+    const requestedAt = new Date();
+    const livePolicy = getLiveBoardPolicy(requestedAt);
     waitUntilLogged(
         ctx,
-        recordRouteInterest(env, origin, dest),
+        recordRouteInterest(env, origin, dest, requestedAt),
         'Route interest update'
     );
 
@@ -192,7 +197,11 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
         isToday ? getLiveBoardSnapshot(env) : Promise.resolve(null),
     ]);
     let liveBoard = liveBoardSnapshot;
-    let liveData = getLiveDataStatus(isToday, liveBoard);
+    let liveData = getLiveDataStatus(
+        isToday,
+        liveBoard,
+        livePolicy.maxAgeSeconds
+    );
 
     if (routeResult.cacheStatus === 'warming') {
         waitUntilLogged(
@@ -204,24 +213,24 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
 
     const shouldAttemptLiveRefresh =
         liveData.status === 'stale' || liveData.status === 'unavailable';
-    if (
-        forceLiveRefresh &&
-        isToday &&
-        shouldAttemptLiveRefresh &&
-        shouldRefreshLiveBoard(new Date(), 'manual')
-    ) {
+    if (forceLiveRefresh && isToday && shouldAttemptLiveRefresh) {
         try {
-            await refreshLiveBoard(env);
+            await refreshLiveBoardForManual(env, requestedAt);
             liveBoard = await getLiveBoardSnapshot(env);
-            liveData = getLiveDataStatus(isToday, liveBoard);
+            liveData = getLiveDataStatus(
+                isToday,
+                liveBoard,
+                livePolicy.maxAgeSeconds
+            );
         } catch (error) {
             console.error('Manual live board refresh failed:', error);
         }
-    } else if (
-        shouldAttemptLiveRefresh &&
-        shouldRefreshLiveBoard(new Date(), 'auto')
-    ) {
-        waitUntilLogged(ctx, refreshLiveBoard(env), 'Live board refresh');
+    } else if (shouldAttemptLiveRefresh) {
+        waitUntilLogged(
+            ctx,
+            refreshLiveBoardForAuto(env, origin, dest, requestedAt),
+            'Live board refresh'
+        );
     }
 
     const delayMap =
@@ -270,7 +279,10 @@ async function handleRefresh(request: Request, env: Env) {
         return json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await Promise.all([refreshDailySnapshots(env), refreshLiveBoard(env)]);
+    await Promise.all([
+        refreshDailySnapshots(env),
+        refreshLiveBoardForManual(env),
+    ]);
     return json({ ok: true });
 }
 
@@ -323,7 +335,7 @@ export default {
 
     async scheduled(controller, env, ctx) {
         const refresh = LIVE_BOARD_REFRESH_CRONS.has(controller.cron)
-            ? refreshLiveBoard(env)
+            ? refreshLiveBoardForCron(env)
             : controller.cron === DAILY_REFRESH_CRON
               ? refreshDailySnapshots(env)
               : Promise.resolve();
