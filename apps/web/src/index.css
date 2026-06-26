@@ -92,10 +92,12 @@
     --content-title: 12ch;
     --content-mobile: 30rem; /* 480px */
     --content-app: 40rem; /* 640px */
+    --content-dialog: 20rem; /* 320px */
     --size-preview-min: 17.5rem; /* 280px */
     --size-touch: 2.75rem; /* 44px */
     --size-control: 4rem; /* 64px */
     --size-icon: 1.25rem; /* 20px */
+    --size-hairline: 1px;
 
     --space-neg-2: -0.5rem; /* -8px */
     --space-neg-3: -0.75rem; /* -12px */

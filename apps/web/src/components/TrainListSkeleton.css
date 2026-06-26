@@ -2,9 +2,7 @@
     pointer-events: none;
     opacity: 0.9;
     border-color: var(--color-skeleton);
-    box-shadow:
-        inset 0 1px 0 var(--color-surface-highlight),
-        var(--shadow-lg);
+    box-shadow: none;
 }
 
 .skeleton-card .train-card-times {
@@ -17,9 +15,9 @@
 }
 
 .skeleton-time {
-    width: 3.2rem;
-    height: 1rem;
-    border-radius: 999px;
+    width: calc(var(--space-10) + var(--space-3));
+    height: var(--space-4);
+    border-radius: var(--radius-pill);
 }
 
 .skeleton-line {
@@ -27,25 +25,25 @@
 }
 
 .skeleton-trip-time {
-    width: 2.4rem;
-    height: 0.7rem;
-    border-radius: 999px;
+    width: var(--space-10);
+    height: var(--space-3);
+    border-radius: var(--radius-pill);
 }
 
 .skeleton-type {
-    width: 3.5rem;
-    height: 0.875rem;
-    border-radius: 999px;
+    width: calc(var(--space-10) + var(--space-4));
+    height: var(--space-4);
+    border-radius: var(--radius-pill);
 }
 
 .skeleton-number {
     width: 2rem;
-    height: 0.75rem;
-    border-radius: 999px;
+    height: var(--space-3);
+    border-radius: var(--radius-pill);
 }
 
 .skeleton-dot {
-    width: 6px;
-    height: 6px;
+    width: var(--space-2);
+    height: var(--space-2);
     border-radius: 50%;
 }

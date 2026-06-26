@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Share } from 'lucide-react';
+import { ArrowDown, Plus, Share } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 
@@ -89,21 +89,7 @@ export function IOSInstallPrompt() {
 
             {/* Arrow pointing to Safari's share button */}
             <div className='ios-install-arrow'>
-                <svg
-                    width='40'
-                    height='60'
-                    viewBox='0 0 40 60'
-                    fill='none'
-                    xmlns='http://www.w3.org/2000/svg'
-                >
-                    <path
-                        d='M20 0 L20 45 M5 30 L20 45 L35 30'
-                        stroke='currentColor'
-                        strokeWidth='3'
-                        strokeLinecap='round'
-                        strokeLinejoin='round'
-                    />
-                </svg>
+                <ArrowDown aria-hidden='true' />
             </div>
         </div>
     );

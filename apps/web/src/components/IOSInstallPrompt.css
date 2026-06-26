@@ -7,7 +7,8 @@
     align-items: center;
     justify-content: center;
     z-index: 10000;
-    padding: var(--space-4);
+    padding: var(--space-4) var(--space-4)
+        calc(var(--space-8) + env(safe-area-inset-bottom));
     animation: fadeIn var(--motion-panel) var(--ease-out);
 }
 
@@ -22,19 +23,19 @@
 
 .ios-install-prompt {
     background-color: var(--color-bg-light);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     padding: var(--space-6);
-    max-width: 320px;
+    max-width: var(--content-dialog);
     width: 100%;
     position: relative;
-    box-shadow: var(--shadow-surface);
+    box-shadow: var(--shadow-lg);
     animation: slideUp var(--motion-panel) var(--ease-out);
 }
 
 @keyframes slideUp {
     from {
         opacity: 0;
-        transform: translateY(20px);
+        transform: translateY(var(--space-5));
     }
     to {
         opacity: 1;
@@ -98,10 +99,10 @@
 }
 
 .ios-install-step-icon {
-    width: 44px;
-    height: 44px;
+    width: var(--size-touch);
+    height: var(--size-touch);
     background-color: var(--color-primary-subtle);
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -121,8 +122,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 20px;
-    height: 20px;
+    width: var(--size-icon);
+    height: var(--size-icon);
     background-color: var(--color-primary);
     color: var(--color-primary-contrast);
     border-radius: 50%;
@@ -133,11 +134,12 @@
 
 .ios-install-dismiss {
     width: 100%;
+    min-height: var(--size-touch);
     padding: var(--space-4);
     background-color: var(--color-primary);
     color: var(--color-primary-contrast);
     border: none;
-    border-radius: var(--radius-sm);
+    border-radius: var(--radius-md);
     font-size: var(--text-base);
     font-weight: var(--font-medium);
     cursor: pointer;
@@ -157,11 +159,16 @@
 
 .ios-install-arrow {
     position: fixed;
-    bottom: var(--space-4);
+    bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
     color: var(--color-primary);
     animation: bounce 1.5s ease-in-out infinite;
+}
+
+.ios-install-arrow svg {
+    width: var(--space-10);
+    height: var(--space-10);
 }
 
 @keyframes bounce {
@@ -170,6 +177,6 @@
         transform: translateX(-50%) translateY(0);
     }
     50% {
-        transform: translateX(-50%) translateY(8px);
+        transform: translateX(-50%) translateY(var(--space-2));
     }
 }
