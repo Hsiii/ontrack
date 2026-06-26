@@ -36,17 +36,30 @@ fi
 
 mkdir -p "$(dirname "$ARCHIVE_PATH")"
 
-xcodebuild archive \
-    -project "$PROJECT" \
-    -scheme "$SCHEME" \
-    -configuration "$CONFIGURATION" \
-    -destination "generic/platform=iOS" \
-    -archivePath "$ARCHIVE_PATH" \
-    "${PROVISIONING_ARGS[@]}" \
-    "${AUTH_ARGS[@]}" \
-    DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
-    PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID" \
-    MARKETING_VERSION="$MARKETING_VERSION" \
+XCODEBUILD_ARGS=(
+    archive
+    -project "$PROJECT"
+    -scheme "$SCHEME"
+    -configuration "$CONFIGURATION"
+    -destination "generic/platform=iOS"
+    -archivePath "$ARCHIVE_PATH"
+)
+
+if [[ ${#PROVISIONING_ARGS[@]} -gt 0 ]]; then
+    XCODEBUILD_ARGS+=("${PROVISIONING_ARGS[@]}")
+fi
+
+if [[ ${#AUTH_ARGS[@]} -gt 0 ]]; then
+    XCODEBUILD_ARGS+=("${AUTH_ARGS[@]}")
+fi
+
+XCODEBUILD_ARGS+=(
+    DEVELOPMENT_TEAM="$APPLE_TEAM_ID"
+    PRODUCT_BUNDLE_IDENTIFIER="$BUNDLE_ID"
+    MARKETING_VERSION="$MARKETING_VERSION"
     CURRENT_PROJECT_VERSION="$BUILD_NUMBER"
+)
+
+xcodebuild "${XCODEBUILD_ARGS[@]}"
 
 echo "Archive written to $ARCHIVE_PATH"

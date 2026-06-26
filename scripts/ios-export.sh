@@ -66,11 +66,21 @@ PLIST
 
 mkdir -p "$EXPORT_PATH"
 
-xcodebuild -exportArchive \
-    -archivePath "$ARCHIVE_PATH" \
-    -exportPath "$EXPORT_PATH" \
-    -exportOptionsPlist "$EXPORT_OPTIONS_PLIST" \
-    "${PROVISIONING_ARGS[@]}" \
-    "${AUTH_ARGS[@]}"
+XCODEBUILD_ARGS=(
+    -exportArchive
+    -archivePath "$ARCHIVE_PATH"
+    -exportPath "$EXPORT_PATH"
+    -exportOptionsPlist "$EXPORT_OPTIONS_PLIST"
+)
+
+if [[ ${#PROVISIONING_ARGS[@]} -gt 0 ]]; then
+    XCODEBUILD_ARGS+=("${PROVISIONING_ARGS[@]}")
+fi
+
+if [[ ${#AUTH_ARGS[@]} -gt 0 ]]; then
+    XCODEBUILD_ARGS+=("${AUTH_ARGS[@]}")
+fi
+
+xcodebuild "${XCODEBUILD_ARGS[@]}"
 
 echo "Export completed at $EXPORT_PATH"
