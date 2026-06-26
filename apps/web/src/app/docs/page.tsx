@@ -39,21 +39,25 @@ const features = [
         icon: MapPin,
         title: '自動偵測最近車站',
         body: '開啟定位後，OnTrack 便能依您的當前位置自動判斷起點站。',
+        placement: 'topLeft',
     },
     {
         icon: Navigation,
         title: '智慧預測目的地',
         body: '使用幾次後，OnTrack會開始以您的搭乘習慣預測目的地並幫您填入。',
+        placement: 'topRight',
     },
     {
         icon: Clock3,
         title: '輕鬆找出下一班列車',
         body: '整合即時延誤資料、幫您找出下一班能搭上的列車。',
+        placement: 'bottomLeft',
     },
     {
         icon: Share2,
         title: '抵達時間快速分享',
         body: '一鍵分享目的地與抵達時間訊息，快速讓親友知道你的動態。',
+        placement: 'bottomRight',
     },
 ] as const;
 
@@ -128,46 +132,91 @@ export default function DocsPage() {
                             </Link>
                         </div>
                     </div>
-
-                    <div
-                        className={styles.heroMedia}
-                        aria-label='OnTrack app screenshot'
-                    >
-                        <img
-                            className={styles.phoneImage}
-                            src='/ontrack-web-showcase.png'
-                            alt='OnTrack 網頁版台鐵時刻表 App 畫面，顯示車站、班次與預計搭乘資訊'
-                            width='390'
-                            height='844'
-                        />
-                    </div>
                 </section>
 
                 <section
-                    className={styles.featureSection}
+                    className={styles.showcaseSection}
                     id='features'
                     aria-labelledby='features-title'
                 >
                     <div className={styles.sectionIntro}>
                         <h2 id='features-title'>重要資訊一目了然。</h2>
                     </div>
-                    <div className={styles.featureGrid}>
-                        {features.map((feature) => {
-                            const Icon = feature.icon;
+                    <div className={styles.showcaseAnalysis}>
+                        <div className={styles.featureStack} data-side='left'>
+                            {features
+                                .filter((feature) =>
+                                    feature.placement.endsWith('Left')
+                                )
+                                .map((feature) => {
+                                    const Icon = feature.icon;
 
-                            return (
-                                <article
-                                    className={styles.featureCard}
-                                    key={feature.title}
-                                >
-                                    <span className={styles.featureIcon}>
-                                        <Icon aria-hidden='true' />
-                                    </span>
-                                    <h3>{feature.title}</h3>
-                                    <p>{feature.body}</p>
-                                </article>
-                            );
-                        })}
+                                    return (
+                                        <article
+                                            className={styles.featureCard}
+                                            data-placement={feature.placement}
+                                            key={feature.title}
+                                        >
+                                            <span
+                                                className={styles.featureIcon}
+                                            >
+                                                <Icon aria-hidden='true' />
+                                            </span>
+                                            <div
+                                                className={
+                                                    styles.featureContent
+                                                }
+                                            >
+                                                <h3>{feature.title}</h3>
+                                                <p>{feature.body}</p>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                        </div>
+                        <div
+                            className={styles.heroMedia}
+                            aria-label='OnTrack app screenshot'
+                        >
+                            <img
+                                className={styles.phoneImage}
+                                src='/ontrack-web-showcase.png'
+                                alt='OnTrack 網頁版台鐵時刻表 App 畫面，顯示車站、班次與預計搭乘資訊'
+                                width='390'
+                                height='844'
+                            />
+                        </div>
+                        <div className={styles.featureStack} data-side='right'>
+                            {features
+                                .filter((feature) =>
+                                    feature.placement.endsWith('Right')
+                                )
+                                .map((feature) => {
+                                    const Icon = feature.icon;
+
+                                    return (
+                                        <article
+                                            className={styles.featureCard}
+                                            data-placement={feature.placement}
+                                            key={feature.title}
+                                        >
+                                            <span
+                                                className={styles.featureIcon}
+                                            >
+                                                <Icon aria-hidden='true' />
+                                            </span>
+                                            <div
+                                                className={
+                                                    styles.featureContent
+                                                }
+                                            >
+                                                <h3>{feature.title}</h3>
+                                                <p>{feature.body}</p>
+                                            </div>
+                                        </article>
+                                    );
+                                })}
+                        </div>
                     </div>
                 </section>
 
