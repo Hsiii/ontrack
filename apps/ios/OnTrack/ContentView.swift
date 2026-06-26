@@ -315,7 +315,7 @@ struct ContentView: View {
                 [TrainPanelLayout.collapsedDetent, .large],
                 selection: $trainPanelDetent
             )
-            .presentationDragIndicator(.visible)
+            .presentationDragIndicator(.hidden)
             .presentationBackground(OnTrackTheme.panel)
             .presentationBackgroundInteraction(.enabled(upThrough: TrainPanelLayout.collapsedDetent))
             .interactiveDismissDisabled()
@@ -1776,15 +1776,20 @@ private enum TrainPanelLayout {
     static let collapsedContentReserve: CGFloat = 400
 
     static var panelChromeHeight: CGFloat {
-        topContentPadding
+        handleAreaHeight
+            + topContentPadding
             + expectedHeaderHeight
             + OnTrackTheme.controlHeight
             + expectedSectionBottomPadding
             + 1
     }
 
-    static var topContentPadding: CGFloat {
+    static var handleAreaHeight: CGFloat {
         OnTrackTheme.space6
+    }
+
+    static var topContentPadding: CGFloat {
+        OnTrackTheme.space1
     }
 
     static var expectedHeaderHeight: CGFloat {
@@ -1835,6 +1840,8 @@ private struct TrainBoardingPanel: View {
 
     private var panelContent: some View {
         VStack(spacing: 0) {
+            panelHandle
+
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space5)
                 .padding(.top, TrainPanelLayout.topContentPadding)
@@ -1874,6 +1881,14 @@ private struct TrainBoardingPanel: View {
         }
 
         return TrainPanelLayout.cardHeight * CGFloat(trains.count)
+    }
+
+    private var panelHandle: some View {
+        Capsule()
+            .fill(OnTrackTheme.border)
+            .frame(width: 40, height: OnTrackTheme.space1)
+            .frame(maxWidth: .infinity)
+            .frame(height: TrainPanelLayout.handleAreaHeight)
     }
 
     private var expectedBoardingSection: some View {
