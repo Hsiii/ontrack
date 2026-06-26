@@ -285,8 +285,6 @@ struct ContentView: View {
                     appearanceRaw: $appearanceRaw,
                     messageFormatRaw: $messageFormatRaw
                 )
-                .presentationDetents([.height(320)])
-                .presentationDragIndicator(.automatic)
             }
         }
         .tint(OnTrackTheme.primary)
@@ -751,8 +749,6 @@ private struct TimeSelectorView: View {
                 selection: $selection,
                 dateRange: dateRange
             )
-            .presentationDetents([.height(392)])
-            .presentationDragIndicator(.automatic)
         }
         .onAppear {
             syncNowIfNeeded()
@@ -772,11 +768,14 @@ private struct TimeSelectorView: View {
 }
 
 private struct TimeEditorSheet: View {
+    private static let detentHeight: CGFloat = 392
+
     @Binding var selection: TimeSelection
     let dateRange: ClosedRange<Date>
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: TimeSelection
+    @State private var bottomSafeAreaInset: CGFloat = 0
 
     private var modeSelection: Binding<TimeMode> {
         Binding(
@@ -847,80 +846,112 @@ private struct TimeEditorSheet: View {
     }
 
     var body: some View {
+        GeometryReader { proxy in
+            content(
+                availableWidth: proxy.size.width,
+                bottomSafeAreaInset: proxy.safeAreaInsets.bottom
+            )
+            .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+            .onAppear {
+                updateBottomSafeArea(proxy.safeAreaInsets.bottom)
+            }
+            .onChange(of: proxy.safeAreaInsets.bottom) { _, inset in
+                updateBottomSafeArea(inset)
+            }
+        }
+        .presentationDetents([.height(Self.detentHeight + bottomSafeAreaInset)])
+        .presentationDragIndicator(.automatic)
+        .presentationBackground(OnTrackTheme.background)
+    }
+
+    private func content(availableWidth: CGFloat, bottomSafeAreaInset: CGFloat) -> some View {
         VStack(spacing: 0) {
-            GeometryReader { proxy in
-                ZStack {
-                    HStack {
-                        Button {
-                            draft = .current(mode: .now)
-                        } label: {
-                            Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
-                                .font(OnTrackFont.icon)
-                                .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
-                                .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-                        }
-                        .buttonStyle(OnTrackPressButtonStyle())
-                        .accessibilityLabel(AppText.now)
+            timeEditorHeader(availableWidth: availableWidth)
+                .padding(.horizontal, OnTrackTheme.space5)
+                .padding(.top, OnTrackTheme.space5)
 
-                        Spacer()
+            timeEditorPicker
+                .padding(.horizontal, OnTrackTheme.space5)
+                .padding(.top, OnTrackTheme.space3)
 
-                        Button {
-                            draft.mode = .lastTrain
-                            draft.date = Self.lastTrainDate(for: draft.date)
-                        } label: {
-                            Image(systemName: "moon")
-                                .font(OnTrackFont.icon)
-                                .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
-                                .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
-                        }
-                        .buttonStyle(OnTrackPressButtonStyle())
-                        .accessibilityLabel(AppText.lastTrain)
-                    }
+            timeEditorFooter(bottomSafeAreaInset: bottomSafeAreaInset)
+        }
+        .background(OnTrackTheme.background)
+    }
 
-                    Picker(AppText.timeMode, selection: modeSelection) {
-                        ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
-                            Text(mode.title).tag(mode)
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .frame(
-                        width: min(
-                            OnTrackTheme.timeModePickerMaxWidth,
-                            max(
-                                OnTrackTheme.timeModePickerMinWidth,
-                                proxy.size.width - OnTrackTheme.controlHeight * 2
-                            )
-                        )
-                    )
-                    .frame(minHeight: OnTrackTheme.controlHeight)
+    private func timeEditorHeader(availableWidth: CGFloat) -> some View {
+        ZStack {
+            HStack {
+                Button {
+                    draft = .current(mode: .now)
+                } label: {
+                    Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
+                        .font(OnTrackFont.icon)
+                        .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                        .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                }
+                .buttonStyle(OnTrackPressButtonStyle())
+                .accessibilityLabel(AppText.now)
+
+                Spacer()
+
+                Button {
+                    draft.mode = .lastTrain
+                    draft.date = Self.lastTrainDate(for: draft.date)
+                } label: {
+                    Image(systemName: "moon")
+                        .font(OnTrackFont.icon)
+                        .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                        .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                }
+                .buttonStyle(OnTrackPressButtonStyle())
+                .accessibilityLabel(AppText.lastTrain)
+            }
+
+            Picker(AppText.timeMode, selection: modeSelection) {
+                ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
+                    Text(mode.title).tag(mode)
                 }
             }
-            .frame(height: OnTrackTheme.controlHeight)
-            .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.top, OnTrackTheme.space5)
-
-            Group {
-                if draft.mode == .lastTrain {
-                    Text(AppText.queryTodayLastTrain)
-                        .font(OnTrackFont.title)
-                        .foregroundStyle(OnTrackTheme.text)
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity, minHeight: 216)
-                } else {
-                    MinuteIntervalDatePicker(
-                        selection: selectedTime,
-                        dateRange: dateRange,
-                        minuteInterval: timePickerMinuteInterval
+            .pickerStyle(.segmented)
+            .frame(
+                width: min(
+                    OnTrackTheme.timeModePickerMaxWidth,
+                    max(
+                        OnTrackTheme.timeModePickerMinWidth,
+                        availableWidth - OnTrackTheme.controlHeight * 2
                     )
-                    .accessibilityLabel(AppText.time)
-                }
-            }
-            .frame(maxWidth: .infinity)
-            .clipped()
-            .tint(OnTrackTheme.primary)
-            .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.top, OnTrackTheme.space3)
+                )
+            )
+            .frame(minHeight: OnTrackTheme.controlHeight)
+        }
+        .frame(height: OnTrackTheme.controlHeight)
+    }
 
+    private var timeEditorPicker: some View {
+        Group {
+            if draft.mode == .lastTrain {
+                Text(AppText.queryTodayLastTrain)
+                    .font(OnTrackFont.title)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity, minHeight: 216)
+            } else {
+                MinuteIntervalDatePicker(
+                    selection: selectedTime,
+                    dateRange: dateRange,
+                    minuteInterval: timePickerMinuteInterval
+                )
+                .accessibilityLabel(AppText.time)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .clipped()
+        .tint(OnTrackTheme.primary)
+    }
+
+    private func timeEditorFooter(bottomSafeAreaInset: CGFloat) -> some View {
+        VStack(spacing: 0) {
             HStack(spacing: 0) {
                 Button(AppText.cancel) {
                     dismiss()
@@ -941,12 +972,23 @@ private struct TimeEditorSheet: View {
                 .foregroundStyle(OnTrackTheme.primary)
                 .frame(maxWidth: .infinity, minHeight: 56)
             }
-            .background(OnTrackTheme.panel)
+
+            if bottomSafeAreaInset > 0 {
+                Color.clear
+                    .frame(height: bottomSafeAreaInset)
+            }
         }
-        .background(OnTrackTheme.background)
-        .presentationBackground(OnTrackTheme.background)
+        .background(OnTrackTheme.panel)
     }
 
+    private func updateBottomSafeArea(_ inset: CGFloat) {
+        let safeInset = max(0, inset)
+        guard bottomSafeAreaInset != safeInset else {
+            return
+        }
+
+        bottomSafeAreaInset = safeInset
+    }
 }
 
 private struct RouteSelectorView: View {
@@ -1894,11 +1936,32 @@ private struct TrainBoardingPanel: View {
 }
 
 private struct SettingsSheet: View {
+    private static let detentHeight: CGFloat = 320
+
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
 
+    @State private var bottomSafeAreaInset: CGFloat = 0
+
     var body: some View {
+        GeometryReader { proxy in
+            content(bottomSafeAreaInset: proxy.safeAreaInsets.bottom)
+                .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
+                .onAppear {
+                    updateBottomSafeArea(proxy.safeAreaInsets.bottom)
+                }
+                .onChange(of: proxy.safeAreaInsets.bottom) { _, inset in
+                    updateBottomSafeArea(inset)
+                }
+        }
+        .presentationDetents([.height(Self.detentHeight + bottomSafeAreaInset)])
+        .presentationDragIndicator(.automatic)
+        .presentationBackground(OnTrackTheme.background)
+        .tint(OnTrackTheme.primary)
+    }
+
+    private func content(bottomSafeAreaInset: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
             Text(AppText.settings)
                 .font(OnTrackFont.title)
@@ -1940,10 +2003,9 @@ private struct SettingsSheet: View {
         }
         .padding(.horizontal, OnTrackTheme.space5)
         .padding(.top, OnTrackTheme.space5)
+        .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(OnTrackTheme.background)
-        .presentationBackground(OnTrackTheme.background)
-        .tint(OnTrackTheme.primary)
     }
 
     private func languageTitle(_ setting: AppLanguageSetting) -> String {
@@ -1966,6 +2028,15 @@ private struct SettingsSheet: View {
         case .dark:
             AppText.darkAppearance
         }
+    }
+
+    private func updateBottomSafeArea(_ inset: CGFloat) {
+        let safeInset = max(0, inset)
+        guard bottomSafeAreaInset != safeInset else {
+            return
+        }
+
+        bottomSafeAreaInset = safeInset
     }
 }
 
