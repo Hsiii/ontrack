@@ -7,7 +7,7 @@ const SUPPORT_EMAIL = 'its.hsichen@gmail.com';
 export const metadata: Metadata = {
     title: 'Privacy Policy | OnTrack',
     description:
-        'Read the OnTrack privacy policy, including how location access, diagnostics, third-party services, and user rights are handled.',
+        'Read how OnTrack handles location, schedule requests, route-demand aggregates, local preferences, and analytics.',
     alternates: {
         canonical: 'https://ontrack.hsichen.dev/docs/privacy',
     },
@@ -18,17 +18,30 @@ export default function PrivacyPage() {
         <LegalPage
             eyebrow='Effective Date: June 2026'
             title='Privacy Policy'
-            subtitle='OnTrack is designed to provide train schedule and travel information while respecting user privacy.'
+            subtitle='OnTrack does not require an account, does not sell user data, and keeps location-based station detection on your device.'
             footerLinks={[{ href: '/docs/support', label: 'Support' }]}
             footerNote='Last updated: June 2026'
         >
             <section className={styles.section} aria-labelledby='overview'>
                 <h2 id='overview'>Overview</h2>
                 <p>
-                    OnTrack helps users view train schedules, nearby stations,
-                    route suggestions, and travel information. We aim to collect
-                    only the information needed to provide these features.
+                    OnTrack is a train schedule app for checking departures,
+                    destinations, and live delay information. The app is
+                    designed around minimal data use: your device keeps
+                    preferences and frequent destinations locally, while the
+                    OnTrack server stores only aggregate route demand from
+                    schedule lookups so popular routes can be cached and refresh
+                    jobs can avoid unnecessary work.
                 </p>
+                <div className={styles.callout}>
+                    <strong>At a glance</strong>
+                    <p>
+                        Location stays on your device. Schedule lookups send
+                        station IDs and a date. OnTrack stores aggregate
+                        origin-destination demand counts, not accounts or raw
+                        location history.
+                    </p>
+                </div>
             </section>
 
             <section className={styles.section} aria-labelledby='collect'>
@@ -37,27 +50,65 @@ export default function PrivacyPage() {
                 <article className={styles.faqItem}>
                     <h3>Location</h3>
                     <p>
-                        If you grant permission, OnTrack may access your
-                        location to:
+                        If you grant permission, OnTrack uses your current
+                        location on your device or in your browser to choose the
+                        nearest departure station.
                     </p>
                     <ul>
                         <li>Detect nearby stations</li>
-                        <li>Suggest relevant routes</li>
-                        <li>Improve travel convenience</li>
+                        <li>Fill the origin station more quickly</li>
+                        <li>Fall back to your cached origin if needed</li>
                     </ul>
                     <p>
-                        Location is used only to provide these features and is
-                        not sold.
+                        OnTrack does not send your raw latitude or longitude to
+                        the OnTrack server for this feature.
                     </p>
                 </article>
 
                 <article className={styles.faqItem}>
-                    <h3>Usage Data</h3>
+                    <h3>Schedule Requests and Route Demand</h3>
                     <p>
-                        OnTrack may receive anonymous diagnostics, crash
-                        reports, and basic analytics from platform or hosting
-                        services to help identify reliability issues and improve
-                        the app.
+                        When you request a schedule, OnTrack sends the origin
+                        station ID, destination station ID, selected date, and
+                        optional refresh request to the OnTrack server so it can
+                        return train times and live delay status.
+                    </p>
+                    <p>
+                        To keep the service fast and avoid wasteful background
+                        refreshes, OnTrack stores aggregate route-demand
+                        records: origin station ID, destination station ID,
+                        request count, last-seen time, and Taipei-hour demand
+                        buckets. These records are used for route timetable
+                        cache prewarming, live-board refresh decisions, and cron
+                        optimization.
+                    </p>
+                </article>
+
+                <article className={styles.faqItem}>
+                    <h3>Local Preferences and Destination History</h3>
+                    <p>
+                        OnTrack stores preferences on your device, such as your
+                        selected origin and destination, cached origin,
+                        language, appearance, share format, and frequent
+                        destination history. This is used to restore your setup
+                        and power destination auto-fill.
+                    </p>
+                    <p>
+                        This local preference history is not uploaded as a
+                        separate profile. A destination becomes part of a server
+                        request only when you use it in a schedule lookup.
+                    </p>
+                </article>
+
+                <article className={styles.faqItem}>
+                    <h3>Analytics and Diagnostics</h3>
+                    <p>
+                        The production website may use Cloudflare Web Analytics
+                        and hosting telemetry to understand basic site
+                        reliability and performance. Apple, Cloudflare, and
+                        other platform providers may process diagnostics, crash
+                        reports, or request metadata according to their own
+                        policies.
                     </p>
                 </article>
 
@@ -80,7 +131,8 @@ export default function PrivacyPage() {
                         crash reports, and App Store distribution.
                     </li>
                     <li>
-                        Official railway data sources for schedules and delay
+                        Official railway data sources, including Taiwan
+                        transport data services, for schedules and delay
                         information.
                     </li>
                     <li>
@@ -94,19 +146,25 @@ export default function PrivacyPage() {
                 <h2 id='sharing'>Data Sharing</h2>
                 <p>User data is never sold.</p>
                 <p>
-                    Information is shared only when necessary to provide app
-                    functionality, maintain the service, troubleshoot issues, or
-                    comply with legal obligations.
+                    OnTrack shares information only when needed to provide app
+                    functionality, operate hosting and analytics, maintain or
+                    troubleshoot the service, or comply with legal obligations.
+                    The OnTrack application database does not store accounts,
+                    names, phone numbers, mailing addresses, or raw location
+                    coordinates.
                 </p>
             </section>
 
             <section className={styles.section} aria-labelledby='retention'>
                 <h2 id='retention'>Data Retention</h2>
                 <p>
-                    OnTrack does not store personal account information.
-                    Diagnostics, crash reports, and basic analytics, if
-                    available, are retained by the relevant platform or service
-                    provider according to their policies.
+                    Local preferences stay on your device until you clear site
+                    data, reset app data, or uninstall the app. OnTrack server
+                    route-demand aggregates are kept while they are useful for
+                    cache prewarming and refresh optimization. Diagnostics,
+                    crash reports, request metadata, and analytics handled by
+                    platform or hosting providers are retained according to
+                    those providers&apos; policies.
                 </p>
             </section>
 
