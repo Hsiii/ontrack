@@ -1,5 +1,11 @@
 node_modules/
+.next/
+out/
 dist/
+.wrangler/
+.vercel/
+apps/web/.next/
+apps/web/out/
 .vscode/
 *.min.js
 *.min.css
