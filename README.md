@@ -1,4 +1,6 @@
 <div align="center">
+  <img src="apps/web/public/apple-touch-icon.png" alt="OnTrack logo" width="160" />
+
   <h1>OnTrack</h1>
   <p>Check train status with zero taps.</p>
   <p>
