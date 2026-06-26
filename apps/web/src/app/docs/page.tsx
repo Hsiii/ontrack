@@ -43,7 +43,7 @@ export default function DocsPage() {
                             height='32'
                             aria-hidden='true'
                         />
-                        OnTrack
+                        <span className={styles.brandText}>OnTrack</span>
                     </Link>
                     <Link className={styles.navLink} href='/'>
                         開啟 App

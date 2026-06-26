@@ -27,8 +27,6 @@
     align-items: center;
     gap: var(--space-2);
     color: var(--color-text);
-    font-size: var(--text-sm);
-    font-weight: var(--font-bold);
     text-decoration: none;
 }
 
@@ -37,6 +35,12 @@
     height: var(--space-8);
     border-radius: var(--radius-sm);
     box-shadow: var(--shadow-surface);
+}
+
+.brandText {
+    font-size: var(--text-xl);
+    font-weight: var(--font-bold);
+    line-height: 1;
 }
 
 .navLink {
