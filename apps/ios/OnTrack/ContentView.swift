@@ -309,7 +309,6 @@ struct ContentView: View {
                 trains: trains,
                 isLoading: isLoadingSchedule,
                 canLoadSchedule: canLoadSchedule,
-                isCollapsed: trainPanelDetent == TrainPanelLayout.collapsedDetent,
                 onSelect: { selectedTrain = $0 }
             )
             .presentationDetents(
@@ -1827,19 +1826,13 @@ private struct TrainBoardingPanel: View {
     let trains: [TrainInfo]
     let isLoading: Bool
     let canLoadSchedule: Bool
-    let isCollapsed: Bool
     let onSelect: (TrainInfo) -> Void
 
     var body: some View {
-        GeometryReader { proxy in
-            panelShell
-                .frame(height: panelViewportHeight(for: proxy), alignment: .top)
-                .frame(
-                    width: proxy.size.width,
-                    height: proxy.size.height,
-                    alignment: isCollapsed ? .bottom : .top
-                )
-        }
+        panelShell
+            .frame(height: panelContentHeight, alignment: .top)
+            .frame(maxWidth: .infinity, alignment: .top)
+            .clipped()
         .background(OnTrackTheme.panel)
     }
 
@@ -1881,16 +1874,11 @@ private struct TrainBoardingPanel: View {
         .clipped()
     }
 
-    private func panelViewportHeight(for proxy: GeometryProxy) -> CGFloat {
-        if isCollapsed {
-            return min(TrainPanelLayout.collapsedSheetHeight, proxy.size.height)
-        }
-
-        return proxy.size.height
-    }
-
     private var panelContentHeight: CGFloat {
-        TrainPanelLayout.panelChromeHeight + trainListContentHeight
+        max(
+            TrainPanelLayout.collapsedSheetHeight,
+            TrainPanelLayout.panelChromeHeight + trainListContentHeight
+        )
     }
 
     private var trainListContentHeight: CGFloat {
