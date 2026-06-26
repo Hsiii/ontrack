@@ -15,25 +15,18 @@ export const metadata: Metadata = {
 
 const docsLinks = [
     {
-        icon: TrainFront,
-        title: '開啟 OnTrack',
-        body: '直接回到查詢工具，設定車站與時間來查看列車資訊。',
-        href: '/',
-        cta: '開始查詢',
-    },
-    {
         icon: LifeBuoy,
-        title: 'Support',
-        body: '查看常見問題，或回報站點偵測、列車資訊與分享功能相關問題。',
+        title: '需要協助',
+        body: '定位不到車站、列車時間看起來不對，或想回報問題時從這裡開始。',
         href: '/docs/support',
-        cta: '取得協助',
+        cta: '查看支援',
     },
     {
         icon: Shield,
-        title: 'Privacy Policy',
-        body: '了解 OnTrack 如何處理位置權限、診斷資料與第三方服務。',
+        title: '隱私權',
+        body: '了解位置權限、診斷資料與第三方服務如何用於提供查詢功能。',
         href: '/docs/privacy',
-        cta: '閱讀政策',
+        cta: '閱讀說明',
     },
 ] as const;
 
@@ -48,22 +41,19 @@ export default function DocsPage() {
                         </span>
                         OnTrack
                     </Link>
-                    <Link className={styles.navLink} href='/'>
-                        開啟 App
-                    </Link>
                 </nav>
 
                 <section className={styles.hero}>
                     <div className={styles.heroCopy}>
                         <p className={styles.eyebrow}>Docs</p>
-                        <h1 className={styles.title}>OnTrack 說明文件</h1>
+                        <h1 className={styles.title}>第一次使用 OnTrack</h1>
                         <p className={styles.lede}>
-                            OnTrack
-                            是台鐵查詢工具，提供附近車站、常用目的地、列車時間與分享功能。這裡保留必要的使用支援與隱私資訊。
+                            先選出發站、目的地與時間。允許定位後，OnTrack
+                            可以優先顯示附近車站，讓你更快查到下一班台鐵列車。
                         </p>
                         <div className={styles.actions}>
                             <Link className={styles.primaryAction} href='/'>
-                                開始查詢
+                                開始查車
                                 <ArrowRight size={16} />
                             </Link>
                         </div>
@@ -95,10 +85,6 @@ export default function DocsPage() {
                         );
                     })}
                 </section>
-
-                <footer className={styles.footer}>
-                    <span>Support: its.hsichen@gmail.com</span>
-                </footer>
             </div>
         </main>
     );

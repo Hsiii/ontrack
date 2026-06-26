@@ -39,13 +39,6 @@
     color: var(--color-primary-contrast);
 }
 
-.navLink {
-    color: var(--color-text-dim);
-    font-size: var(--text-sm);
-    font-weight: var(--font-medium);
-    text-decoration: none;
-}
-
 .hero {
     display: grid;
     gap: var(--space-5);
@@ -92,8 +85,7 @@
     align-items: center;
 }
 
-.primaryAction,
-.secondaryAction {
+.primaryAction {
     display: inline-flex;
     min-height: var(--space-10);
     align-items: center;
@@ -109,11 +101,6 @@
 .primaryAction {
     background: var(--color-primary);
     color: var(--color-primary-contrast);
-}
-
-.secondaryAction {
-    background: var(--color-primary-subtle);
-    color: var(--color-primary);
 }
 
 .cardIcon {
@@ -167,14 +154,6 @@
     font-size: var(--text-sm);
     font-weight: var(--font-semibold);
     white-space: nowrap;
-}
-
-.footer {
-    display: flex;
-    justify-content: center;
-    padding: var(--space-2) 0 0;
-    color: var(--color-text-dim);
-    font-size: var(--text-sm);
 }
 
 @media (max-width: 760px) {
