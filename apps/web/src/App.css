@@ -1,5 +1,7 @@
 .app-container {
     width: 100%;
+    max-width: var(--content-mobile);
+    margin-inline: auto;
     padding-inline: var(--space-5);
     padding-top: var(--space-3);
     padding-bottom: calc(
