@@ -81,12 +81,17 @@
 
 .cardIcon {
     display: grid;
-    width: var(--space-15);
-    height: var(--space-15);
+    width: 100%;
+    aspect-ratio: 1;
     place-items: center;
     border-radius: var(--radius-sm);
     background: var(--color-primary-subtle);
     color: var(--color-primary);
+}
+
+.cardIcon svg {
+    width: var(--space-15);
+    height: var(--space-15);
 }
 
 .linkGrid {

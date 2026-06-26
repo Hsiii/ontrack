@@ -67,7 +67,7 @@ export default function DocsPage() {
                                 key={item.title}
                             >
                                 <span className={styles.cardIcon}>
-                                    <Icon size={28} />
+                                    <Icon aria-hidden='true' />
                                 </span>
                                 <span className={styles.cardText}>
                                     <strong>{item.title}</strong>
