@@ -897,14 +897,11 @@ private struct TimeEditorSheet: View {
 
             Group {
                 if draft.mode == .lastTrain {
-                    DatePicker(
-                        AppText.date,
-                        selection: selectedTime,
-                        in: dateRange,
-                        displayedComponents: [.date]
-                    )
-                    .labelsHidden()
-                    .datePickerStyle(.wheel)
+                    Text(AppText.queryTodayLastTrain)
+                        .font(OnTrackFont.title)
+                        .foregroundStyle(OnTrackTheme.text)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity, minHeight: 216)
                 } else {
                     MinuteIntervalDatePicker(
                         selection: selectedTime,

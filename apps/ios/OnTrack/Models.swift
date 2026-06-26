@@ -325,6 +325,7 @@ enum AppText {
     static var departure: String { isZh ? "出發" : "Depart" }
     static var arrival: String { isZh ? "抵達" : "Arrive" }
     static var lastTrain: String { isZh ? "末班" : "Last" }
+    static var queryTodayLastTrain: String { isZh ? "查詢今日末班車" : "Find today's last train" }
     static var chooseRoute: String { isZh ? "選擇路線" : "Choose a route" }
     static var noTrainsAvailable: String { isZh ? "查無可搭乘班次" : "No trains available" }
     static var origin: String { isZh ? "出發站" : "Origin" }
