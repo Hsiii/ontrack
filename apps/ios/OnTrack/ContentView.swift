@@ -934,7 +934,7 @@ private struct TimeEditorSheet: View {
         }
         .presentationDetents([.height(Self.detentHeight)])
         .presentationDragIndicator(.automatic)
-        .presentationBackground(OnTrackTheme.background)
+        .presentationBackground(OnTrackTheme.panel)
     }
 
     private func content(availableWidth: CGFloat, bottomSafeAreaInset: CGFloat) -> some View {
@@ -949,7 +949,7 @@ private struct TimeEditorSheet: View {
 
             timeEditorFooter(bottomSafeAreaInset: bottomSafeAreaInset)
         }
-        .background(OnTrackTheme.background)
+        .background(OnTrackTheme.panel)
     }
 
     private func timeEditorHeader(availableWidth: CGFloat) -> some View {
@@ -1977,7 +1977,7 @@ private struct SettingsSheet: View {
         }
         .presentationDetents([.height(Self.detentHeight + bottomSafeAreaInset)])
         .presentationDragIndicator(.automatic)
-        .presentationBackground(OnTrackTheme.background)
+        .presentationBackground(OnTrackTheme.panel)
         .tint(OnTrackTheme.primary)
     }
 
@@ -2025,7 +2025,7 @@ private struct SettingsSheet: View {
         .padding(.top, OnTrackTheme.space5)
         .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(OnTrackTheme.background)
+        .background(OnTrackTheme.panel)
     }
 
     private func languageTitle(_ setting: AppLanguageSetting) -> String {
