@@ -200,11 +200,13 @@ struct ContentView: View {
                             canLoadSchedule: canLoadSchedule,
                             isExpanded: $isTrainPanelExpanded,
                             maxHeight: max(320, proxy.size.height),
+                            bottomSafeAreaInset: proxy.safeAreaInsets.bottom,
                             onSelect: { selectedTrain = $0 }
                         )
                         .frame(maxWidth: .infinity)
                     }
                 }
+                .ignoresSafeArea(edges: .bottom)
 
                 if let stationPicker {
                     StationSearchView(
@@ -1688,6 +1690,7 @@ private struct TrainBoardingPanel: View {
     let canLoadSchedule: Bool
     @Binding var isExpanded: Bool
     let maxHeight: CGFloat
+    let bottomSafeAreaInset: CGFloat
     let onSelect: (TrainInfo) -> Void
 
     @State private var didCopy = false
@@ -1723,6 +1726,7 @@ private struct TrainBoardingPanel: View {
             .frame(height: trainListViewportHeight)
             .scrollIndicators(isExpanded ? .automatic : .hidden)
         }
+        .padding(.bottom, bottomSafeAreaInset)
         .frame(maxWidth: .infinity)
         .frame(height: isExpanded ? maxHeight : nil, alignment: .top)
         .clipped()
@@ -1796,7 +1800,10 @@ private struct TrainBoardingPanel: View {
     private var trainListViewportHeight: CGFloat {
         let contentHeight = trainListContentHeight + OnTrackTheme.space6
         if isExpanded {
-            return max(OnTrackTheme.controlHeight, maxHeight - TrainPanelLayout.expandedNonListHeight)
+            return max(
+                OnTrackTheme.controlHeight,
+                maxHeight - TrainPanelLayout.expandedNonListHeight - bottomSafeAreaInset
+            )
         }
 
         return min(contentHeight, TrainPanelLayout.collapsedListViewportHeight)
@@ -2145,7 +2152,7 @@ private extension View {
                 ),
                 style: .continuous
             )
-            .fill(.regularMaterial)
+            .fill(OnTrackTheme.panel)
         }
         .overlay {
             UnevenRoundedRectangle(
