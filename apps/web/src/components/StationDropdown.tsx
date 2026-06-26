@@ -7,6 +7,7 @@ import {
     type ReactNode,
 } from 'react';
 import { Clock3, Search, X } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
@@ -36,6 +37,7 @@ interface StationDropdownProps {
     selectedStation?: Station;
     onCacheSelection?: (id: string) => void;
     triggerAction?: ReactNode;
+    TriggerIcon?: LucideIcon;
     showFrequentDestinations?: boolean;
     frequentDestinationOriginId?: string;
     excludedFrequentDestinationId?: string;
@@ -63,6 +65,7 @@ export function StationDropdown({
     selectedStation,
     onCacheSelection,
     triggerAction,
+    TriggerIcon = Search,
     showFrequentDestinations = false,
     frequentDestinationOriginId = '',
     excludedFrequentDestinationId = '',
@@ -279,7 +282,7 @@ export function StationDropdown({
                 aria-haspopup='dialog'
                 aria-expanded={isOpen}
             >
-                <Search className='station-trigger-leading-icon' />
+                <TriggerIcon className='station-trigger-leading-icon' />
                 <span className='station-trigger-copy'>
                     <span className='station-trigger-label'>{placeholder}</span>
                     <span className='station-trigger-value'>

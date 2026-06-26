@@ -1,11 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import { RefreshCw, Settings } from 'lucide-react';
 
 import './App.css';
 
 import { api } from './api/client';
 import { IOSInstallPrompt } from './components/IOSInstallPrompt';
+import {
+    SettingsSheet,
+    type ShareMessageFormat,
+} from './components/SettingsSheet';
 import { ShareCard } from './components/ShareCard';
 import { StationSelector } from './components/StationSelector';
 import { StationSelectorSkeleton } from './components/StationSelectorSkeleton';
@@ -31,6 +36,17 @@ const EMPTY_TIME_SELECTION: TimeSelection = {
     timeDigits: '',
 };
 const NATIVE_SPLASH_HIDE_FALLBACK_MS = 240;
+const SHARE_MESSAGE_FORMAT_KEY = 'ontrack_share_message_format';
+
+function getStoredShareMessageFormat(): ShareMessageFormat {
+    if (typeof window === 'undefined') {
+        return 'arrivalOnly';
+    }
+
+    const stored = window.localStorage.getItem(SHARE_MESSAGE_FORMAT_KEY);
+
+    return stored === 'routeArrival' ? 'routeArrival' : 'arrivalOnly';
+}
 
 function App() {
     const { t, language } = useI18n();
@@ -51,6 +67,9 @@ function App() {
     const [stationsError, setStationsError] = useState<string | null>(null);
     const [liveRefreshNonce, setLiveRefreshNonce] = useState(0);
     const [isRefreshingLive, setIsRefreshingLive] = useState(false);
+    const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [shareMessageFormat, setShareMessageFormat] =
+        useState<ShareMessageFormat>('arrivalOnly');
 
     useEffect(() => {
         api.getStations()
@@ -71,6 +90,14 @@ function App() {
                     ? currentTimeSelection
                     : getInitialTimeSelection()
             );
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
+        const timer = window.setTimeout(() => {
+            setShareMessageFormat(getStoredShareMessageFormat());
         }, 0);
 
         return () => window.clearTimeout(timer);
@@ -139,26 +166,58 @@ function App() {
         timeSelection.dateDigits.length === 4 &&
         timeSelection.timeDigits.length === 4;
     const canRefreshLive = Boolean(isTimeInitialized && originId && destId);
+    const handleSetShareMessageFormat = (format: ShareMessageFormat) => {
+        setShareMessageFormat(format);
+        window.localStorage.setItem(SHARE_MESSAGE_FORMAT_KEY, format);
+    };
 
     return (
         <>
             <IOSInstallPrompt />
+            <SettingsSheet
+                isOpen={isSettingsOpen}
+                onClose={() => setIsSettingsOpen(false)}
+                messageFormat={shareMessageFormat}
+                onMessageFormatChange={handleSetShareMessageFormat}
+            />
             <div className='app-container'>
                 <main className='app-main'>
-                    <TimeSelector
-                        value={timeSelection}
-                        onChange={setTimeSelection}
-                        canRefreshLive={canRefreshLive}
-                        isRefreshingLive={isRefreshingLive}
-                        onRefreshLive={() =>
-                            setLiveRefreshNonce((value) => value + 1)
-                        }
-                    />
+                    <div className='app-toolbar'>
+                        <button
+                            type='button'
+                            className='app-toolbar-button'
+                            onClick={() =>
+                                setLiveRefreshNonce((value) => value + 1)
+                            }
+                            disabled={!canRefreshLive || isRefreshingLive}
+                            aria-label={t('train.refreshLiveStatus')}
+                            title={t('train.refreshLiveStatus')}
+                        >
+                            <RefreshCw
+                                className={
+                                    isRefreshingLive ? 'is-spinning' : ''
+                                }
+                                aria-hidden='true'
+                            />
+                        </button>
 
-                    <section aria-labelledby='station-selector-heading'>
-                        <h2 id='station-selector-heading' className='label-dim'>
-                            {t('app.selectRoute')}
-                        </h2>
+                        <TimeSelector
+                            value={timeSelection}
+                            onChange={setTimeSelection}
+                        />
+
+                        <button
+                            type='button'
+                            className='app-toolbar-button'
+                            onClick={() => setIsSettingsOpen(true)}
+                            aria-label={t('settings.title')}
+                            title={t('settings.title')}
+                        >
+                            <Settings aria-hidden='true' />
+                        </button>
+                    </div>
+
+                    <section aria-label={t('app.selectRoute')}>
                         {stationsLoading ? (
                             <StationSelectorSkeleton />
                         ) : stationsError ? (

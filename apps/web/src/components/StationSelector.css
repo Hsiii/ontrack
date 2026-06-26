@@ -12,37 +12,6 @@
     box-shadow: var(--shadow-surface);
 }
 
-.station-toast {
-    position: absolute;
-    left: 50%;
-    bottom: calc(100% + var(--space-2));
-    transform: translateX(-50%);
-    z-index: 10;
-    pointer-events: none;
-    white-space: nowrap;
-    text-align: center;
-    font-size: var(--text-sm);
-    color: var(--color-primary);
-    border-radius: var(--radius-sm);
-    background: var(--color-primary-subtle);
-    opacity: 0;
-    overflow: hidden;
-    transition:
-        opacity var(--motion-panel) var(--ease-out),
-        transform var(--motion-panel) var(--ease-out);
-    padding: 0 var(--space-3);
-}
-
-.station-toast-visible {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-    padding: var(--space-1) var(--space-3);
-}
-
-.station-toast:not(.station-toast-visible) {
-    transform: translateX(-50%) translateY(0.25rem);
-}
-
 .station-row {
     display: flex;
     align-items: center;
@@ -56,59 +25,6 @@
     position: relative;
     flex: 1;
     min-width: 0;
-}
-
-.station-swap-row {
-    position: absolute;
-    top: 50%;
-    left: 0;
-    right: 0;
-    z-index: 3;
-    display: flex;
-    justify-content: center;
-    height: var(--size-touch);
-    pointer-events: none;
-    transform: translateY(-50%);
-}
-
-.station-swap-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--size-touch);
-    height: var(--size-touch);
-    padding: var(--space-2);
-    border: var(--space-1) solid var(--color-bg-light);
-    border-radius: 50%;
-    background: var(--color-bg-light);
-    box-shadow: var(--shadow-surface);
-    color: var(--color-text-dim);
-    cursor: pointer;
-    pointer-events: auto;
-    transition:
-        background-color var(--motion-base) ease,
-        box-shadow var(--motion-base) ease,
-        color var(--motion-base) ease,
-        transform var(--motion-fast) ease;
-}
-
-.station-swap-btn:not(:disabled):hover {
-    box-shadow: var(--shadow-surface-hover);
-}
-
-.station-swap-btn svg {
-    width: var(--size-icon);
-    height: var(--size-icon);
-    flex: 0 0 var(--size-icon);
-}
-
-.station-swap-btn:disabled {
-    color: var(--color-border);
-    cursor: default;
-}
-
-.station-swap-btn:not(:disabled):active {
-    transform: scale(0.96);
 }
 
 .station-action-btn {
@@ -136,6 +52,10 @@
 .station-action-btn:hover {
     background: var(--color-hover);
     color: var(--color-text);
+}
+
+.station-action-btn:disabled {
+    color: var(--color-border);
 }
 
 .station-action-btn:active {

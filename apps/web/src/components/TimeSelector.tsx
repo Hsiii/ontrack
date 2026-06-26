@@ -3,7 +3,6 @@ import {
     ArrowRightFromLine,
     ArrowRightToLine,
     ChevronDown,
-    RefreshCw,
     TimerReset,
     TrainFront,
 } from 'lucide-react';
@@ -226,18 +225,9 @@ export function getScheduleTime(
 interface TimeSelectorProps {
     value: TimeSelection;
     onChange: (value: TimeSelection) => void;
-    canRefreshLive?: boolean;
-    isRefreshingLive?: boolean;
-    onRefreshLive?: () => void;
 }
 
-export function TimeSelector({
-    value,
-    onChange,
-    canRefreshLive = false,
-    isRefreshingLive = false,
-    onRefreshLive,
-}: TimeSelectorProps) {
+export function TimeSelector({ value, onChange }: TimeSelectorProps) {
     const { t } = useI18n();
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [draft, setDraft] = useState<TimeSelection>(() =>
@@ -474,47 +464,20 @@ export function TimeSelector({
     };
 
     return (
-        <section
-            className='time-selector'
-            aria-labelledby='time-selector-heading'
-        >
-            <h2 id='time-selector-heading' className='label-dim'>
-                {t('time.selectTime')}
-            </h2>
-            <div className='time-selector-row'>
-                <button
-                    type='button'
-                    className='time-selector-trigger'
-                    onClick={openEditor}
-                    aria-label={t('time.selectTime')}
-                    aria-haspopup='dialog'
-                    aria-expanded={isEditorOpen}
-                >
-                    <span className='time-selector-trigger-copy'>
-                        <span className='time-selector-trigger-title'>
-                            {title}
-                        </span>
-                    </span>
-                    <ChevronDown aria-hidden='true' />
-                </button>
-                <button
-                    type='button'
-                    className='time-selector-refresh-btn'
-                    onClick={onRefreshLive}
-                    disabled={!canRefreshLive || isRefreshingLive}
-                    aria-label={t('train.refreshLiveStatus')}
-                    title={t('train.refreshLiveStatus')}
-                >
-                    <RefreshCw
-                        className={
-                            isRefreshingLive
-                                ? 'time-selector-refresh-icon spinning'
-                                : 'time-selector-refresh-icon'
-                        }
-                        aria-hidden='true'
-                    />
-                </button>
-            </div>
+        <div className='time-selector'>
+            <button
+                type='button'
+                className='time-selector-trigger'
+                onClick={openEditor}
+                aria-label={t('time.selectTime')}
+                aria-haspopup='dialog'
+                aria-expanded={isEditorOpen}
+            >
+                <span className='time-selector-trigger-copy'>
+                    <span className='time-selector-trigger-title'>{title}</span>
+                </span>
+                <ChevronDown aria-hidden='true' />
+            </button>
 
             {isEditorOpen && (
                 <div className='time-editor-backdrop' onClick={closeEditor}>
@@ -638,12 +601,8 @@ export function TimeSelector({
                                         <button
                                             key={optionHour}
                                             type='button'
+                                            className={`time-editor-wheel-option ${draftHour === optionHour ? 'active' : ''}`}
                                             data-time-value={optionHour}
-                                            className={`time-editor-wheel-option ${
-                                                draftHour === optionHour
-                                                    ? 'active'
-                                                    : ''
-                                            }`}
                                             role='option'
                                             aria-selected={
                                                 draftHour === optionHour
@@ -662,9 +621,12 @@ export function TimeSelector({
                                     ))}
                                 </div>
 
-                                <span className='time-editor-wheel-separator'>
+                                <div
+                                    className='time-editor-wheel-separator'
+                                    aria-hidden='true'
+                                >
                                     :
-                                </span>
+                                </div>
 
                                 <div
                                     ref={minuteListRef}
@@ -677,12 +639,8 @@ export function TimeSelector({
                                         <button
                                             key={optionMinute}
                                             type='button'
+                                            className={`time-editor-wheel-option ${draftMinute === optionMinute ? 'active' : ''}`}
                                             data-time-value={optionMinute}
-                                            className={`time-editor-wheel-option ${
-                                                draftMinute === optionMinute
-                                                    ? 'active'
-                                                    : ''
-                                            }`}
                                             role='option'
                                             aria-selected={
                                                 draftMinute === optionMinute
@@ -714,6 +672,6 @@ export function TimeSelector({
                     </div>
                 </div>
             )}
-        </section>
+        </div>
     );
 }

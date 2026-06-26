@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpDown, MapPin, MapPinCheck, MapPinOff } from 'lucide-react';
+import { ArrowUpDown, Circle, Flag } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
@@ -40,14 +40,12 @@ export function StationSelector({
     const [destSearch, setDestSearch] = useState('');
     const [originDropdownOpen, setOriginDropdownOpen] = useState(false);
     const [destDropdownOpen, setDestDropdownOpen] = useState(false);
-    const [toast, setToast] = useState<string | null>(null);
-    const toastTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
     const hasAutoSelected = useRef(false);
     const isGeolocationPending = useRef(false);
     const originIdRef = useRef(originId);
     const prevAutoDetectOrigin = useRef(autoDetectOrigin);
-    const [originSource, setOriginSource] = useState<OriginSelectionSource>(
-        () => (originId ? 'cached' : null)
+    const [, setOriginSource] = useState<OriginSelectionSource>(() =>
+        originId ? 'cached' : null
     );
     const [destinationSource, setDestinationSource] =
         useState<DestinationSelectionSource>(() => (destId ? 'cached' : null));
@@ -60,12 +58,6 @@ export function StationSelector({
         },
         [setOriginId]
     );
-
-    const showToast = (message: string) => {
-        if (toastTimer.current) clearTimeout(toastTimer.current);
-        setToast(message);
-        toastTimer.current = setTimeout(() => setToast(null), 2500);
-    };
 
     useEffect(() => {
         originIdRef.current = originId;
@@ -241,18 +233,13 @@ export function StationSelector({
         setDestId(id);
     };
 
-    const geoToggleIcon = !autoDetectOrigin ? (
-        <MapPinOff />
-    ) : originSource === 'geo' ? (
-        <MapPinCheck />
-    ) : (
-        <MapPin />
-    );
-
     const handleOriginDropdownOpen = (isOpen: boolean) => {
         setOriginDropdownOpen(isOpen);
         if (isOpen) {
             setDestDropdownOpen(false);
+            if (!autoDetectOrigin) {
+                setAutoDetectOrigin(true);
+            }
         }
     };
 
@@ -261,12 +248,6 @@ export function StationSelector({
         if (isOpen) {
             setOriginDropdownOpen(false);
         }
-    };
-
-    const handleToggleGeo = () => {
-        const next = !autoDetectOrigin;
-        setAutoDetectOrigin(next);
-        showToast(next ? t('toast.geoEnabled') : t('toast.geoDisabled'));
     };
 
     const handleSwapStations = () => {
@@ -287,16 +268,6 @@ export function StationSelector({
 
     return (
         <div className='station-selector-container'>
-            {/* Toast */}
-            <div
-                className={`station-toast ${toast ? 'station-toast-visible' : ''}`}
-                role='status'
-                aria-live='polite'
-                aria-atomic='true'
-            >
-                {toast}
-            </div>
-
             <div className='station-fields-group'>
                 {/* Origin Station Row */}
                 <div className='station-row station-row-origin'>
@@ -312,35 +283,9 @@ export function StationSelector({
                             placeholder={t('station.origin')}
                             title={t('station.selectOrigin')}
                             selectedStation={originStation}
-                            triggerAction={
-                                <button
-                                    type='button'
-                                    className={`station-action-btn ${autoDetectOrigin ? 'active' : ''}`}
-                                    onClick={handleToggleGeo}
-                                    aria-label={
-                                        autoDetectOrigin
-                                            ? t('app.disableAutoDetectOrigin')
-                                            : t('app.enableAutoDetectOrigin')
-                                    }
-                                >
-                                    {geoToggleIcon}
-                                </button>
-                            }
+                            TriggerIcon={Circle}
                         />
                     </div>
-                </div>
-
-                <div className='station-swap-row'>
-                    <button
-                        type='button'
-                        className='station-swap-btn'
-                        onClick={handleSwapStations}
-                        disabled={!originId || !destId}
-                        aria-label={t('station.swap')}
-                        title={t('station.swap')}
-                    >
-                        <ArrowUpDown aria-hidden='true' />
-                    </button>
                 </div>
 
                 {/* Destination Station Row */}
@@ -357,9 +302,22 @@ export function StationSelector({
                             placeholder={t('station.destination')}
                             title={t('station.selectDestination')}
                             selectedStation={destStation}
+                            TriggerIcon={Flag}
                             showFrequentDestinations
                             frequentDestinationOriginId={originId}
                             excludedFrequentDestinationId={originId}
+                            triggerAction={
+                                <button
+                                    type='button'
+                                    className='station-action-btn'
+                                    onClick={handleSwapStations}
+                                    disabled={!originId || !destId}
+                                    aria-label={t('station.swap')}
+                                    title={t('station.swap')}
+                                >
+                                    <ArrowUpDown aria-hidden='true' />
+                                </button>
+                            }
                         />
                     </div>
                 </div>

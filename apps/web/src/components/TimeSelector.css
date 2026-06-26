@@ -1,18 +1,8 @@
 .time-selector {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2);
+    min-width: 0;
 }
 
-.time-selector-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--size-touch);
-    align-items: center;
-    gap: var(--space-2);
-}
-
-.time-selector-trigger,
-.time-selector-refresh-btn {
+.time-selector-trigger {
     min-height: var(--size-touch);
     border: 1px solid var(--color-border);
     background: var(--color-bg-light);
@@ -39,7 +29,6 @@
 }
 
 .time-selector-trigger:not(:disabled):active,
-.time-selector-refresh-btn:not(:disabled):active,
 .time-editor-shortcut-btn:not(:disabled):active,
 .time-editor-mode-option:not(.active):active,
 .time-editor-wheel-option:not(.active):active,
@@ -47,8 +36,7 @@
     transform: scale(0.96);
 }
 
-.time-selector-trigger:hover,
-.time-selector-refresh-btn:hover {
+.time-selector-trigger:hover {
     box-shadow: var(--shadow-surface-hover);
 }
 
@@ -74,31 +62,11 @@
     font-weight: var(--font-medium);
 }
 
-.time-selector-trigger svg,
-.time-selector-refresh-icon {
+.time-selector-trigger svg {
     width: var(--size-icon);
     height: var(--size-icon);
     flex: 0 0 var(--size-icon);
     color: var(--color-text-dim);
-}
-
-.time-selector-refresh-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: var(--size-touch);
-    padding: 0;
-    border-radius: 50%;
-}
-
-.time-selector-refresh-btn:disabled {
-    color: var(--color-border);
-    cursor: default;
-    opacity: 0.56;
-}
-
-.time-selector-refresh-icon.spinning {
-    animation: timeSelectorSpin var(--motion-panel) linear infinite;
 }
 
 .time-editor-backdrop {
@@ -410,11 +378,5 @@
     to {
         opacity: 1;
         transform: translateY(0);
-    }
-}
-
-@keyframes timeSelectorSpin {
-    to {
-        transform: rotate(360deg);
     }
 }

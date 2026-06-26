@@ -15,6 +15,51 @@
     gap: var(--space-4);
 }
 
+.app-toolbar {
+    display: grid;
+    grid-template-columns: var(--size-touch) minmax(0, 1fr) var(--size-touch);
+    align-items: center;
+    gap: var(--space-2);
+}
+
+.app-toolbar-button {
+    display: flex;
+    width: var(--size-touch);
+    height: var(--size-touch);
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: var(--color-text-dim);
+    transition:
+        background-color var(--motion-base) ease,
+        color var(--motion-base) ease,
+        transform var(--motion-fast) ease;
+}
+
+.app-toolbar-button:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
+
+.app-toolbar-button:active {
+    transform: scale(0.96);
+}
+
+.app-toolbar-button:disabled {
+    color: var(--color-border);
+    opacity: 0.56;
+}
+
+.app-toolbar-button svg {
+    width: var(--size-icon);
+    height: var(--size-icon);
+}
+
+.app-toolbar-button .is-spinning {
+    animation: appToolbarSpin var(--motion-panel) linear infinite;
+}
+
 @media (min-width: 720px) {
     .app-container {
         padding-inline: var(--space-6);
@@ -23,6 +68,12 @@
 
     .app-main {
         gap: var(--space-5);
+    }
+}
+
+@keyframes appToolbarSpin {
+    to {
+        transform: rotate(360deg);
     }
 }
 
