@@ -3,8 +3,8 @@ import {
     ArrowRightFromLine,
     ArrowRightToLine,
     ChevronDown,
+    Moon,
     TimerReset,
-    TrainFront,
 } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
@@ -23,9 +23,13 @@ const DATE_DIGIT_COUNT = 4;
 const TIME_DIGIT_COUNT = 4;
 const FUTURE_DATE_RANGE_DAYS = 7;
 const LAST_TRAIN_TIME_DIGITS = '2359';
+const TIME_PICKER_MINUTE_INTERVAL = 10;
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
-const MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
-type WheelTimePart = 'hour' | 'minute';
+const MINUTES = Array.from(
+    { length: 60 / TIME_PICKER_MINUTE_INTERVAL },
+    (_, index) => index * TIME_PICKER_MINUTE_INTERVAL
+);
+type WheelTimePart = 'day' | 'hour' | 'minute';
 
 function getTodayDate() {
     const today = new Date();
@@ -137,6 +141,12 @@ function getDateDigitsAtOffset(dayOffset: number) {
     return formatDateDigits(addDays(minDate, normalizedOffset));
 }
 
+function getDateAtOffset(dayOffset: number) {
+    const { minDate } = getScheduleDateRange();
+
+    return addDays(minDate, dayOffset);
+}
+
 function normalizeSelection(value: TimeSelection): TimeSelection {
     if (
         parseScheduleDateDigits(value.dateDigits) !== null &&
@@ -160,6 +170,25 @@ function getTimeParts(timeDigits: string) {
     }
 
     return { hour, minute };
+}
+
+function getWheelTimeParts(timeDigits: string) {
+    const { hour, minute } = getTimeParts(timeDigits);
+    const snappedMinute =
+        Math.round(minute / TIME_PICKER_MINUTE_INTERVAL) *
+        TIME_PICKER_MINUTE_INTERVAL;
+
+    if (snappedMinute >= 60) {
+        return {
+            hour: (hour + 1) % 24,
+            minute: 0,
+        };
+    }
+
+    return {
+        hour,
+        minute: snappedMinute,
+    };
 }
 
 function formatTime(hour: number, minute: number) {
@@ -228,17 +257,19 @@ interface TimeSelectorProps {
 }
 
 export function TimeSelector({ value, onChange }: TimeSelectorProps) {
-    const { t } = useI18n();
+    const { t, language } = useI18n();
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const [draft, setDraft] = useState<TimeSelection>(() =>
         normalizeSelection(value)
     );
     const draftRef = useRef(draft);
+    const dayListRef = useRef<HTMLDivElement>(null);
     const hourListRef = useRef<HTMLDivElement>(null);
     const minuteListRef = useRef<HTMLDivElement>(null);
     const isAligningWheelRef = useRef(false);
     const wheelAlignReleaseTimerRef = useRef<number | null>(null);
     const wheelScrollFrameRef = useRef<Record<WheelTimePart, number | null>>({
+        day: null,
         hour: null,
         minute: null,
     });
@@ -262,12 +293,6 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                     shortLabel: t('time.arrival'),
                     Icon: ArrowRightToLine,
                 },
-                {
-                    value: 'lastTrain' as const,
-                    label: t('time.lastTrain'),
-                    shortLabel: t('time.lastTrain'),
-                    Icon: TrainFront,
-                },
             ] satisfies {
                 value: TimeMode;
                 label: string;
@@ -276,6 +301,38 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
             }[],
         [t]
     );
+
+    const dateOptions = useMemo(() => {
+        const dateFormatter = new Intl.DateTimeFormat(language, {
+            month: '2-digit',
+            day: '2-digit',
+            timeZone: 'Asia/Taipei',
+        });
+        const weekdayFormatter = new Intl.DateTimeFormat(language, {
+            weekday: 'short',
+            timeZone: 'Asia/Taipei',
+        });
+
+        return Array.from(
+            { length: FUTURE_DATE_RANGE_DAYS + 1 },
+            (_, dayOffset) => {
+                const date = getDateAtOffset(dayOffset);
+                const dayLabel =
+                    dayOffset === 0
+                        ? t('time.today')
+                        : dayOffset === 1
+                          ? t('time.tomorrow')
+                          : weekdayFormatter.format(date);
+
+                return {
+                    dayOffset,
+                    dateDigits: getDateDigitsAtOffset(dayOffset),
+                    dayLabel,
+                    dateLabel: dateFormatter.format(date),
+                };
+            }
+        );
+    }, [language, t]);
 
     useEffect(() => {
         const syncNowSelection = () => {
@@ -292,15 +349,19 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
         };
     }, [onChange, value.mode]);
 
-    const scrollWheelsToTime = useCallback((timeDigits: string) => {
+    const scrollWheelsToSelection = useCallback((selection: TimeSelection) => {
         isAligningWheelRef.current = true;
 
         if (wheelAlignReleaseTimerRef.current !== null) {
             window.clearTimeout(wheelAlignReleaseTimerRef.current);
         }
 
-        const { hour, minute } = getTimeParts(timeDigits);
+        const dayOffset = getDateOffset(selection.dateDigits);
+        const { hour, minute } = getWheelTimeParts(selection.timeDigits);
 
+        dayListRef.current
+            ?.querySelector(`[data-time-value="${dayOffset}"]`)
+            ?.scrollIntoView({ block: 'center' });
         hourListRef.current
             ?.querySelector(`[data-time-value="${hour}"]`)
             ?.scrollIntoView({ block: 'center' });
@@ -318,11 +379,11 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
         if (!isEditorOpen) return;
 
         const frame = window.requestAnimationFrame(() => {
-            scrollWheelsToTime(draftRef.current.timeDigits);
+            scrollWheelsToSelection(draftRef.current);
         });
 
         return () => window.cancelAnimationFrame(frame);
-    }, [isEditorOpen, scrollWheelsToTime]);
+    }, [isEditorOpen, scrollWheelsToSelection]);
 
     useEffect(
         () => () => {
@@ -341,15 +402,17 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
 
     const normalizedValue = normalizeSelection(value);
     const { hour, minute } = getTimeParts(normalizedValue.timeDigits);
-    const { hour: draftHour, minute: draftMinute } = getTimeParts(
+    const { hour: draftHour, minute: draftMinute } = getWheelTimeParts(
         draft.timeDigits
     );
     const isNowSelected = normalizedValue.mode === 'now';
     const draftDateOffset = getDateOffset(draft.dateDigits);
-    const draftDateLabel = getScheduleDate(draft.dateDigits);
     const modeLabel =
-        modeOptions.find((option) => option.value === normalizedValue.mode)
-            ?.shortLabel ?? t('time.departure');
+        normalizedValue.mode === 'lastTrain'
+            ? t('time.lastTrain')
+            : (modeOptions.find(
+                  (option) => option.value === normalizedValue.mode
+              )?.shortLabel ?? t('time.departure'));
     const title = isNowSelected
         ? t('time.leaveNow')
         : normalizedValue.mode === 'lastTrain'
@@ -357,6 +420,7 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
           : `${modeLabel} ${formatTime(hour, minute)}`;
 
     const openEditor = () => {
+        draftRef.current = normalizedValue;
         setDraft(normalizedValue);
         setIsEditorOpen(true);
     };
@@ -387,43 +451,84 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
 
     const handleSetNow = () => {
         const nextSelection = getCurrentDateTimeSelection('now');
+        draftRef.current = nextSelection;
         setDraft(nextSelection);
         window.requestAnimationFrame(() =>
-            scrollWheelsToTime(nextSelection.timeDigits)
+            scrollWheelsToSelection(nextSelection)
         );
     };
 
-    const handleSetDateOffset = (dayOffset: number) => {
-        setDraft((current) => ({
-            ...current,
-            mode: current.mode === 'now' ? 'departure' : current.mode,
+    const handleSetLastTrain = () => {
+        const nextSelection = {
+            ...draftRef.current,
+            mode: 'lastTrain' as const,
+            timeDigits: LAST_TRAIN_TIME_DIGITS,
+        };
+
+        draftRef.current = nextSelection;
+        setDraft(nextSelection);
+    };
+
+    const handleSetDateOffset = (
+        dayOffset: number,
+        options: { alignWheel?: boolean } = {}
+    ) => {
+        const nextSelection = {
+            ...draftRef.current,
+            mode:
+                draftRef.current.mode === 'now'
+                    ? ('departure' as const)
+                    : draftRef.current.mode,
             dateDigits: getDateDigitsAtOffset(dayOffset),
-        }));
+        };
+
+        draftRef.current = nextSelection;
+        setDraft(nextSelection);
+
+        if (options.alignWheel !== false) {
+            window.requestAnimationFrame(() =>
+                scrollWheelsToSelection(nextSelection)
+            );
+        }
+    };
+
+    const handleSetMode = (mode: TimeMode) => {
+        const nextSelection = {
+            ...draftRef.current,
+            mode,
+            timeDigits:
+                mode === 'lastTrain'
+                    ? LAST_TRAIN_TIME_DIGITS
+                    : draftRef.current.timeDigits,
+        };
+
+        draftRef.current = nextSelection;
+        setDraft(nextSelection);
     };
 
     const handleSetTimePart = (
         next: { hour?: number; minute?: number },
         options: { alignWheel?: boolean } = {}
     ) => {
-        const currentParts = getTimeParts(draftRef.current.timeDigits);
+        const currentParts = getWheelTimeParts(draftRef.current.timeDigits);
         const nextHour = next.hour ?? currentParts.hour;
         const nextMinute = next.minute ?? currentParts.minute;
         const nextTimeDigits = formatTimeDigits(nextHour, nextMinute);
+        const nextSelection = {
+            ...draftRef.current,
+            mode:
+                draftRef.current.mode === 'now'
+                    ? ('departure' as const)
+                    : draftRef.current.mode,
+            timeDigits: nextTimeDigits,
+        };
 
-        setDraft((current) => {
-            const nextMode =
-                current.mode === 'now' ? 'departure' : current.mode;
-
-            return {
-                ...current,
-                mode: nextMode,
-                timeDigits: nextTimeDigits,
-            };
-        });
+        draftRef.current = nextSelection;
+        setDraft(nextSelection);
 
         if (options.alignWheel !== false) {
             window.requestAnimationFrame(() =>
-                scrollWheelsToTime(nextTimeDigits)
+                scrollWheelsToSelection(nextSelection)
             );
         }
     };
@@ -432,7 +537,11 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
         if (isAligningWheelRef.current) return;
 
         const wheel =
-            part === 'hour' ? hourListRef.current : minuteListRef.current;
+            part === 'day'
+                ? dayListRef.current
+                : part === 'hour'
+                  ? hourListRef.current
+                  : minuteListRef.current;
 
         if (!wheel) return;
 
@@ -447,6 +556,11 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
 
             if (centeredValue === null) return;
 
+            if (part === 'day') {
+                handleSetDateOffset(centeredValue, { alignWheel: false });
+                return;
+            }
+
             handleSetTimePart(
                 part === 'hour'
                     ? { hour: centeredValue }
@@ -457,8 +571,12 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
     };
 
     const handleDone = () => {
+        const nextSelection = draftRef.current;
+
         onChange(
-            draft.mode === 'now' ? getCurrentDateTimeSelection('now') : draft
+            nextSelection.mode === 'now'
+                ? getCurrentDateTimeSelection('now')
+                : nextSelection
         );
         closeEditor();
     };
@@ -496,21 +614,15 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                             {t('time.selectTime')}
                         </h2>
 
-                        <div className='time-editor-control-row'>
-                            <div
-                                className='time-editor-shortcuts'
-                                role='group'
-                                aria-label={t('time.time')}
+                        <div className='time-editor-header'>
+                            <button
+                                type='button'
+                                className={`time-editor-icon-button ${draft.mode === 'now' ? 'active' : ''}`}
+                                onClick={handleSetNow}
+                                aria-label={t('time.now')}
                             >
-                                <button
-                                    type='button'
-                                    className={`time-editor-shortcut-btn ${draft.mode === 'now' ? 'active' : ''}`}
-                                    onClick={handleSetNow}
-                                >
-                                    <TimerReset aria-hidden='true' />
-                                    <span>{t('time.now')}</span>
-                                </button>
-                            </div>
+                                <TimerReset aria-hidden='true' />
+                            </button>
 
                             <div
                                 className={`time-editor-mode-segmented ${
@@ -521,9 +633,9 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                             >
                                 {modeOptions.map((option) => {
                                     const isActive =
-                                        (draft.mode === 'now'
-                                            ? 'departure'
-                                            : draft.mode) === option.value;
+                                        draft.mode === option.value ||
+                                        (draft.mode === 'now' &&
+                                            option.value === 'departure');
 
                                     return (
                                         <button
@@ -533,15 +645,7 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                                             role='radio'
                                             aria-checked={isActive}
                                             onClick={() =>
-                                                setDraft((current) => ({
-                                                    ...current,
-                                                    mode: option.value,
-                                                    timeDigits:
-                                                        option.value ===
-                                                        'lastTrain'
-                                                            ? LAST_TRAIN_TIME_DIGITS
-                                                            : current.timeDigits,
-                                                }))
+                                                handleSetMode(option.value)
                                             }
                                         >
                                             <option.Icon aria-hidden='true' />
@@ -550,46 +654,54 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                                     );
                                 })}
                             </div>
-                        </div>
 
-                        <label className='time-editor-date-slider-field'>
-                            <span className='time-editor-date-slider-copy'>
-                                <span>{t('time.date')}</span>
-                                <strong>{draftDateLabel}</strong>
-                            </span>
-                            <input
-                                className='time-editor-date-slider'
-                                type='range'
-                                min='0'
-                                max={FUTURE_DATE_RANGE_DAYS}
-                                step='1'
-                                value={draftDateOffset}
-                                aria-label={t('time.date')}
-                                onChange={(event) =>
-                                    handleSetDateOffset(
-                                        Number(event.target.value)
-                                    )
-                                }
-                            />
-                            <span className='time-editor-date-slider-range'>
-                                <span>{t('time.today')}</span>
-                                <span>
-                                    {getScheduleDate(
-                                        getDateDigitsAtOffset(
-                                            FUTURE_DATE_RANGE_DAYS
-                                        )
-                                    )}
-                                </span>
-                            </span>
-                        </label>
+                            <button
+                                type='button'
+                                className={`time-editor-icon-button ${draft.mode === 'lastTrain' ? 'active' : ''}`}
+                                onClick={handleSetLastTrain}
+                                aria-label={t('time.lastTrain')}
+                            >
+                                <Moon aria-hidden='true' />
+                            </button>
+                        </div>
 
                         {draft.mode === 'lastTrain' ? (
                             <div className='time-editor-fixed-time'>
-                                <TrainFront aria-hidden='true' />
-                                <span>{formatTime(23, 59)}</span>
+                                <Moon aria-hidden='true' />
+                                <span>{t('time.queryTodayLastTrain')}</span>
                             </div>
                         ) : (
                             <div className='time-editor-wheels'>
+                                <div
+                                    ref={dayListRef}
+                                    className='time-editor-wheel time-editor-day-wheel'
+                                    role='listbox'
+                                    aria-label={t('time.date')}
+                                    onScroll={() => handleWheelScroll('day')}
+                                >
+                                    {dateOptions.map((option) => (
+                                        <button
+                                            key={option.dateDigits}
+                                            type='button'
+                                            className={`time-editor-wheel-option time-editor-day-option ${draftDateOffset === option.dayOffset ? 'active' : ''}`}
+                                            data-time-value={option.dayOffset}
+                                            role='option'
+                                            aria-selected={
+                                                draftDateOffset ===
+                                                option.dayOffset
+                                            }
+                                            onClick={() =>
+                                                handleSetDateOffset(
+                                                    option.dayOffset
+                                                )
+                                            }
+                                        >
+                                            <span>{option.dayLabel}</span>
+                                            <small>{option.dateLabel}</small>
+                                        </button>
+                                    ))}
+                                </div>
+
                                 <div
                                     ref={hourListRef}
                                     className='time-editor-wheel'
@@ -619,13 +731,6 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                                             )}
                                         </button>
                                     ))}
-                                </div>
-
-                                <div
-                                    className='time-editor-wheel-separator'
-                                    aria-hidden='true'
-                                >
-                                    :
                                 </div>
 
                                 <div
