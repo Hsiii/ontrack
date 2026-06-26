@@ -1,7 +1,6 @@
 .page {
     --docs-phone-mobile-width: 20rem;
     --docs-showcase-width: calc(var(--space-15) * 6 + var(--space-8));
-    --docs-showcase-max-height: calc(var(--space-15) * 11);
     --docs-connector-length: var(--space-8);
     --docs-image-outline: rgba(0, 0, 0, 0.1);
 
@@ -149,9 +148,7 @@
     display: grid;
     align-self: start;
     justify-items: center;
-    max-height: var(--docs-showcase-max-height);
-    overflow: hidden;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-radius: var(--radius-xl);
     background: linear-gradient(
         180deg,
         var(--color-surface-highlight),
@@ -162,7 +159,7 @@
 .phoneImage {
     width: min(100%, var(--docs-showcase-width));
     height: auto;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-radius: var(--radius-xl);
     outline: var(--size-hairline) solid var(--docs-image-outline);
     outline-offset: calc(var(--size-hairline) * -1);
     box-shadow: var(--shadow-lg);
@@ -374,10 +371,6 @@
 
     .phoneImage {
         width: min(100%, var(--docs-phone-mobile-width));
-    }
-
-    .heroMedia {
-        max-height: calc(var(--space-15) * 9);
     }
 
     .showcaseSection {

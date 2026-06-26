@@ -6,7 +6,7 @@ import styles from './page.module.css';
 
 const APP_URL = 'https://ontrack.hsichen.dev/';
 const DOCS_URL = 'https://ontrack.hsichen.dev/docs';
-const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-web-showcase.png';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 
 export const metadata: Metadata = {
     title: 'OnTrack 台鐵時刻表 App | Web 與 iPhone 查車工具',
@@ -180,10 +180,10 @@ export default function DocsPage() {
                         >
                             <img
                                 className={styles.phoneImage}
-                                src='/ontrack-web-showcase.png'
-                                alt='OnTrack 網頁版台鐵時刻表 App 畫面，顯示車站、班次與預計搭乘資訊'
-                                width='390'
-                                height='844'
+                                src='/demo.png'
+                                alt='OnTrack iOS 台鐵時刻表 App 畫面，顯示車站、班次與抵達時間分享資訊'
+                                width='1320'
+                                height='2868'
                             />
                         </div>
                         <div className={styles.featureStack} data-side='right'>
