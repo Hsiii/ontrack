@@ -1,12 +1,4 @@
-import {
-    ArrowRight,
-    Clock3,
-    MapPin,
-    Navigation,
-    Share2,
-    Smartphone,
-    TrainFront,
-} from 'lucide-react';
+import { Clock3, MapPin, Navigation, Share2 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -65,23 +57,6 @@ const features = [
     },
 ] as const;
 
-const downloads = [
-    {
-        icon: TrainFront,
-        title: 'Web app',
-        body: '不需要安裝，打開瀏覽器就能查台鐵時刻表、選站、看延誤與分享班次。',
-        cta: '立即開啟 Web App',
-        href: '/',
-    },
-    {
-        icon: Smartphone,
-        title: 'iPhone app',
-        body: '原生 iPhone 版本使用同一套台鐵資料、定位起站與分享流程。',
-        cta: '查看 iOS 支援資訊',
-        href: '/docs/support',
-    },
-] as const;
-
 export default function DocsPage() {
     const structuredData = {
         '@context': 'https://schema.org',
@@ -119,34 +94,50 @@ export default function DocsPage() {
                         <Link className={styles.navTextLink} href='#features'>
                             功能
                         </Link>
-                        <Link className={styles.navTextLink} href='#apps'>
-                            App
+                        <Link className={styles.navTextLink} href='/'>
+                            網頁版
                         </Link>
-                        <Link className={styles.navLink} href='/'>
-                            開啟 App
+                        <Link
+                            className={styles.navTextLink}
+                            href='/docs/support'
+                        >
+                            iOS
                         </Link>
                     </div>
                 </nav>
 
                 <section className={styles.hero}>
                     <div className={styles.heroCopy}>
-                        <p className={styles.eyebrow}>
-                            Taiwan Railway schedule app
-                        </p>
                         <h1 className={styles.title}>
-                            快速查台鐵時刻表與下一班列車。
+                            專為台鐵旅客打造的查車 App。
                         </h1>
-                        <p className={styles.lede}>
-                            OnTrack 以最近車站、即時延誤與常用目的地為核心， 讓
-                            Web 與 iPhone 上的查車流程更短。
-                        </p>
+                        <div className={styles.lede}>
+                            <p>
+                                OnTrack 讓查詢台鐵資訊不再需要繁瑣的手動輸入。
+                            </p>
+                            <p>
+                                App
+                                會自動偵測目前所在車站，依照您的搭乘習慣預測路線，
+                                立即顯示最適合搭乘的班次、行車時間與即時延誤資訊。
+                                多數情況下，您需要的資訊在打開 App
+                                的瞬間就已準備完成。
+                            </p>
+                            <p>
+                                您也可以手動選擇出發站、抵達站及出發或抵達時間，
+                                查詢所有符合條件的班次與即時延誤資訊。需要分享目前搭乘的列車時，
+                                OnTrack 也能一鍵分享列車資訊給親友。
+                            </p>
+                        </div>
                         <div className={styles.heroActions}>
                             <Link className={styles.primaryCta} href='/'>
-                                立即開啟 Web App
-                                <ArrowRight size={18} aria-hidden='true' />
+                                網頁版
                             </Link>
-                            <Link className={styles.secondaryCta} href='#apps'>
-                                查看 iOS App
+                            {/* TODO: Replace with App Store URL when the listing is live. */}
+                            <Link
+                                className={styles.secondaryCta}
+                                href='/docs/support'
+                            >
+                                iOS App
                             </Link>
                         </div>
                     </div>
@@ -171,7 +162,6 @@ export default function DocsPage() {
                     aria-labelledby='features-title'
                 >
                     <div className={styles.sectionIntro}>
-                        <p className={styles.sectionKicker}>Features</p>
                         <h2 id='features-title'>查車需要的資訊放在同一頁。</h2>
                     </div>
                     <div className={styles.featureGrid}>
@@ -194,64 +184,12 @@ export default function DocsPage() {
                     </div>
                 </section>
 
-                <section
-                    className={styles.appsSection}
-                    id='apps'
-                    aria-labelledby='apps-title'
-                >
-                    <div className={styles.sectionIntro}>
-                        <p className={styles.sectionKicker}>Download</p>
-                        <h2 id='apps-title'>Web 先用，iPhone 版同步準備。</h2>
-                    </div>
-                    <div className={styles.platformGrid}>
-                        {downloads.map((item) => {
-                            const Icon = item.icon;
-
-                            return (
-                                <Link
-                                    className={`${styles.platformCard} card-panel`}
-                                    href={item.href}
-                                    key={item.title}
-                                >
-                                    <span className={styles.platformIcon}>
-                                        <Icon aria-hidden='true' />
-                                    </span>
-                                    <span className={styles.platformText}>
-                                        <strong>{item.title}</strong>
-                                        <span>{item.body}</span>
-                                    </span>
-                                    <span className={styles.platformCta}>
-                                        {item.cta}
-                                        <ArrowRight
-                                            size={16}
-                                            aria-hidden='true'
-                                        />
-                                    </span>
-                                </Link>
-                            );
-                        })}
-                    </div>
-                </section>
-
-                <section
-                    className={styles.downloadBand}
-                    aria-labelledby='start-title'
-                >
-                    <div>
-                        <p className={styles.sectionKicker}>Start now</p>
-                        <h2 id='start-title'>
-                            現在就用 OnTrack 查下一班台鐵。
-                        </h2>
-                    </div>
-                    <Link className={styles.primaryCta} href='/'>
-                        開啟 Web App
-                        <ArrowRight size={18} aria-hidden='true' />
-                    </Link>
-                </section>
-
                 <footer className={styles.footer}>
                     <span>© 2026 OnTrack</span>
                     <nav aria-label='Support links'>
+                        <Link href='https://github.com/Hsiii/OnTrack'>
+                            GitHub
+                        </Link>
                         <Link href='/docs/support'>支援</Link>
                         <Link href='/docs/privacy'>隱私權</Link>
                     </nav>
