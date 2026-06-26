@@ -21,7 +21,7 @@
     box-shadow:
         0 0 0 1px var(--color-danger-ring),
         var(--shadow-surface);
-    background: rgba(239, 68, 68, 0.08);
+    background: var(--color-danger-subtle);
     text-align: center;
 }
 

@@ -85,7 +85,7 @@
 }
 
 .share-card-button:hover {
-    background: var(--color-border);
+    background: var(--color-hover);
     box-shadow: var(--shadow-surface-hover);
 }
 

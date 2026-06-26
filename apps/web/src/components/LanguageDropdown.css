@@ -21,7 +21,7 @@
 }
 
 .language-dropdown-trigger:hover {
-    background: var(--color-border);
+    background: var(--color-hover);
     box-shadow: var(--shadow-surface-hover);
     color: var(--color-text-dim);
 }
@@ -49,7 +49,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    background: rgba(0, 0, 0, 0.45);
+    background: var(--color-overlay);
     animation: lang-backdrop-in var(--motion-base) var(--ease-out);
     transition: opacity var(--motion-base) ease-out;
 }
@@ -129,7 +129,7 @@
 }
 
 .lang-sheet-option:active {
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--color-active);
 }
 
 .lang-sheet-option.active {

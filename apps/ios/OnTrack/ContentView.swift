@@ -2000,7 +2000,7 @@ private struct SettingsSheet: View {
                 SettingsDivider()
 
                 SettingsPickerRow(
-                    title: AppText.darkMode,
+                    title: AppText.appearance,
                     selection: $appearanceRaw,
                     options: AppAppearanceSetting.allCases.map {
                         SettingOption(id: $0.rawValue, title: appearanceTitle($0))
@@ -2346,7 +2346,7 @@ private enum OnTrackTheme {
         )
     }
 
-    static let primary = Color(red: 56 / 255, green: 189 / 255, blue: 248 / 255)
+    static let primary = Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
 

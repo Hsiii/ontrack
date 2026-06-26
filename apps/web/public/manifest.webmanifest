@@ -2,8 +2,8 @@
     "name": "OnTrack",
     "short_name": "OnTrack",
     "description": "Taiwan railway train schedule app",
-    "theme_color": "#0f172a",
-    "background_color": "#0f172a",
+    "theme_color": "#ffffff",
+    "background_color": "#f8fafc",
     "display": "standalone",
     "start_url": "/",
     "icons": [

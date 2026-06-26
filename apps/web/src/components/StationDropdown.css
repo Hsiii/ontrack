@@ -108,7 +108,7 @@
     position: fixed;
     inset: 0;
     z-index: 1100;
-    background: color-mix(in srgb, var(--color-bg) 90%, black 10%);
+    background: var(--color-bg);
     display: flex;
     justify-content: center;
 }

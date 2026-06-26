@@ -52,7 +52,7 @@ enum AppAppearanceSetting: String, CaseIterable, Identifiable {
             return UserDefaults.standard.bool(forKey: AppPreferenceKey.darkMode) ? .dark : .light
         }
 
-        return .dark
+        return .light
     }
 }
 
@@ -366,7 +366,7 @@ enum AppText {
     static var systemLanguage: String { isZh ? "系統" : "System" }
     static var traditionalChinese: String { "繁體中文" }
     static var english: String { "English" }
-    static var darkMode: String { isZh ? "深色模式" : "Dark mode" }
+    static var appearance: String { isZh ? "外觀" : "Appearance" }
     static var systemAppearance: String { isZh ? "系統" : "System" }
     static var lightAppearance: String { isZh ? "亮色" : "Light" }
     static var darkAppearance: String { isZh ? "暗色" : "Dark" }
