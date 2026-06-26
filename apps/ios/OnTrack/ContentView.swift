@@ -199,12 +199,10 @@ struct ContentView: View {
                             isLoading: isLoadingSchedule,
                             canLoadSchedule: canLoadSchedule,
                             isExpanded: $isTrainPanelExpanded,
-                            maxHeight: max(320, proxy.size.height - OnTrackTheme.space6),
+                            maxHeight: max(320, proxy.size.height),
                             onSelect: { selectedTrain = $0 }
                         )
-                        .frame(maxWidth: 480)
-                        .padding(.horizontal, OnTrackTheme.space5)
-                        .padding(.bottom, OnTrackTheme.space3)
+                        .frame(maxWidth: .infinity)
                     }
                 }
 
@@ -1728,7 +1726,7 @@ private struct TrainBoardingPanel: View {
         .frame(maxWidth: .infinity)
         .frame(height: isExpanded ? maxHeight : nil, alignment: .top)
         .clipped()
-        .onTrackPanelSurface()
+        .onTrackBottomSheetSurface()
         .sensoryFeedback(.success, trigger: copyFeedbackTrigger)
         .animation(.snappy(duration: 0.28, extraBounce: 0), value: isExpanded)
     }
@@ -2135,6 +2133,34 @@ private extension View {
             }
             .shadow(color: OnTrackTheme.surfaceShadow, radius: 8, x: 0, y: 4)
     }
+
+    func onTrackBottomSheetSurface() -> some View {
+        background {
+            UnevenRoundedRectangle(
+                cornerRadii: RectangleCornerRadii(
+                    topLeading: OnTrackTheme.radiusSheet,
+                    bottomLeading: 0,
+                    bottomTrailing: 0,
+                    topTrailing: OnTrackTheme.radiusSheet
+                ),
+                style: .continuous
+            )
+            .fill(.regularMaterial)
+        }
+        .overlay {
+            UnevenRoundedRectangle(
+                cornerRadii: RectangleCornerRadii(
+                    topLeading: OnTrackTheme.radiusSheet,
+                    bottomLeading: 0,
+                    bottomTrailing: 0,
+                    topTrailing: OnTrackTheme.radiusSheet
+                ),
+                style: .continuous
+            )
+            .stroke(OnTrackTheme.border, lineWidth: 1)
+        }
+        .shadow(color: OnTrackTheme.surfaceShadow, radius: 16, x: 0, y: -4)
+    }
 }
 
 private extension AppAppearanceSetting {
@@ -2199,6 +2225,7 @@ private enum OnTrackTheme {
 
     static let radiusControl: CGFloat = 8
     static let radiusPanel: CGFloat = 12
+    static let radiusSheet: CGFloat = 24
     static let controlHeight: CGFloat = 44
     static let routeDividerHeight: CGFloat = 1
     static let routeRowHeight: CGFloat = 56
