@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ARCHIVE_PATH="${IOS_ARCHIVE_PATH:-$ROOT_DIR/build/ios/archive/OnTrack.xcarchive}"
 EXPORT_PATH="${IOS_EXPORT_PATH:-$ROOT_DIR/build/ios/export}"
 EXPORT_METHOD="${IOS_EXPORT_METHOD:-app-store-connect}"
@@ -11,7 +11,7 @@ STRIP_SWIFT_SYMBOLS="${IOS_STRIP_SWIFT_SYMBOLS:-true}"
 UPLOAD_SYMBOLS="${IOS_UPLOAD_SYMBOLS:-true}"
 
 if [[ ! -d "$ARCHIVE_PATH" ]]; then
-    echo "Archive not found at $ARCHIVE_PATH. Run tools/ios/archive.sh first." >&2
+    echo "Archive not found at $ARCHIVE_PATH. Run scripts/ios-archive.sh first." >&2
     exit 1
 fi
 
