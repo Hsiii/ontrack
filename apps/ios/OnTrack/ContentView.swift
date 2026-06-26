@@ -1785,11 +1785,11 @@ private enum TrainPanelLayout {
     }
 
     static var topContentPadding: CGFloat {
-        OnTrackTheme.space3
+        OnTrackTheme.space6
     }
 
     static var expectedHeaderHeight: CGFloat {
-        OnTrackTheme.space4
+        OnTrackTheme.space5
     }
 
     static var expectedSectionBottomPadding: CGFloat {
