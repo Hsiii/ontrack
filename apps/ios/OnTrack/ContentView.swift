@@ -71,6 +71,7 @@ struct ContentView: View {
     @State private var originSource: OriginSelectionSource = .manual
     @State private var destinationSource: DestinationSelectionSource = .cached
     @State private var isSettingsPresented = false
+    @State private var isTrainPanelExpanded = false
 
     private let scheduleRefreshTimer = Timer.publish(
         every: scheduleRefreshInterval,
@@ -147,61 +148,63 @@ struct ContentView: View {
                 OnTrackTheme.background
                     .ignoresSafeArea()
 
-                ScrollView {
-                    VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
-                        HStack(spacing: OnTrackTheme.space2) {
-                            IconPlainButton(
-                                systemName: "arrow.clockwise",
-                                isLoading: isRefreshingLive,
-                                action: refreshLiveSchedule
-                            )
-                            .disabled(!canLoadSchedule || isLoadingSchedule || isRefreshingLive)
-                            .accessibilityLabel(AppText.refreshLiveStatus)
+                GeometryReader { proxy in
+                    ZStack(alignment: .bottom) {
+                        ScrollView {
+                            VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
+                                HStack(spacing: OnTrackTheme.space2) {
+                                    IconPlainButton(
+                                        systemName: "arrow.clockwise",
+                                        isLoading: isRefreshingLive,
+                                        action: refreshLiveSchedule
+                                    )
+                                    .disabled(!canLoadSchedule || isLoadingSchedule || isRefreshingLive)
+                                    .accessibilityLabel(AppText.refreshLiveStatus)
 
-                            TimeSelectorView(selection: $timeSelection)
-                                .frame(maxWidth: .infinity)
+                                    TimeSelectorView(selection: $timeSelection)
+                                        .frame(maxWidth: .infinity)
 
-                            IconPlainButton(
-                                systemName: "gearshape",
-                                action: { isSettingsPresented = true }
-                            )
-                            .accessibilityLabel(AppText.settings)
-                        }
+                                    IconPlainButton(
+                                        systemName: "gearshape",
+                                        action: { isSettingsPresented = true }
+                                    )
+                                    .accessibilityLabel(AppText.settings)
+                                }
 
-                        RouteSelectorView(
-                            origin: originStation,
-                            destination: destinationStation,
-                            isLoading: isLoadingStations,
-                            onPickOrigin: { openStationPicker(.origin) },
-                            onPickDestination: { openStationPicker(.destination) },
-                            onSwap: swapStations
-                        )
-
-                        TrainListView(
-                            trains: trains,
-                            selectedTrain: selectedTrain,
-                            isLoading: isLoadingSchedule,
-                            canLoadSchedule: canLoadSchedule,
-                            onSelect: { selectedTrain = $0 }
-                        )
-                    }
-                    .frame(maxWidth: 480)
-                    .padding(.horizontal, OnTrackTheme.space5)
-                    .padding(.top, OnTrackTheme.space3)
-                    .padding(.bottom, shareMessage == nil ? OnTrackTheme.space6 : OnTrackTheme.space2)
-                    .frame(maxWidth: .infinity)
-                }
-                .scrollIndicators(.hidden)
-                .refreshable {
-                    await loadSchedule(refreshLive: true)
-                }
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    if let shareMessage {
-                        SharePanel(message: shareMessage)
+                                RouteSelectorView(
+                                    origin: originStation,
+                                    destination: destinationStation,
+                                    isLoading: isLoadingStations,
+                                    onPickOrigin: { openStationPicker(.origin) },
+                                    onPickDestination: { openStationPicker(.destination) },
+                                    onSwap: swapStations
+                                )
+                            }
                             .frame(maxWidth: 480)
                             .padding(.horizontal, OnTrackTheme.space5)
-                            .padding(.top, OnTrackTheme.space2)
-                            .padding(.bottom, OnTrackTheme.space3)
+                            .padding(.top, OnTrackTheme.space3)
+                            .padding(.bottom, TrainBoardingPanel.collapsedContentReserve)
+                            .frame(maxWidth: .infinity)
+                        }
+                        .scrollIndicators(.hidden)
+                        .refreshable {
+                            await loadSchedule(refreshLive: true)
+                        }
+
+                        TrainBoardingPanel(
+                            message: shareMessage,
+                            selectedTrain: selectedTrain,
+                            destination: destinationStation,
+                            trains: trains,
+                            isLoading: isLoadingSchedule,
+                            canLoadSchedule: canLoadSchedule,
+                            isExpanded: $isTrainPanelExpanded,
+                            maxHeight: max(320, proxy.size.height - OnTrackTheme.space6),
+                            onSelect: { selectedTrain = $0 }
+                        )
+                        .frame(maxWidth: 480)
+                        .padding(.horizontal, OnTrackTheme.space5)
+                        .padding(.bottom, OnTrackTheme.space3)
                     }
                 }
 
@@ -232,6 +235,9 @@ struct ContentView: View {
             }
             .task(id: scheduleTaskID) {
                 await loadSchedule()
+            }
+            .onChange(of: scheduleTaskID) { _, _ in
+                isTrainPanelExpanded = false
             }
             .onReceive(scheduleRefreshTimer) { _ in
                 Task {
@@ -1171,13 +1177,14 @@ private struct TrainListView: View {
     let selectedTrain: TrainInfo?
     let isLoading: Bool
     let canLoadSchedule: Bool
+    var usePlainEmptyState = false
     let onSelect: (TrainInfo) -> Void
     @State private var selectionFeedbackTrigger = 0
 
     var body: some View {
         Group {
             if !canLoadSchedule {
-                EmptyPanel(message: AppText.chooseRoute)
+                emptyState(AppText.chooseRoute)
             } else if isLoading && trains.isEmpty {
                 VStack(spacing: OnTrackTheme.space2) {
                     ForEach(0..<3, id: \.self) { _ in
@@ -1185,7 +1192,7 @@ private struct TrainListView: View {
                     }
                 }
             } else if trains.isEmpty {
-                EmptyPanel(message: AppText.noTrainsAvailable)
+                emptyState(AppText.noTrainsAvailable)
             } else {
                 VStack(spacing: OnTrackTheme.space2) {
                     ForEach(trains) { train in
@@ -1201,6 +1208,15 @@ private struct TrainListView: View {
             }
         }
         .sensoryFeedback(.selection, trigger: selectionFeedbackTrigger)
+    }
+
+    @ViewBuilder
+    private func emptyState(_ message: String) -> some View {
+        if usePlainEmptyState {
+            PanelEmptyState(message: message)
+        } else {
+            EmptyPanel(message: message)
+        }
     }
 }
 
@@ -1647,45 +1663,186 @@ private struct StationSearchRow: View {
     }
 }
 
-private struct SharePanel: View {
-    let message: String
+private enum TrainPanelLayout {
+    static let cardHeight: CGFloat = 64
+    static let collapsedVisibleCards: CGFloat = 3.5
+    static let collapsedVisibleGaps: CGFloat = 3
+    static let expandedNonListHeight: CGFloat = 136
+    static let collapsedContentReserve: CGFloat = 400
+
+    static var collapsedCardsHeight: CGFloat {
+        cardHeight * collapsedVisibleCards + OnTrackTheme.space2 * collapsedVisibleGaps
+    }
+
+    static var collapsedListViewportHeight: CGFloat {
+        collapsedCardsHeight + OnTrackTheme.space3
+    }
+}
+
+private struct TrainBoardingPanel: View {
+    static let collapsedContentReserve = TrainPanelLayout.collapsedContentReserve
+
+    let message: String?
+    let selectedTrain: TrainInfo?
+    let destination: Station?
+    let trains: [TrainInfo]
+    let isLoading: Bool
+    let canLoadSchedule: Bool
+    @Binding var isExpanded: Bool
+    let maxHeight: CGFloat
+    let onSelect: (TrainInfo) -> Void
+
     @State private var didCopy = false
     @State private var copyFeedbackTrigger = 0
 
     var body: some View {
-        HStack(spacing: OnTrackTheme.space3) {
-            VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
-                Text(AppText.shareText)
-                    .font(OnTrackFont.label)
-                    .foregroundStyle(OnTrackTheme.dimText)
+        VStack(spacing: 0) {
+            panelHandle
+                .padding(.top, OnTrackTheme.space2)
+                .padding(.bottom, OnTrackTheme.space2)
 
-                Text(message)
-                    .font(OnTrackFont.control)
-                    .foregroundStyle(OnTrackTheme.text)
-                    .lineLimit(2)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .layoutPriority(1)
+            expectedBoardingSection
+                .padding(.horizontal, OnTrackTheme.space4)
+                .padding(.bottom, OnTrackTheme.space4)
 
-            Button(action: copyMessage) {
-                IconSquare(systemName: didCopy ? "checkmark" : "doc.on.doc")
-            }
-            .buttonStyle(OnTrackPressButtonStyle())
-            .accessibilityLabel(didCopy ? AppText.copied : AppText.copyMessage)
+            Rectangle()
+                .fill(OnTrackTheme.border)
+                .frame(height: 1)
 
-            ShareLink(item: message) {
-                IconSquare(systemName: "square.and.arrow.up")
+            ScrollView {
+                TrainListView(
+                    trains: trains,
+                    selectedTrain: selectedTrain,
+                    isLoading: isLoading,
+                    canLoadSchedule: canLoadSchedule,
+                    usePlainEmptyState: true
+                ) { train in
+                    onSelect(train)
+                }
+                .padding(.horizontal, OnTrackTheme.space4)
+                .padding(.vertical, OnTrackTheme.space3)
             }
-            .accessibilityLabel(AppText.shareVia)
+            .frame(height: trainListViewportHeight)
+            .scrollIndicators(isExpanded ? .automatic : .hidden)
         }
-        .padding(.leading, OnTrackTheme.space4)
-        .padding(.trailing, OnTrackTheme.space3)
-        .padding(.vertical, OnTrackTheme.space3)
+        .frame(maxWidth: .infinity)
+        .frame(height: isExpanded ? maxHeight : nil, alignment: .top)
+        .clipped()
         .onTrackPanelSurface()
         .sensoryFeedback(.success, trigger: copyFeedbackTrigger)
+        .animation(.snappy(duration: 0.28, extraBounce: 0), value: isExpanded)
+    }
+
+    private var expectedBoardingSection: some View {
+        VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+            HStack(spacing: OnTrackTheme.space2) {
+                Text(AppText.expectedBoarding)
+                    .font(OnTrackFont.title)
+                    .foregroundStyle(OnTrackTheme.text)
+
+                Spacer()
+
+                Button(action: copyMessage) {
+                    PanelActionIcon(systemName: didCopy ? "checkmark" : "doc.on.doc")
+                }
+                .buttonStyle(OnTrackPressButtonStyle())
+                .disabled(message == nil)
+                .accessibilityLabel(didCopy ? AppText.copied : AppText.copyMessage)
+
+                ShareLink(item: message ?? "") {
+                    PanelActionIcon(systemName: "square.and.arrow.up")
+                }
+                .disabled(message == nil)
+                .accessibilityLabel(AppText.shareVia)
+            }
+            .contentShape(Rectangle())
+            .gesture(panelDragGesture)
+
+            Text(boardingSummary)
+                .font(OnTrackFont.control)
+                .foregroundStyle(selectedTrain == nil ? OnTrackTheme.dimText : OnTrackTheme.text)
+                .lineLimit(1)
+                .minimumScaleFactor(0.82)
+                .monospacedDigit()
+        }
+    }
+
+    private var panelHandle: some View {
+        Button {
+            setExpanded(!isExpanded)
+        } label: {
+            Capsule()
+                .fill(OnTrackTheme.border)
+                .frame(width: 40, height: 4)
+                .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .gesture(panelDragGesture)
+        .accessibilityLabel(isExpanded ? AppText.collapseTrainPanel : AppText.expandTrainPanel)
+    }
+
+    private var boardingSummary: String {
+        guard let selectedTrain, let destination else {
+            return canLoadSchedule ? AppText.noTrainsAvailable : AppText.chooseRoute
+        }
+
+        return AppText.boardingSummary(
+            type: TrainDisplay.trainType(selectedTrain.trainType),
+            number: selectedTrain.trainNo,
+            time: TrainDisplay.adjustedTime(selectedTrain.arrivalTime, delay: selectedTrain.delay),
+            station: destination.displayName
+        )
+    }
+
+    private var trainListViewportHeight: CGFloat {
+        let contentHeight = trainListContentHeight + OnTrackTheme.space6
+        if isExpanded {
+            return max(OnTrackTheme.controlHeight, maxHeight - TrainPanelLayout.expandedNonListHeight)
+        }
+
+        return min(contentHeight, TrainPanelLayout.collapsedListViewportHeight)
+    }
+
+    private var trainListContentHeight: CGFloat {
+        if isLoading && trains.isEmpty {
+            return TrainPanelLayout.cardHeight * 3 + OnTrackTheme.space2 * 2
+        }
+
+        if !canLoadSchedule || trains.isEmpty {
+            return TrainPanelLayout.cardHeight
+        }
+
+        return CGFloat(trains.count) * TrainPanelLayout.cardHeight
+            + CGFloat(max(0, trains.count - 1)) * OnTrackTheme.space2
+    }
+
+    private var panelDragGesture: some Gesture {
+        DragGesture(minimumDistance: OnTrackTheme.space4)
+            .onEnded { value in
+                guard abs(value.translation.height) > abs(value.translation.width) else {
+                    return
+                }
+
+                if value.translation.height < -OnTrackTheme.space6 {
+                    setExpanded(true)
+                } else if value.translation.height > OnTrackTheme.space6 {
+                    setExpanded(false)
+                }
+            }
+    }
+
+    private func setExpanded(_ expanded: Bool) {
+        withAnimation(.snappy(duration: 0.28, extraBounce: 0)) {
+            isExpanded = expanded
+        }
     }
 
     private func copyMessage() {
+        guard let message else {
+            return
+        }
+
         UIPasteboard.general.string = message
         copyFeedbackTrigger += 1
         didCopy = true
@@ -1875,6 +2032,18 @@ private struct IconSquare: View {
     }
 }
 
+private struct PanelActionIcon: View {
+    let systemName: String
+
+    var body: some View {
+        Image(systemName: systemName)
+            .font(OnTrackFont.icon)
+            .foregroundStyle(OnTrackTheme.dimText)
+            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+            .contentShape(Rectangle())
+    }
+}
+
 private struct EmptyPanel: View {
     let message: String
 
@@ -1885,6 +2054,18 @@ private struct EmptyPanel: View {
             .frame(maxWidth: .infinity)
             .padding(OnTrackTheme.space5)
             .onTrackPanelSurface()
+    }
+}
+
+private struct PanelEmptyState: View {
+    let message: String
+
+    var body: some View {
+        Text(message)
+            .font(OnTrackFont.body)
+            .foregroundStyle(OnTrackTheme.dimText)
+            .frame(maxWidth: .infinity, minHeight: TrainPanelLayout.cardHeight)
+            .padding(.horizontal, OnTrackTheme.space4)
     }
 }
 

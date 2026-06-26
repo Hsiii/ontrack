@@ -241,9 +241,6 @@ enum TrainDisplay {
             }
         }
 
-        let nextScheduledIndex = trains.firstIndex {
-            timeToMinutes($0.departureTime) >= targetMinutes
-        }
         let nextCatchableIndex = trains.firstIndex {
             comparisonMinutes($0) >= targetMinutes
         }
@@ -352,6 +349,9 @@ enum AppText {
     static var loading: String { isZh ? "載入中" : "Loading" }
     static var notSelected: String { isZh ? "尚未選擇" : "Not selected" }
     static var selected: String { isZh ? "已選取" : "Selected" }
+    static var expectedBoarding: String { isZh ? "預計搭乘" : "Planned ride" }
+    static var expandTrainPanel: String { isZh ? "展開班次面板" : "Expand train panel" }
+    static var collapseTrainPanel: String { isZh ? "收合班次面板" : "Collapse train panel" }
     static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
     static var shareText: String { isZh ? "分享到站資訊" : "Share arrival info" }
     static var shareVia: String { isZh ? "分享" : "Share" }
@@ -380,6 +380,10 @@ enum AppText {
 
     static func routeArrivalMessage(origin: String, destination: String, time: String) -> String {
         isZh ? "\(origin)→\(destination) \(time)到" : "\(origin) to \(destination), arrive by \(time)"
+    }
+
+    static func boardingSummary(type: String, number: String, time: String, station: String) -> String {
+        isZh ? "\(type) \(number) | \(time) 到 \(station)" : "\(type) \(number) | \(time) to \(station)"
     }
 
     static func trainAccessibilityLabel(
