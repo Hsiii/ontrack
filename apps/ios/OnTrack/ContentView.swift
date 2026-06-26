@@ -80,7 +80,7 @@ struct ContentView: View {
     @State private var originSource: OriginSelectionSource = .manual
     @State private var destinationSource: DestinationSelectionSource = .cached
     @State private var activeSheet: ActiveSheet? = .trainPanel
-    @State private var trainPanelDetent: PresentationDetent = TrainPanelLayout.collapsedDetent
+    @State private var trainPanelDetent: PresentationDetent = TrainPanelLayout.collapsedDetent(rowCount: 1)
     @State private var suppressTrainPanelRestore = false
 
     private let scheduleRefreshTimer = Timer.publish(
@@ -127,6 +127,18 @@ struct ContentView: View {
 
     private var canLoadSchedule: Bool {
         originStation != nil && destinationStation != nil
+    }
+
+    private var trainPanelRowCount: Int {
+        TrainPanelLayout.rowCount(
+            isLoading: isLoadingSchedule,
+            canLoadSchedule: canLoadSchedule,
+            trainCount: trains.count
+        )
+    }
+
+    private var trainPanelCollapsedDetent: PresentationDetent {
+        TrainPanelLayout.collapsedDetent(rowCount: trainPanelRowCount)
     }
 
     private var shareMessage: String? {
@@ -248,7 +260,10 @@ struct ContentView: View {
                 await loadSchedule()
             }
             .onChange(of: scheduleTaskID) { _, _ in
-                trainPanelDetent = TrainPanelLayout.collapsedDetent
+                trainPanelDetent = trainPanelCollapsedDetent
+            }
+            .onChange(of: trainPanelRowCount) { _, _ in
+                trainPanelDetent = trainPanelCollapsedDetent
             }
             .onReceive(scheduleRefreshTimer) { _ in
                 Task {
@@ -312,12 +327,12 @@ struct ContentView: View {
                 onSelect: { selectedTrain = $0 }
             )
             .presentationDetents(
-                [TrainPanelLayout.collapsedDetent, .large],
+                [trainPanelCollapsedDetent, .large],
                 selection: $trainPanelDetent
             )
             .presentationDragIndicator(.hidden)
             .presentationBackground(OnTrackTheme.panel)
-            .presentationBackgroundInteraction(.enabled(upThrough: TrainPanelLayout.collapsedDetent))
+            .presentationBackgroundInteraction(.enabled(upThrough: trainPanelCollapsedDetent))
             .interactiveDismissDisabled()
 
         case .timeEditor:
@@ -393,7 +408,7 @@ struct ContentView: View {
                 return
             }
 
-            trainPanelDetent = TrainPanelLayout.collapsedDetent
+            trainPanelDetent = trainPanelCollapsedDetent
             activeSheet = .trainPanel
         }
     }
@@ -1772,8 +1787,13 @@ private struct StationSearchRow: View {
 
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
-    static let collapsedVisibleCards: CGFloat = 3.5
-    static let collapsedContentReserve: CGFloat = 400
+    static let maxTrainRows = 7
+    static let loadingRows = 3
+    static let emptyStateRows = 1
+
+    static var collapsedContentReserve: CGFloat {
+        panelHeight(rowCount: maxTrainRows)
+    }
 
     static var panelChromeHeight: CGFloat {
         handleAreaHeight
@@ -1800,20 +1820,24 @@ private enum TrainPanelLayout {
         OnTrackTheme.space2
     }
 
-    static var collapsedCardsHeight: CGFloat {
-        cardHeight * collapsedVisibleCards
+    static func rowCount(isLoading: Bool, canLoadSchedule: Bool, trainCount: Int) -> Int {
+        if isLoading && trainCount == 0 {
+            return loadingRows
+        }
+
+        if !canLoadSchedule || trainCount == 0 {
+            return emptyStateRows
+        }
+
+        return min(maxTrainRows, trainCount)
     }
 
-    static var collapsedListViewportHeight: CGFloat {
-        collapsedCardsHeight
+    static func panelHeight(rowCount: Int) -> CGFloat {
+        panelChromeHeight + cardHeight * CGFloat(max(emptyStateRows, rowCount))
     }
 
-    static var collapsedSheetHeight: CGFloat {
-        panelChromeHeight + collapsedListViewportHeight
-    }
-
-    static var collapsedDetent: PresentationDetent {
-        .height(collapsedSheetHeight)
+    static func collapsedDetent(rowCount: Int) -> PresentationDetent {
+        .height(panelHeight(rowCount: rowCount))
     }
 }
 
@@ -1875,22 +1899,15 @@ private struct TrainBoardingPanel: View {
     }
 
     private var panelContentHeight: CGFloat {
-        max(
-            TrainPanelLayout.collapsedSheetHeight,
-            TrainPanelLayout.panelChromeHeight + trainListContentHeight
-        )
+        TrainPanelLayout.panelHeight(rowCount: trainListRowCount)
     }
 
-    private var trainListContentHeight: CGFloat {
-        if isLoading && trains.isEmpty {
-            return TrainPanelLayout.cardHeight * 3
-        }
-
-        if !canLoadSchedule || trains.isEmpty {
-            return TrainPanelLayout.cardHeight
-        }
-
-        return TrainPanelLayout.cardHeight * CGFloat(trains.count)
+    private var trainListRowCount: Int {
+        TrainPanelLayout.rowCount(
+            isLoading: isLoading,
+            canLoadSchedule: canLoadSchedule,
+            trainCount: trains.count
+        )
     }
 
     private var panelHandle: some View {
