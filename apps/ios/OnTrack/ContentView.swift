@@ -2352,7 +2352,7 @@ private enum OnTrackTheme {
 
     static var surfaceShadow: Color {
         adaptiveColor(
-            light: UIColor.black.withAlphaComponent(0.08),
+            light: UIColor.black.withAlphaComponent(0.04),
             dark: UIColor.black.withAlphaComponent(0.12)
         )
     }
