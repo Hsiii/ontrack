@@ -61,21 +61,12 @@
     display: grid;
     gap: var(--space-5);
     overflow: hidden;
-    padding: var(--space-8) 0;
+    padding: var(--space-8) 0 var(--space-4);
 }
 
 .heroCopy {
     display: grid;
-    gap: var(--space-4);
-}
-
-.eyebrow {
-    margin: 0;
-    color: var(--color-primary);
-    font-size: var(--text-xs);
-    font-weight: var(--font-bold);
-    letter-spacing: 0;
-    text-transform: uppercase;
+    gap: var(--space-3);
 }
 
 .title {
@@ -88,19 +79,10 @@
     text-wrap: balance;
 }
 
-.lede {
-    max-width: var(--content-prose);
-    margin: 0;
-    color: var(--color-text-dim);
-    font-size: var(--text-lg);
-    line-height: 1.5;
-    text-wrap: pretty;
-}
-
 .cardIcon {
     display: grid;
-    width: var(--space-10);
-    height: var(--space-10);
+    width: var(--space-15);
+    height: var(--space-15);
     place-items: center;
     border-radius: var(--radius-sm);
     background: var(--color-primary-subtle);
@@ -115,9 +97,8 @@
 
 .linkCard {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr);
-    gap: var(--space-4);
-    align-items: center;
+    gap: var(--space-5);
+    align-content: start;
     padding: var(--space-5);
     color: var(--color-text);
     text-decoration: none;
@@ -143,7 +124,6 @@
 
 .cardCta {
     display: inline-flex;
-    grid-column: 2;
     align-items: center;
     gap: var(--space-2);
     color: var(--color-primary);

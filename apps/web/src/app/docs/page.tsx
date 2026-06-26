@@ -1,4 +1,4 @@
-import { ArrowRight, LifeBuoy, Shield } from 'lucide-react';
+import { ArrowRight, Info, Shield } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 const docsLinks = [
     {
-        icon: LifeBuoy,
+        icon: Info,
         title: '支援',
         body: '定位、列車時間、分享或其他問題，查看常見解法並聯絡我們。',
         href: '/docs/support',
@@ -52,11 +52,7 @@ export default function DocsPage() {
 
                 <section className={styles.hero}>
                     <div className={styles.heroCopy}>
-                        <p className={styles.eyebrow}>Help</p>
                         <h1 className={styles.title}>OnTrack 支援</h1>
-                        <p className={styles.lede}>
-                            查車工具在首頁；支援與隱私權資訊放在這裡。
-                        </p>
                     </div>
                 </section>
 
@@ -71,7 +67,7 @@ export default function DocsPage() {
                                 key={item.title}
                             >
                                 <span className={styles.cardIcon}>
-                                    <Icon size={22} />
+                                    <Icon size={28} />
                                 </span>
                                 <span className={styles.cardText}>
                                     <strong>{item.title}</strong>
