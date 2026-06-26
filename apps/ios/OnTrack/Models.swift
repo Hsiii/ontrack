@@ -386,6 +386,10 @@ enum AppText {
         isZh ? "\(type) \(number) | \(time) 到 \(station)" : "\(type) \(number) | \(time) to \(station)"
     }
 
+    static func plannedBoardingMessage(type: String, number: String, time: String, station: String) -> String {
+        isZh ? "\(expectedBoarding)\(type) \(number)，\(time)到\(station)" : "\(expectedBoarding) \(type) \(number), \(time) to \(station)"
+    }
+
     static func trainAccessibilityLabel(
         type: String,
         number: String,

@@ -124,11 +124,11 @@ struct ContentView: View {
             return nil
         }
 
-        let messageFormat = ShareMessageFormat(rawValue: messageFormatRaw) ?? .arrivalOnly
-        return messageFormat.message(
-            train: selectedTrain,
-            origin: originStation,
-            destination: destinationStation
+        return AppText.plannedBoardingMessage(
+            type: TrainDisplay.trainType(selectedTrain.trainType),
+            number: selectedTrain.trainNo,
+            time: TrainDisplay.adjustedTime(selectedTrain.arrivalTime, delay: selectedTrain.delay),
+            station: destinationStation.displayName
         )
     }
 
@@ -1693,9 +1693,6 @@ private struct TrainBoardingPanel: View {
     let bottomSafeAreaInset: CGFloat
     let onSelect: (TrainInfo) -> Void
 
-    @State private var didCopy = false
-    @State private var copyFeedbackTrigger = 0
-
     var body: some View {
         VStack(spacing: 0) {
             panelHandle
@@ -1730,25 +1727,23 @@ private struct TrainBoardingPanel: View {
         .frame(height: isExpanded ? maxHeight : nil, alignment: .top)
         .clipped()
         .onTrackBottomSheetSurface()
-        .sensoryFeedback(.success, trigger: copyFeedbackTrigger)
-        .animation(.snappy(duration: 0.28, extraBounce: 0), value: isExpanded)
     }
 
     private var expectedBoardingSection: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+            Text(AppText.expectedBoarding)
+                .font(OnTrackFont.label)
+                .foregroundStyle(OnTrackTheme.dimText)
+                .frame(height: OnTrackTheme.space5, alignment: .leading)
+
             HStack(spacing: OnTrackTheme.space2) {
-                Text(AppText.expectedBoarding)
-                    .font(OnTrackFont.title)
-                    .foregroundStyle(OnTrackTheme.text)
-
-                Spacer()
-
-                Button(action: copyMessage) {
-                    PanelActionIcon(systemName: didCopy ? "checkmark" : "doc.on.doc")
-                }
-                .buttonStyle(OnTrackPressButtonStyle())
-                .disabled(message == nil)
-                .accessibilityLabel(didCopy ? AppText.copied : AppText.copyMessage)
+                Text(boardingSummary)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(selectedTrain == nil ? OnTrackTheme.dimText : OnTrackTheme.text)
+                    .lineLimit(1)
+                    .truncationMode(.tail)
+                    .monospacedDigit()
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                 ShareLink(item: message ?? "") {
                     PanelActionIcon(systemName: "square.and.arrow.up")
@@ -1756,15 +1751,13 @@ private struct TrainBoardingPanel: View {
                 .disabled(message == nil)
                 .accessibilityLabel(AppText.shareVia)
             }
-            .contentShape(Rectangle())
-            .gesture(panelDragGesture)
-
-            Text(boardingSummary)
-                .font(OnTrackFont.control)
-                .foregroundStyle(selectedTrain == nil ? OnTrackTheme.dimText : OnTrackTheme.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.82)
-                .monospacedDigit()
+            .frame(height: OnTrackTheme.controlHeight, alignment: .center)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+        .simultaneousGesture(panelDragGesture)
+        .transaction { transaction in
+            transaction.animation = nil
         }
     }
 
@@ -1842,23 +1835,6 @@ private struct TrainBoardingPanel: View {
     private func setExpanded(_ expanded: Bool) {
         withAnimation(.snappy(duration: 0.28, extraBounce: 0)) {
             isExpanded = expanded
-        }
-    }
-
-    private func copyMessage() {
-        guard let message else {
-            return
-        }
-
-        UIPasteboard.general.string = message
-        copyFeedbackTrigger += 1
-        didCopy = true
-
-        Task {
-            try? await Task.sleep(nanoseconds: 1_200_000_000)
-            await MainActor.run {
-                didCopy = false
-            }
         }
     }
 }
