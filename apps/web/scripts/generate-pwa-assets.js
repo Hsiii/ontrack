@@ -13,7 +13,15 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 const splashDir = path.join(publicDir, 'splash');
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
-const sourceIconPath = path.join(repoRoot, 'assets', 'app-icon.png');
+const sourceIconPath = path.join(
+    repoRoot,
+    'apps',
+    'ios',
+    'OnTrack',
+    'Assets.xcassets',
+    'AppIcon.appiconset',
+    'icon-1024.png'
+);
 const splashBackground = '#f8fafc';
 
 // Create splash directory if it doesn't exist
@@ -144,7 +152,7 @@ async function generateAssets() {
         throw new Error(`Missing app icon source: ${sourceIconPath}`);
     }
 
-    console.log('Generating PWA assets from assets/app-icon.png...\n');
+    console.log('Generating PWA assets from the iOS app icon...\n');
 
     // Generate splash screens
     for (const { name, width, height, dpr, safeAreaTop } of splashSizes) {
