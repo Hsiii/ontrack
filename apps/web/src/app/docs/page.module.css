@@ -1,7 +1,7 @@
 .page {
     --docs-phone-mobile-width: 20rem;
     --docs-showcase-width: calc(var(--space-15) * 6 + var(--space-8));
-    --docs-connector-length: var(--space-8);
+    --docs-connector-length: var(--space-6);
     --docs-image-outline: rgba(0, 0, 0, 0.1);
 
     min-height: 100vh;
@@ -199,14 +199,13 @@
 }
 
 .featureStack {
-    display: grid;
-    align-content: space-around;
-    gap: var(--space-5);
+    position: relative;
     min-width: 0;
-    padding: var(--space-10) 0 var(--space-15);
 }
 
 .featureCard {
+    --feature-anchor-y: calc(var(--space-5) + var(--space-10) / 2);
+
     position: relative;
     display: grid;
     grid-template-columns: var(--space-10) minmax(0, 1fr);
@@ -218,16 +217,39 @@
     box-shadow: var(--shadow-surface);
 }
 
+.featureStack .featureCard {
+    position: absolute;
+    right: 0;
+    left: 0;
+}
+
+.featureCard[data-placement='topLeft'] {
+    top: calc(var(--space-15) + var(--space-10));
+}
+
+.featureCard[data-placement='topRight'] {
+    top: calc(var(--space-15) * 2 + var(--space-8));
+}
+
 .featureCard[data-placement='bottomLeft'],
 .featureCard[data-placement='bottomRight'] {
-    margin-top: calc(var(--space-15) * 3 + var(--space-8));
+    margin-top: 0;
+}
+
+.featureCard[data-placement='bottomLeft'] {
+    top: calc(var(--space-15) * 7);
+}
+
+.featureCard[data-placement='bottomRight'] {
+    top: calc(var(--space-15) * 6);
 }
 
 .featureCard::before,
 .featureCard::after {
     position: absolute;
-    top: calc(var(--space-5) + var(--space-10) / 2);
+    top: var(--feature-anchor-y);
     display: block;
+    transform: translateY(-50%);
     content: '';
 }
 
@@ -246,7 +268,7 @@
 }
 
 .featureStack[data-side='left'] .featureCard::before {
-    right: calc(var(--docs-connector-length) * -1 - var(--space-2));
+    right: calc(var(--docs-connector-length) * -1 - var(--space-1));
 }
 
 .featureStack[data-side='left'] .featureCard::after {
@@ -254,7 +276,7 @@
 }
 
 .featureStack[data-side='right'] .featureCard::before {
-    left: calc(var(--docs-connector-length) * -1 - var(--space-2));
+    left: calc(var(--docs-connector-length) * -1 - var(--space-1));
 }
 
 .featureStack[data-side='right'] .featureCard::after {
@@ -327,9 +349,19 @@
     }
 
     .featureStack {
+        display: grid;
+        position: static;
         grid-template-columns: 1fr 1fr;
         align-content: start;
+        gap: var(--space-5);
         padding: 0;
+    }
+
+    .featureStack .featureCard {
+        position: relative;
+        right: auto;
+        left: auto;
+        top: auto;
     }
 
     .featureCard::before,
