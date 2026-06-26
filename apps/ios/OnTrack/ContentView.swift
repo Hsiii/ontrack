@@ -1667,8 +1667,16 @@ private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
     static let collapsedVisibleCards: CGFloat = 3.5
     static let collapsedVisibleGaps: CGFloat = 3
-    static let expandedNonListHeight: CGFloat = 136
     static let collapsedContentReserve: CGFloat = 400
+
+    static var panelChromeHeight: CGFloat {
+        OnTrackTheme.space6
+            + OnTrackTheme.space5
+            + OnTrackTheme.space1
+            + OnTrackTheme.controlHeight
+            + OnTrackTheme.space4
+            + 1
+    }
 
     static var collapsedCardsHeight: CGFloat {
         cardHeight * collapsedVisibleCards + OnTrackTheme.space2 * collapsedVisibleGaps
@@ -1692,6 +1700,8 @@ private struct TrainBoardingPanel: View {
     let maxHeight: CGFloat
     let bottomSafeAreaInset: CGFloat
     let onSelect: (TrainInfo) -> Void
+
+    @GestureState private var panelDragTranslation: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
@@ -1724,7 +1734,7 @@ private struct TrainBoardingPanel: View {
         }
         .padding(.bottom, bottomSafeAreaInset)
         .frame(maxWidth: .infinity)
-        .frame(height: isExpanded ? maxHeight : nil, alignment: .top)
+        .frame(height: panelHeight, alignment: .top)
         .clipped()
         .onTrackBottomSheetSurface()
     }
@@ -1790,18 +1800,41 @@ private struct TrainBoardingPanel: View {
     }
 
     private var trainListViewportHeight: CGFloat {
-        let contentHeight = trainListContentHeight + OnTrackTheme.space6
-        if isExpanded {
-            return min(
-                contentHeight,
-                max(
-                    OnTrackTheme.controlHeight,
-                    maxHeight - TrainPanelLayout.expandedNonListHeight - bottomSafeAreaInset
-                )
+        min(
+            trainListContentViewportHeight,
+            max(
+                OnTrackTheme.controlHeight,
+                panelHeight - TrainPanelLayout.panelChromeHeight - bottomSafeAreaInset
             )
-        }
+        )
+    }
 
-        return min(contentHeight, TrainPanelLayout.collapsedListViewportHeight)
+    private var panelHeight: CGFloat {
+        panelHeight(for: panelDragTranslation)
+    }
+
+    private var expandedPanelHeight: CGFloat {
+        max(maxHeight, collapsedPanelHeight)
+    }
+
+    private var collapsedPanelHeight: CGFloat {
+        TrainPanelLayout.panelChromeHeight + collapsedTrainListViewportHeight + bottomSafeAreaInset
+    }
+
+    private var collapsedTrainListViewportHeight: CGFloat {
+        min(trainListContentViewportHeight, TrainPanelLayout.collapsedListViewportHeight)
+    }
+
+    private var trainListContentViewportHeight: CGFloat {
+        trainListContentHeight + OnTrackTheme.space6
+    }
+
+    private func panelHeight(for translationY: CGFloat) -> CGFloat {
+        let baseHeight = isExpanded ? expandedPanelHeight : collapsedPanelHeight
+        return min(
+            max(baseHeight - translationY, collapsedPanelHeight),
+            expandedPanelHeight
+        )
     }
 
     private var trainListContentHeight: CGFloat {
@@ -1818,18 +1851,39 @@ private struct TrainBoardingPanel: View {
     }
 
     private var panelDragGesture: some Gesture {
-        DragGesture(minimumDistance: OnTrackTheme.space4)
-            .onEnded { value in
-                guard abs(value.translation.height) > abs(value.translation.width) else {
+        DragGesture(minimumDistance: OnTrackTheme.space2)
+            .updating($panelDragTranslation) { value, state, _ in
+                guard isVerticalDrag(value) else {
                     return
                 }
 
-                if value.translation.height < -OnTrackTheme.space6 {
-                    setExpanded(true)
-                } else if value.translation.height > OnTrackTheme.space6 {
-                    setExpanded(false)
-                }
+                state = value.translation.height
             }
+            .onEnded { value in
+                guard isVerticalDrag(value) else {
+                    return
+                }
+
+                setExpanded(shouldExpand(after: value))
+            }
+    }
+
+    private func isVerticalDrag(_ value: DragGesture.Value) -> Bool {
+        abs(value.translation.height) > abs(value.translation.width)
+    }
+
+    private func shouldExpand(after value: DragGesture.Value) -> Bool {
+        let projectedHeight = panelHeight(for: value.predictedEndTranslation.height)
+        let detentDistance = min(
+            OnTrackTheme.controlHeight * 3,
+            max(OnTrackTheme.controlHeight, (expandedPanelHeight - collapsedPanelHeight) / 2)
+        )
+
+        if isExpanded {
+            return projectedHeight > expandedPanelHeight - detentDistance
+        }
+
+        return projectedHeight >= collapsedPanelHeight + detentDistance
     }
 
     private func setExpanded(_ expanded: Bool) {
