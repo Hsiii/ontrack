@@ -128,6 +128,7 @@ enum TimeMode: String, CaseIterable, Identifiable {
     case now
     case departure
     case arrival
+    case lastTrain
 
     var id: String { rawValue }
 
@@ -139,12 +140,14 @@ enum TimeMode: String, CaseIterable, Identifiable {
             AppText.departure
         case .arrival:
             AppText.arrival
+        case .lastTrain:
+            AppText.lastTrain
         }
     }
 
     var scheduleMode: TimeMode {
         switch self {
-        case .now:
+        case .now, .lastTrain:
             .departure
         case .departure, .arrival:
             self
@@ -159,7 +162,6 @@ struct TimeSelection: Equatable {
     static let futureDayLimit = 7
     static let lastTrainHour = 23
     static let lastTrainMinute = 59
-    static let lastTrainTime = String(format: "%02d:%02d", lastTrainHour, lastTrainMinute)
 
     static func current(mode: TimeMode = .now, date: Date = Date()) -> TimeSelection {
         TimeSelection(
@@ -173,6 +175,10 @@ struct TimeSelection: Equatable {
     }
 
     var scheduleTime: String {
+        if mode == .lastTrain {
+            return String(format: "%02d:%02d", Self.lastTrainHour, Self.lastTrainMinute)
+        }
+
         Formatters.displayTime.string(from: date)
     }
 }
@@ -227,7 +233,7 @@ enum TrainDisplay {
         let targetMinutes = timeToMinutes(targetTime)
         let comparisonMinutes: (TrainInfo) -> Int = { train in
             switch timeMode {
-            case .now, .departure:
+            case .now, .departure, .lastTrain:
                 timeToMinutes(train.departureTime) + (train.delay ?? 0)
             case .arrival:
                 timeToMinutes(train.arrivalTime)
