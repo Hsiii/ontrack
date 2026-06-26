@@ -179,7 +179,7 @@ struct TimeSelection: Equatable {
             return String(format: "%02d:%02d", Self.lastTrainHour, Self.lastTrainMinute)
         }
 
-        Formatters.displayTime.string(from: date)
+        return Formatters.displayTime.string(from: date)
     }
 }
 

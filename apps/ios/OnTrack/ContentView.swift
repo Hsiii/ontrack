@@ -788,7 +788,7 @@ private struct TimeEditorSheet: View {
             set: { mode in
                 draft.mode = mode
                 if mode == .lastTrain {
-                    draft.date = lastTrainDate(for: draft.date)
+                    draft.date = Self.lastTrainDate(for: draft.date)
                 }
             }
         )
@@ -798,7 +798,7 @@ private struct TimeEditorSheet: View {
         draft.mode == .now
     }
 
-    private func lastTrainDate(for date: Date) -> Date {
+    private static func lastTrainDate(for date: Date) -> Date {
         let calendar = Formatters.taipeiCalendar
         return calendar.date(
             bySettingHour: TimeSelection.lastTrainHour,
@@ -813,7 +813,7 @@ private struct TimeEditorSheet: View {
             get: { draft.date },
             set: { date in
                 if draft.mode == .lastTrain {
-                    draft.date = lastTrainDate(for: date)
+                    draft.date = Self.lastTrainDate(for: date)
                     return
                 }
 
@@ -832,7 +832,7 @@ private struct TimeEditorSheet: View {
 
         var initialDraft = selection.wrappedValue
         if initialDraft.mode == .lastTrain {
-            initialDraft.date = lastTrainDate(for: initialDraft.date)
+            initialDraft.date = Self.lastTrainDate(for: initialDraft.date)
         }
         self._draft = State(initialValue: initialDraft)
     }
@@ -869,9 +869,9 @@ private struct TimeEditorSheet: View {
                                 OnTrackTheme.timeModePickerMinWidth,
                                 proxy.size.width - OnTrackTheme.controlHeight * 2
                             )
-                        ),
-                        minHeight: OnTrackTheme.controlHeight
+                        )
                     )
+                    .frame(minHeight: OnTrackTheme.controlHeight)
                 }
             }
             .frame(height: OnTrackTheme.controlHeight)
@@ -1024,7 +1024,8 @@ private struct StationTrigger: View {
                 }
                 .padding(.leading, OnTrackTheme.space4)
                 .padding(.trailing, OnTrackTheme.space4)
-                .frame(maxWidth: .infinity, height: OnTrackTheme.routeRowHeight, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(height: OnTrackTheme.routeRowHeight)
                 .contentShape(Rectangle())
             }
             .buttonStyle(OnTrackPressButtonStyle())
