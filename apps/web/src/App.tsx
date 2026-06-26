@@ -131,7 +131,10 @@ function App() {
             ? formatEnglishStationName(destStation?.nameEn)
             : destStation?.name) || destId;
     const scheduleDate = getScheduleDate(timeSelection.dateDigits);
-    const scheduleTime = getScheduleTime(timeSelection.timeDigits);
+    const scheduleTime = getScheduleTime(
+        timeSelection.timeDigits,
+        timeSelection.mode
+    );
     const isTimeInitialized =
         timeSelection.dateDigits.length === 4 &&
         timeSelection.timeDigits.length === 4;

@@ -12,7 +12,7 @@ import { useI18n } from '../i18n/useI18n';
 
 import './TimeSelector.css';
 
-export type TimeMode = 'now' | 'departure' | 'arrival';
+export type TimeMode = 'now' | 'departure' | 'arrival' | 'lastTrain';
 
 export interface TimeSelection {
     mode: TimeMode;
@@ -22,17 +22,45 @@ export interface TimeSelection {
 
 const DATE_DIGIT_COUNT = 4;
 const TIME_DIGIT_COUNT = 4;
+const FUTURE_DATE_RANGE_DAYS = 7;
 const LAST_TRAIN_TIME_DIGITS = '2359';
 const HOURS = Array.from({ length: 24 }, (_, hour) => hour);
 const MINUTES = Array.from({ length: 60 }, (_, minute) => minute);
 type WheelTimePart = 'hour' | 'minute';
 
-function getTodayDigits() {
+function getTodayDate() {
     const today = new Date();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const date = String(today.getDate()).padStart(2, '0');
 
-    return `${month}${date}`;
+    return new Date(today.getFullYear(), today.getMonth(), today.getDate());
+}
+
+function addDays(date: Date, dayOffset: number) {
+    const nextDate = new Date(date);
+
+    nextDate.setDate(nextDate.getDate() + dayOffset);
+
+    return nextDate;
+}
+
+function formatDateDigits(date: Date) {
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+
+    return `${month}${day}`;
+}
+
+function getScheduleDateRange() {
+    const minDate = getTodayDate();
+    const maxDate = addDays(minDate, FUTURE_DATE_RANGE_DAYS);
+
+    return {
+        minDate,
+        maxDate,
+    };
+}
+
+function getTodayDigits() {
+    return formatDateDigits(getTodayDate());
 }
 
 function getCurrentTimeDigits() {
@@ -50,51 +78,69 @@ function getCurrentDateTimeSelection(mode: TimeMode): TimeSelection {
     return {
         mode,
         dateDigits: getTodayDigits(),
-        timeDigits: getCurrentTimeDigits(),
+        timeDigits:
+            mode === 'lastTrain'
+                ? LAST_TRAIN_TIME_DIGITS
+                : getCurrentTimeDigits(),
     };
 }
 
-function parseDateDigits(dateDigits: string) {
-    const today = new Date();
-    const year = today.getFullYear();
+function parseScheduleDateDigits(dateDigits: string) {
+    const { minDate, maxDate } = getScheduleDateRange();
+    const year = minDate.getFullYear();
     const month = Number(dateDigits.slice(0, 2));
-    const date = Number(dateDigits.slice(2, 4));
-    const selectedDate = new Date(year, month - 1, date);
+    const day = Number(dateDigits.slice(2, 4));
 
-    if (
-        dateDigits.length !== DATE_DIGIT_COUNT ||
-        selectedDate.getFullYear() !== year ||
-        selectedDate.getMonth() !== month - 1 ||
-        selectedDate.getDate() !== date
-    ) {
-        return today;
+    if (dateDigits.length !== DATE_DIGIT_COUNT) {
+        return null;
+    }
+
+    const candidates = [year, year + 1].map(
+        (candidateYear) => new Date(candidateYear, month - 1, day)
+    );
+    const selectedDate =
+        candidates.find(
+            (candidate) =>
+                candidate.getMonth() === month - 1 &&
+                candidate.getDate() === day &&
+                candidate.getTime() >= minDate.getTime()
+        ) ?? null;
+
+    if (selectedDate === null || selectedDate.getTime() > maxDate.getTime()) {
+        return null;
     }
 
     return selectedDate;
 }
 
-function addDaysToDateDigits(dateDigits: string, dayOffset: number) {
-    const selectedDate = parseDateDigits(dateDigits);
-
-    selectedDate.setDate(selectedDate.getDate() + dayOffset);
-
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const date = String(selectedDate.getDate()).padStart(2, '0');
-
-    return `${month}${date}`;
+function parseDateDigits(dateDigits: string) {
+    return parseScheduleDateDigits(dateDigits) ?? getTodayDate();
 }
 
-function getTomorrowDigits() {
-    return addDaysToDateDigits(getTodayDigits(), 1);
+function getDateOffset(dateDigits: string) {
+    const { minDate } = getScheduleDateRange();
+    const selectedDate = parseScheduleDateDigits(dateDigits);
+
+    if (selectedDate === null) return 0;
+
+    return Math.round(
+        (selectedDate.getTime() - minDate.getTime()) / 86_400_000
+    );
+}
+
+function getDateDigitsAtOffset(dayOffset: number) {
+    const { minDate } = getScheduleDateRange();
+    const normalizedOffset = Math.min(
+        FUTURE_DATE_RANGE_DAYS,
+        Math.max(0, dayOffset)
+    );
+
+    return formatDateDigits(addDays(minDate, normalizedOffset));
 }
 
 function normalizeSelection(value: TimeSelection): TimeSelection {
-    const todayDigits = getTodayDigits();
-    const tomorrowDigits = getTomorrowDigits();
-
     if (
-        (value.dateDigits === todayDigits ||
-            value.dateDigits === tomorrowDigits) &&
+        parseScheduleDateDigits(value.dateDigits) !== null &&
         value.timeDigits.length === TIME_DIGIT_COUNT
     ) {
         return value;
@@ -151,12 +197,6 @@ function getCenteredWheelValue(wheel: HTMLDivElement) {
     return centeredValue;
 }
 
-function getDateOffset(dateDigits: string) {
-    if (dateDigits === getTodayDigits()) return 0;
-    if (dateDigits === getTomorrowDigits()) return 1;
-    return null;
-}
-
 export function getInitialTimeSelection(): TimeSelection {
     return getCurrentDateTimeSelection('now');
 }
@@ -170,7 +210,14 @@ export function getScheduleDate(dateDigits: string) {
     return `${year}-${String(month).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
 }
 
-export function getScheduleTime(timeDigits: string) {
+export function getScheduleTime(
+    timeDigits: string,
+    mode: TimeMode = 'departure'
+) {
+    if (mode === 'lastTrain') {
+        return formatTime(23, 59);
+    }
+
     const { hour, minute } = getTimeParts(timeDigits);
 
     return formatTime(hour, minute);
@@ -224,6 +271,12 @@ export function TimeSelector({
                     label: t('time.arrivalTime'),
                     shortLabel: t('time.arrival'),
                     Icon: ArrowRightToLine,
+                },
+                {
+                    value: 'lastTrain' as const,
+                    label: t('time.lastTrain'),
+                    shortLabel: t('time.lastTrain'),
+                    Icon: TrainFront,
                 },
             ] satisfies {
                 value: TimeMode;
@@ -302,23 +355,16 @@ export function TimeSelector({
         draft.timeDigits
     );
     const isNowSelected = normalizedValue.mode === 'now';
-    const dateOffset = getDateOffset(normalizedValue.dateDigits);
-    const dayOptions = [
-        { value: getTodayDigits(), label: t('time.today') },
-        { value: getTomorrowDigits(), label: t('time.tomorrow') },
-    ];
+    const draftDateOffset = getDateOffset(draft.dateDigits);
+    const draftDateLabel = getScheduleDate(draft.dateDigits);
     const modeLabel =
         modeOptions.find((option) => option.value === normalizedValue.mode)
             ?.shortLabel ?? t('time.departure');
     const title = isNowSelected
         ? t('time.leaveNow')
-        : `${modeLabel} ${formatTime(hour, minute)}`;
-    const dateLabel =
-        dateOffset === 0
-            ? t('time.today')
-            : dateOffset === 1
-              ? t('time.tomorrow')
-              : getScheduleDate(normalizedValue.dateDigits);
+        : normalizedValue.mode === 'lastTrain'
+          ? `${modeLabel} ${getScheduleDate(normalizedValue.dateDigits)}`
+          : `${modeLabel} ${formatTime(hour, minute)}`;
 
     const openEditor = () => {
         setDraft(normalizedValue);
@@ -337,28 +383,11 @@ export function TimeSelector({
         );
     };
 
-    const handleSetLastTrain = () => {
-        const nextSelection: TimeSelection = {
-            ...draftRef.current,
-            mode: 'departure',
-            dateDigits:
-                getDateOffset(draftRef.current.dateDigits) === null
-                    ? getTodayDigits()
-                    : draftRef.current.dateDigits,
-            timeDigits: LAST_TRAIN_TIME_DIGITS,
-        };
-
-        setDraft(nextSelection);
-        window.requestAnimationFrame(() =>
-            scrollWheelsToTime(nextSelection.timeDigits)
-        );
-    };
-
-    const handleSetDate = (dateDigits: string) => {
+    const handleSetDateOffset = (dayOffset: number) => {
         setDraft((current) => ({
             ...current,
             mode: current.mode === 'now' ? 'departure' : current.mode,
-            dateDigits,
+            dateDigits: getDateDigitsAtOffset(dayOffset),
         }));
     };
 
@@ -445,11 +474,6 @@ export function TimeSelector({
                         <span className='time-selector-trigger-title'>
                             {title}
                         </span>
-                        {!isNowSelected && (
-                            <span className='time-selector-trigger-date'>
-                                {dateLabel}
-                            </span>
-                        )}
                     </span>
                     <ChevronDown aria-hidden='true' />
                 </button>
@@ -489,162 +513,175 @@ export function TimeSelector({
                             {t('time.selectTime')}
                         </h2>
 
-                        <div
-                            className='time-editor-shortcuts'
-                            role='group'
-                            aria-label={t('time.time')}
-                        >
-                            <button
-                                type='button'
-                                className={`time-editor-shortcut-btn ${draft.mode === 'now' ? 'active' : ''}`}
-                                onClick={handleSetNow}
+                        <div className='time-editor-control-row'>
+                            <div
+                                className='time-editor-shortcuts'
+                                role='group'
+                                aria-label={t('time.time')}
                             >
-                                <TimerReset aria-hidden='true' />
-                                <span>{t('time.now')}</span>
-                            </button>
+                                <button
+                                    type='button'
+                                    className={`time-editor-shortcut-btn ${draft.mode === 'now' ? 'active' : ''}`}
+                                    onClick={handleSetNow}
+                                >
+                                    <TimerReset aria-hidden='true' />
+                                    <span>{t('time.now')}</span>
+                                </button>
+                            </div>
 
-                            <button
-                                type='button'
-                                className={`time-editor-shortcut-btn ${
-                                    draft.mode === 'departure' &&
-                                    draft.timeDigits === LAST_TRAIN_TIME_DIGITS
-                                        ? 'active'
-                                        : ''
+                            <div
+                                className={`time-editor-mode-segmented ${
+                                    draft.mode === 'now' ? 'is-now-mode' : ''
                                 }`}
-                                onClick={handleSetLastTrain}
+                                role='radiogroup'
+                                aria-label={t('time.mode')}
                             >
-                                <TrainFront aria-hidden='true' />
-                                <span>{t('time.lastTrain')}</span>
-                            </button>
-                        </div>
+                                {modeOptions.map((option) => {
+                                    const isActive =
+                                        (draft.mode === 'now'
+                                            ? 'departure'
+                                            : draft.mode) === option.value;
 
-                        <div
-                            className={`time-editor-mode-segmented ${
-                                draft.mode === 'now' ? 'is-now-mode' : ''
-                            }`}
-                            role='radiogroup'
-                            aria-label={t('time.mode')}
-                        >
-                            {modeOptions.map((option) => {
-                                const isActive =
-                                    (draft.mode === 'now'
-                                        ? 'departure'
-                                        : draft.mode) === option.value;
-
-                                return (
-                                    <button
-                                        key={option.value}
-                                        type='button'
-                                        className={`time-editor-mode-option ${isActive ? 'active' : ''}`}
-                                        role='radio'
-                                        aria-checked={isActive}
-                                        onClick={() =>
-                                            setDraft((current) => ({
-                                                ...current,
-                                                mode: option.value,
-                                            }))
-                                        }
-                                    >
-                                        <option.Icon aria-hidden='true' />
-                                        <span>{option.shortLabel}</span>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div
-                            className='time-editor-date-segmented'
-                            role='radiogroup'
-                            aria-label={t('time.date')}
-                        >
-                            {dayOptions.map((option) => {
-                                const isActive =
-                                    draft.dateDigits === option.value;
-
-                                return (
-                                    <button
-                                        key={option.value}
-                                        type='button'
-                                        className={`time-editor-date-option ${isActive ? 'active' : ''}`}
-                                        role='radio'
-                                        aria-checked={isActive}
-                                        onClick={() =>
-                                            handleSetDate(option.value)
-                                        }
-                                    >
-                                        {option.label}
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        <div className='time-editor-wheels'>
-                            <div
-                                ref={hourListRef}
-                                className='time-editor-wheel'
-                                role='listbox'
-                                aria-label={t('time.hour')}
-                                onScroll={() => handleWheelScroll('hour')}
-                            >
-                                {HOURS.map((optionHour) => (
-                                    <button
-                                        key={optionHour}
-                                        type='button'
-                                        data-time-value={optionHour}
-                                        className={`time-editor-wheel-option ${
-                                            draftHour === optionHour
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        role='option'
-                                        aria-selected={draftHour === optionHour}
-                                        onClick={() =>
-                                            handleSetTimePart({
-                                                hour: optionHour,
-                                            })
-                                        }
-                                    >
-                                        {String(optionHour).padStart(2, '0')}
-                                    </button>
-                                ))}
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type='button'
+                                            className={`time-editor-mode-option ${isActive ? 'active' : ''}`}
+                                            role='radio'
+                                            aria-checked={isActive}
+                                            onClick={() =>
+                                                setDraft((current) => ({
+                                                    ...current,
+                                                    mode: option.value,
+                                                    timeDigits:
+                                                        option.value ===
+                                                        'lastTrain'
+                                                            ? LAST_TRAIN_TIME_DIGITS
+                                                            : current.timeDigits,
+                                                }))
+                                            }
+                                        >
+                                            <option.Icon aria-hidden='true' />
+                                            <span>{option.shortLabel}</span>
+                                        </button>
+                                    );
+                                })}
                             </div>
+                        </div>
 
-                            <span className='time-editor-wheel-separator'>
-                                :
+                        <label className='time-editor-date-slider-field'>
+                            <span className='time-editor-date-slider-copy'>
+                                <span>{t('time.date')}</span>
+                                <strong>{draftDateLabel}</strong>
                             </span>
+                            <input
+                                className='time-editor-date-slider'
+                                type='range'
+                                min='0'
+                                max={FUTURE_DATE_RANGE_DAYS}
+                                step='1'
+                                value={draftDateOffset}
+                                aria-label={t('time.date')}
+                                onChange={(event) =>
+                                    handleSetDateOffset(
+                                        Number(event.target.value)
+                                    )
+                                }
+                            />
+                            <span className='time-editor-date-slider-range'>
+                                <span>{t('time.today')}</span>
+                                <span>
+                                    {getScheduleDate(
+                                        getDateDigitsAtOffset(
+                                            FUTURE_DATE_RANGE_DAYS
+                                        )
+                                    )}
+                                </span>
+                            </span>
+                        </label>
 
-                            <div
-                                ref={minuteListRef}
-                                className='time-editor-wheel'
-                                role='listbox'
-                                aria-label={t('time.minute')}
-                                onScroll={() => handleWheelScroll('minute')}
-                            >
-                                {MINUTES.map((optionMinute) => (
-                                    <button
-                                        key={optionMinute}
-                                        type='button'
-                                        data-time-value={optionMinute}
-                                        className={`time-editor-wheel-option ${
-                                            draftMinute === optionMinute
-                                                ? 'active'
-                                                : ''
-                                        }`}
-                                        role='option'
-                                        aria-selected={
-                                            draftMinute === optionMinute
-                                        }
-                                        onClick={() =>
-                                            handleSetTimePart({
-                                                minute: optionMinute,
-                                            })
-                                        }
-                                    >
-                                        {String(optionMinute).padStart(2, '0')}
-                                    </button>
-                                ))}
+                        {draft.mode === 'lastTrain' ? (
+                            <div className='time-editor-fixed-time'>
+                                <TrainFront aria-hidden='true' />
+                                <span>{formatTime(23, 59)}</span>
                             </div>
-                        </div>
+                        ) : (
+                            <div className='time-editor-wheels'>
+                                <div
+                                    ref={hourListRef}
+                                    className='time-editor-wheel'
+                                    role='listbox'
+                                    aria-label={t('time.hour')}
+                                    onScroll={() => handleWheelScroll('hour')}
+                                >
+                                    {HOURS.map((optionHour) => (
+                                        <button
+                                            key={optionHour}
+                                            type='button'
+                                            data-time-value={optionHour}
+                                            className={`time-editor-wheel-option ${
+                                                draftHour === optionHour
+                                                    ? 'active'
+                                                    : ''
+                                            }`}
+                                            role='option'
+                                            aria-selected={
+                                                draftHour === optionHour
+                                            }
+                                            onClick={() =>
+                                                handleSetTimePart({
+                                                    hour: optionHour,
+                                                })
+                                            }
+                                        >
+                                            {String(optionHour).padStart(
+                                                2,
+                                                '0'
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                <span className='time-editor-wheel-separator'>
+                                    :
+                                </span>
+
+                                <div
+                                    ref={minuteListRef}
+                                    className='time-editor-wheel'
+                                    role='listbox'
+                                    aria-label={t('time.minute')}
+                                    onScroll={() => handleWheelScroll('minute')}
+                                >
+                                    {MINUTES.map((optionMinute) => (
+                                        <button
+                                            key={optionMinute}
+                                            type='button'
+                                            data-time-value={optionMinute}
+                                            className={`time-editor-wheel-option ${
+                                                draftMinute === optionMinute
+                                                    ? 'active'
+                                                    : ''
+                                            }`}
+                                            role='option'
+                                            aria-selected={
+                                                draftMinute === optionMinute
+                                            }
+                                            onClick={() =>
+                                                handleSetTimePart({
+                                                    minute: optionMinute,
+                                                })
+                                            }
+                                        >
+                                            {String(optionMinute).padStart(
+                                                2,
+                                                '0'
+                                            )}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
 
                         <div className='time-editor-actions'>
                             <button type='button' onClick={closeEditor}>
