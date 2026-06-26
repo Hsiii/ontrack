@@ -83,3 +83,37 @@ bun run ios:build
 ```
 
 If `xcodebuild` reports that the iOS platform is not installed, install it from Xcode Settings > Components or use `xcodebuild -downloadPlatform iOS`.
+
+## App Store Release Next Steps
+
+Use Apple's current App Store Connect flow as the source of truth:
+
+- Apple Developer Program: https://developer.apple.com/programs/
+- App Store Connect workflow: https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-workflow/
+- Create an app record: https://developer.apple.com/help/app-store-connect/create-an-app-record/add-a-new-app/
+- Upload builds: https://developer.apple.com/help/app-store-connect/manage-builds/upload-builds/
+- TestFlight overview: https://developer.apple.com/help/app-store-connect/test-a-beta-version/testflight-overview/
+- App privacy: https://developer.apple.com/help/app-store-connect/manage-app-information/manage-app-privacy/
+- Export compliance: https://developer.apple.com/help/app-store-connect/manage-app-information/overview-of-export-compliance/
+- Screenshots: https://developer.apple.com/help/app-store-connect/manage-app-information/upload-app-previews-and-screenshots/
+- Submit for review: https://developer.apple.com/help/app-store-connect/manage-submissions-to-app-review/submit-an-app/
+- Review Guidelines: https://developer.apple.com/app-store/review/guidelines/
+
+Suggested order:
+
+1. Confirm the Apple Developer Program account, App Store Connect access, signed agreements, and tax/banking/compliance status.
+2. Register or confirm the bundle ID, then create the App Store Connect app record before uploading a build. Use the same `IOS_BUNDLE_ID` configured for signing.
+3. Prepare product metadata: name, subtitle, keywords, description, category, age rating, support URL, privacy policy URL, review contact, and any reviewer notes.
+4. Complete privacy and compliance answers. OnTrack uses location and network access, so verify the App Privacy answers and export-compliance/encryption answers before review.
+5. Capture App Store screenshots for the device classes this target supports. Apple currently accepts one to ten screenshots per required display set.
+6. Run local checks, increment version/build numbers, then archive and upload:
+
+    ```sh
+    bun run build
+    bun run lint
+    bun run ios:check
+    IOS_EXPORT_DESTINATION=upload bun run ios:release
+    ```
+
+7. Use TestFlight for internal testing first. Resolve any Missing Compliance or processing issues before inviting external testers or submitting to App Review.
+8. Select the uploaded build for the app version, add it for review, and submit. Review the App Review Guidelines before the first submission.
