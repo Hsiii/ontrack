@@ -1783,9 +1783,10 @@ private struct TrainBoardingPanel: View {
         }
         .padding(.bottom, bottomSafeAreaInset)
         .frame(maxWidth: .infinity)
-        .frame(height: panelHeight, alignment: .top)
+        .frame(height: expandedPanelHeight, alignment: .top)
         .clipped()
         .onTrackBottomSheetSurface()
+        .offset(y: panelOffset)
     }
 
     private var expectedBoardingSection: some View {
@@ -1853,13 +1854,13 @@ private struct TrainBoardingPanel: View {
             trainListContentViewportHeight,
             max(
                 OnTrackTheme.controlHeight,
-                panelHeight - TrainPanelLayout.panelChromeHeight - bottomSafeAreaInset
+                expandedPanelHeight - TrainPanelLayout.panelChromeHeight - bottomSafeAreaInset
             )
         )
     }
 
-    private var panelHeight: CGFloat {
-        panelHeight(for: panelDragTranslation)
+    private var panelOffset: CGFloat {
+        panelOffset(for: panelDragTranslation)
     }
 
     private var expandedPanelHeight: CGFloat {
@@ -1878,11 +1879,15 @@ private struct TrainBoardingPanel: View {
         trainListContentHeight
     }
 
-    private func panelHeight(for translationY: CGFloat) -> CGFloat {
-        let baseHeight = isExpanded ? expandedPanelHeight : collapsedPanelHeight
+    private var collapsedPanelOffset: CGFloat {
+        max(0, expandedPanelHeight - collapsedPanelHeight)
+    }
+
+    private func panelOffset(for translationY: CGFloat) -> CGFloat {
+        let baseOffset = isExpanded ? 0 : collapsedPanelOffset
         return min(
-            max(baseHeight - translationY, collapsedPanelHeight),
-            expandedPanelHeight
+            max(baseOffset + translationY, 0),
+            collapsedPanelOffset
         )
     }
 
@@ -1921,17 +1926,7 @@ private struct TrainBoardingPanel: View {
     }
 
     private func shouldExpand(after value: DragGesture.Value) -> Bool {
-        let projectedHeight = panelHeight(for: value.predictedEndTranslation.height)
-        let detentDistance = min(
-            OnTrackTheme.controlHeight * 3,
-            max(OnTrackTheme.controlHeight, (expandedPanelHeight - collapsedPanelHeight) / 2)
-        )
-
-        if isExpanded {
-            return projectedHeight > expandedPanelHeight - detentDistance
-        }
-
-        return projectedHeight >= collapsedPanelHeight + detentDistance
+        panelOffset(for: value.predictedEndTranslation.height) < collapsedPanelOffset / 2
     }
 
     private func setExpanded(_ expanded: Bool) {
