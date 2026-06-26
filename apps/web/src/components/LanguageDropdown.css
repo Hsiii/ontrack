@@ -4,10 +4,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
+    width: var(--size-touch);
+    height: var(--size-touch);
     padding: var(--space-2);
-    border-radius: var(--radius-sm);
+    border-radius: 50%;
     background: var(--color-bg-light);
     box-shadow: var(--shadow-surface);
     color: var(--color-text-dim);
@@ -36,8 +36,8 @@
 }
 
 .language-dropdown-trigger svg {
-    width: 24px;
-    height: 24px;
+    width: var(--space-6);
+    height: var(--space-6);
 }
 
 /* ── Bottom-sheet backdrop ── */
@@ -69,10 +69,10 @@
 
 .lang-sheet {
     width: 100%;
-    max-width: 480px;
+    max-width: var(--content-mobile);
     background: var(--color-bg-light);
     border-top: 1px solid var(--color-border);
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     padding: var(--space-2) 0 calc(var(--space-4) + env(safe-area-inset-bottom));
     animation: lang-sheet-in var(--motion-panel) var(--ease-out);
     transition: transform var(--motion-base) ease-out;
@@ -94,9 +94,9 @@
 
 .lang-sheet-handle {
     width: 36px;
-    height: 4px;
+    height: var(--space-1);
     background: var(--color-border);
-    border-radius: 2px;
+    border-radius: var(--radius-pill);
     margin: var(--space-2) auto var(--space-2);
 }
 
@@ -118,6 +118,7 @@
     align-items: center;
     gap: var(--space-3);
     width: 100%;
+    min-height: calc(var(--size-touch) + var(--space-2));
     padding: var(--space-3) var(--space-5);
     color: var(--color-text-dim);
     font-size: var(--text-base);
@@ -142,8 +143,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: var(--space-6);
+    height: var(--space-6);
     border-radius: 50%;
     background: var(--color-bg);
     color: var(--color-text-dim);

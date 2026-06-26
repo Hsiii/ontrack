@@ -1,8 +1,15 @@
 .station-selector-container {
     display: flex;
     flex-direction: column;
-    gap: var(--space-2);
     position: relative;
+}
+
+.station-fields-group {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-surface);
 }
 
 .station-toast {
@@ -41,6 +48,10 @@
     align-items: center;
 }
 
+.station-row-destination {
+    border-top: 1px solid var(--color-border);
+}
+
 .station-field {
     position: relative;
     flex: 1;
@@ -49,13 +60,13 @@
 
 .station-swap-row {
     position: absolute;
-    top: calc(4rem + var(--space-1));
+    top: 50%;
     left: 0;
     right: 0;
     z-index: 3;
     display: flex;
     justify-content: center;
-    height: 40px;
+    height: var(--size-touch);
     pointer-events: none;
     transform: translateY(-50%);
 }
@@ -64,9 +75,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    width: var(--size-touch);
+    height: var(--size-touch);
     padding: var(--space-2);
+    border: var(--space-1) solid var(--color-bg-light);
     border-radius: 50%;
     background: var(--color-bg-light);
     box-shadow: var(--shadow-surface);
@@ -85,9 +97,9 @@
 }
 
 .station-swap-btn svg {
-    width: 20px;
-    height: 20px;
-    flex: 0 0 20px;
+    width: var(--size-icon);
+    height: var(--size-icon);
+    flex: 0 0 var(--size-icon);
 }
 
 .station-swap-btn:disabled {
@@ -108,9 +120,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-sm);
+    width: var(--size-touch);
+    height: var(--size-touch);
+    border-radius: 50%;
     background: transparent;
     border: none;
     color: var(--color-text-dim);
@@ -122,13 +134,8 @@
 }
 
 .station-action-btn:hover {
-    color: var(--color-text-dim);
-}
-
-.station-action-btn,
-.station-action-btn:hover,
-.station-action-btn.active {
-    color: var(--color-text-dim);
+    background: var(--color-hover);
+    color: var(--color-text);
 }
 
 .station-action-btn:active {
@@ -136,5 +143,5 @@
 }
 
 .station-action-btn.active {
-    color: var(--color-text-dim);
+    color: var(--color-primary);
 }

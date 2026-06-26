@@ -16,14 +16,14 @@
 
 .share-card-input {
     width: 100%;
-    height: 44px;
+    height: var(--size-touch);
     background: var(--color-bg-light);
     border: 1px solid var(--color-border);
     color: var(--color-text);
     padding-block: var(--space-3);
     font-family: inherit;
     font-size: var(--text-base);
-    border-radius: 22px;
+    border-radius: var(--radius-pill);
     text-align: center;
     outline: none;
     font-variant-numeric: tabular-nums;
@@ -71,9 +71,9 @@
 }
 
 .share-card-button {
-    width: 44px;
-    height: 44px;
-    border-radius: var(--radius-sm);
+    width: var(--size-touch);
+    height: var(--size-touch);
+    border-radius: 50%;
     flex-shrink: 0;
     background: var(--color-bg-light);
     box-shadow: var(--shadow-surface);

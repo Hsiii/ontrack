@@ -297,69 +297,71 @@ export function StationSelector({
                 {toast}
             </div>
 
-            {/* Origin Station Row */}
-            <div className='station-row'>
-                <div className='station-field'>
-                    <StationDropdown
-                        stations={stations}
-                        searchValue={originSearch}
-                        setSearchValue={setOriginSearch}
-                        isOpen={originDropdownOpen}
-                        setIsOpen={handleOriginDropdownOpen}
-                        selectedId={originId}
-                        onSelect={handleOriginSelect}
-                        placeholder={t('station.origin')}
-                        title={t('station.selectOrigin')}
-                        selectedStation={originStation}
-                        triggerAction={
-                            <button
-                                type='button'
-                                className={`station-action-btn ${autoDetectOrigin ? 'active' : ''}`}
-                                onClick={handleToggleGeo}
-                                aria-label={
-                                    autoDetectOrigin
-                                        ? t('app.disableAutoDetectOrigin')
-                                        : t('app.enableAutoDetectOrigin')
-                                }
-                            >
-                                {geoToggleIcon}
-                            </button>
-                        }
-                    />
+            <div className='station-fields-group'>
+                {/* Origin Station Row */}
+                <div className='station-row station-row-origin'>
+                    <div className='station-field'>
+                        <StationDropdown
+                            stations={stations}
+                            searchValue={originSearch}
+                            setSearchValue={setOriginSearch}
+                            isOpen={originDropdownOpen}
+                            setIsOpen={handleOriginDropdownOpen}
+                            selectedId={originId}
+                            onSelect={handleOriginSelect}
+                            placeholder={t('station.origin')}
+                            title={t('station.selectOrigin')}
+                            selectedStation={originStation}
+                            triggerAction={
+                                <button
+                                    type='button'
+                                    className={`station-action-btn ${autoDetectOrigin ? 'active' : ''}`}
+                                    onClick={handleToggleGeo}
+                                    aria-label={
+                                        autoDetectOrigin
+                                            ? t('app.disableAutoDetectOrigin')
+                                            : t('app.enableAutoDetectOrigin')
+                                    }
+                                >
+                                    {geoToggleIcon}
+                                </button>
+                            }
+                        />
+                    </div>
                 </div>
-            </div>
 
-            <div className='station-swap-row'>
-                <button
-                    type='button'
-                    className='station-swap-btn'
-                    onClick={handleSwapStations}
-                    disabled={!originId || !destId}
-                    aria-label={t('station.swap')}
-                    title={t('station.swap')}
-                >
-                    <ArrowUpDown aria-hidden='true' />
-                </button>
-            </div>
+                <div className='station-swap-row'>
+                    <button
+                        type='button'
+                        className='station-swap-btn'
+                        onClick={handleSwapStations}
+                        disabled={!originId || !destId}
+                        aria-label={t('station.swap')}
+                        title={t('station.swap')}
+                    >
+                        <ArrowUpDown aria-hidden='true' />
+                    </button>
+                </div>
 
-            {/* Destination Station Row */}
-            <div className='station-row'>
-                <div className='station-field'>
-                    <StationDropdown
-                        stations={stations}
-                        searchValue={destSearch}
-                        setSearchValue={setDestSearch}
-                        isOpen={destDropdownOpen}
-                        setIsOpen={handleDestDropdownOpen}
-                        selectedId={destId}
-                        onSelect={handleDestinationSelect}
-                        placeholder={t('station.destination')}
-                        title={t('station.selectDestination')}
-                        selectedStation={destStation}
-                        showFrequentDestinations
-                        frequentDestinationOriginId={originId}
-                        excludedFrequentDestinationId={originId}
-                    />
+                {/* Destination Station Row */}
+                <div className='station-row station-row-destination'>
+                    <div className='station-field'>
+                        <StationDropdown
+                            stations={stations}
+                            searchValue={destSearch}
+                            setSearchValue={setDestSearch}
+                            isOpen={destDropdownOpen}
+                            setIsOpen={handleDestDropdownOpen}
+                            selectedId={destId}
+                            onSelect={handleDestinationSelect}
+                            placeholder={t('station.destination')}
+                            title={t('station.selectDestination')}
+                            selectedStation={destStation}
+                            showFrequentDestinations
+                            frequentDestinationOriginId={originId}
+                            excludedFrequentDestinationId={originId}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

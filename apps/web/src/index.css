@@ -73,6 +73,8 @@
     --radius-lg: 16px;
     --radius-md: 12px;
     --radius-sm: 8px;
+    --radius-xl: 24px;
+    --radius-pill: 4000px;
 
     /* Spacing Scale (multiples of 4) */
     --space-1: 0.25rem; /* 4px */
@@ -89,7 +91,11 @@
     --content-prose: 36rem; /* 576px */
     --content-title: 12ch;
     --content-mobile: 30rem; /* 480px */
+    --content-app: 40rem; /* 640px */
     --size-preview-min: 17.5rem; /* 280px */
+    --size-touch: 2.75rem; /* 44px */
+    --size-control: 4rem; /* 64px */
+    --size-icon: 1.25rem; /* 20px */
 
     --space-neg-2: -0.5rem; /* -8px */
     --space-neg-3: -0.75rem; /* -12px */
@@ -107,8 +113,8 @@
 
 html {
     overflow-x: hidden;
-    height: 100vh;
-    height: 100svh;
+    min-height: 100vh;
+    min-height: 100svh;
     background-color: var(--color-bg);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -122,6 +128,9 @@ body {
     color: var(--color-text);
     display: flex;
     justify-content: center;
+    min-height: 100vh;
+    min-height: 100svh;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .app-root {
@@ -337,11 +346,11 @@ select {
     bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
     left: 50%;
     transform: translateX(-50%);
-    width: calc(100% - var(--space-10));
-    max-width: calc(480px - var(--space-10));
+    width: calc(100% - var(--space-8));
+    max-width: calc(var(--content-app) - var(--space-8));
     padding: var(--space-2);
     background: var(--color-bg-light);
-    border-radius: var(--radius-lg);
+    border-radius: var(--radius-xl);
     box-shadow: var(--shadow-lg);
     z-index: 100;
 }

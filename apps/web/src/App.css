@@ -1,11 +1,11 @@
 .app-container {
     width: 100%;
-    max-width: var(--content-mobile);
+    max-width: var(--content-app);
     margin-inline: auto;
-    padding-inline: var(--space-5);
-    padding-top: var(--space-3);
+    padding-inline: var(--space-4);
+    padding-top: var(--space-4);
     padding-bottom: calc(
-        var(--space-15) + var(--space-6) + env(safe-area-inset-bottom)
+        var(--space-15) + var(--space-8) + env(safe-area-inset-bottom)
     );
 }
 
@@ -13,6 +13,17 @@
     display: flex;
     flex-direction: column;
     gap: var(--space-4);
+}
+
+@media (min-width: 720px) {
+    .app-container {
+        padding-inline: var(--space-6);
+        padding-top: var(--space-6);
+    }
+
+    .app-main {
+        gap: var(--space-5);
+    }
 }
 
 .app-load-error {
