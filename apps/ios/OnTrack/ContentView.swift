@@ -8,6 +8,7 @@ private let scheduleRefreshInterval: TimeInterval = 5 * 60
 private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
 private let manualOriginProtectionInterval: TimeInterval = 10 * 60
+private let sheetSwapDelay: TimeInterval = 0.28
 private let timePickerMinuteInterval = 10
 private let stationPickerAnimation = Animation.snappy(duration: 0.28, extraBounce: 0)
 
@@ -45,6 +46,14 @@ private enum ShareMessageFormat: String, CaseIterable, Identifiable {
     }
 }
 
+private enum ActiveSheet: String, Identifiable {
+    case trainPanel
+    case timeEditor
+    case settings
+
+    var id: String { rawValue }
+}
+
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
@@ -70,8 +79,9 @@ struct ContentView: View {
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
     @State private var destinationSource: DestinationSelectionSource = .cached
-    @State private var isSettingsPresented = false
-    @State private var isTrainPanelExpanded = false
+    @State private var activeSheet: ActiveSheet? = .trainPanel
+    @State private var trainPanelDetent: PresentationDetent = TrainPanelLayout.collapsedDetent
+    @State private var suppressTrainPanelRestore = false
 
     private let scheduleRefreshTimer = Timer.publish(
         every: scheduleRefreshInterval,
@@ -142,13 +152,25 @@ struct ContentView: View {
         ].joined(separator: "-")
     }
 
+    private var timeEditorDateRange: ClosedRange<Date> {
+        let calendar = Formatters.taipeiCalendar
+        let today = calendar.startOfDay(for: Date())
+        let maxDate = calendar.date(
+            byAdding: .day,
+            value: TimeSelection.futureDayLimit + 1,
+            to: today
+        ) ?? today
+
+        return today...maxDate.addingTimeInterval(-1)
+    }
+
     var body: some View {
         NavigationStack {
             ZStack {
                 OnTrackTheme.background
                     .ignoresSafeArea()
 
-                GeometryReader { proxy in
+                GeometryReader { _ in
                     ZStack(alignment: .bottom) {
                         ScrollView {
                             VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
@@ -161,12 +183,15 @@ struct ContentView: View {
                                     .disabled(!canLoadSchedule || isLoadingSchedule || isRefreshingLive)
                                     .accessibilityLabel(AppText.refreshLiveStatus)
 
-                                    TimeSelectorView(selection: $timeSelection)
+                                    TimeSelectorView(
+                                        selection: $timeSelection,
+                                        onEdit: presentTimeEditor
+                                    )
                                         .frame(maxWidth: .infinity)
 
                                     IconPlainButton(
                                         systemName: "gearshape",
-                                        action: { isSettingsPresented = true }
+                                        action: presentSettings
                                     )
                                     .accessibilityLabel(AppText.settings)
                                 }
@@ -190,20 +215,6 @@ struct ContentView: View {
                         .refreshable {
                             await loadSchedule(refreshLive: true)
                         }
-
-                        TrainBoardingPanel(
-                            message: shareMessage,
-                            selectedTrain: selectedTrain,
-                            destination: destinationStation,
-                            trains: trains,
-                            isLoading: isLoadingSchedule,
-                            canLoadSchedule: canLoadSchedule,
-                            isExpanded: $isTrainPanelExpanded,
-                            maxHeight: max(320, proxy.size.height),
-                            bottomSafeAreaInset: proxy.safeAreaInsets.bottom,
-                            onSelect: { selectedTrain = $0 }
-                        )
-                        .frame(maxWidth: .infinity)
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
@@ -237,7 +248,7 @@ struct ContentView: View {
                 await loadSchedule()
             }
             .onChange(of: scheduleTaskID) { _, _ in
-                isTrainPanelExpanded = false
+                trainPanelDetent = TrainPanelLayout.collapsedDetent
             }
             .onReceive(scheduleRefreshTimer) { _ in
                 Task {
@@ -279,16 +290,50 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-            .sheet(isPresented: $isSettingsPresented) {
-                SettingsSheet(
-                    languageCode: $languageCode,
-                    appearanceRaw: $appearanceRaw,
-                    messageFormatRaw: $messageFormatRaw
-                )
+            .sheet(item: $activeSheet, onDismiss: restoreTrainPanelIfNeeded) { sheet in
+                sheetContent(sheet)
             }
         }
         .tint(OnTrackTheme.primary)
         .preferredColorScheme(appearanceSetting.preferredColorScheme)
+    }
+
+    @ViewBuilder
+    private func sheetContent(_ sheet: ActiveSheet) -> some View {
+        switch sheet {
+        case .trainPanel:
+            TrainBoardingPanel(
+                message: shareMessage,
+                selectedTrain: selectedTrain,
+                destination: destinationStation,
+                trains: trains,
+                isLoading: isLoadingSchedule,
+                canLoadSchedule: canLoadSchedule,
+                onSelect: { selectedTrain = $0 }
+            )
+            .presentationDetents(
+                [TrainPanelLayout.collapsedDetent, .large],
+                selection: $trainPanelDetent
+            )
+            .presentationDragIndicator(.visible)
+            .presentationBackground(OnTrackTheme.panel)
+            .presentationBackgroundInteraction(.enabled(upThrough: TrainPanelLayout.collapsedDetent))
+            .presentationContentInteraction(.resizes)
+            .interactiveDismissDisabled()
+
+        case .timeEditor:
+            TimeEditorSheet(
+                selection: $timeSelection,
+                dateRange: timeEditorDateRange
+            )
+
+        case .settings:
+            SettingsSheet(
+                languageCode: $languageCode,
+                appearanceRaw: $appearanceRaw,
+                messageFormatRaw: $messageFormatRaw
+            )
+        }
     }
 
     private var appearanceSetting: AppAppearanceSetting {
@@ -307,13 +352,51 @@ struct ContentView: View {
             promptForAutoDetectedOrigin()
         }
 
-        withAnimation(stationPickerAnimation) {
-            stationPicker = role
+        suppressTrainPanelRestore = true
+        activeSheet = nil
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + sheetSwapDelay) {
+            withAnimation(stationPickerAnimation) {
+                stationPicker = role
+            }
         }
     }
 
     private func dismissStationPicker() {
-        stationPicker = nil
+        withAnimation(stationPickerAnimation) {
+            stationPicker = nil
+        }
+        suppressTrainPanelRestore = false
+        restoreTrainPanelIfNeeded()
+    }
+
+    private func presentTimeEditor() {
+        presentModalSheet(.timeEditor)
+    }
+
+    private func presentSettings() {
+        presentModalSheet(.settings)
+    }
+
+    private func presentModalSheet(_ sheet: ActiveSheet) {
+        suppressTrainPanelRestore = true
+        activeSheet = nil
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + sheetSwapDelay) {
+            activeSheet = sheet
+            suppressTrainPanelRestore = false
+        }
+    }
+
+    private func restoreTrainPanelIfNeeded() {
+        DispatchQueue.main.async {
+            guard !suppressTrainPanelRestore, activeSheet == nil, stationPicker == nil else {
+                return
+            }
+
+            trainPanelDetent = TrainPanelLayout.collapsedDetent
+            activeSheet = .trainPanel
+        }
     }
 
     private func loadStations() async {
@@ -699,21 +782,9 @@ private enum StationPickerRole: String, Identifiable {
 
 private struct TimeSelectorView: View {
     @Binding var selection: TimeSelection
-    @State private var isEditorPresented = false
+    let onEdit: () -> Void
 
     private let syncTimer = Timer.publish(every: 30, on: .main, in: .common).autoconnect()
-
-    private var dateRange: ClosedRange<Date> {
-        let calendar = Formatters.taipeiCalendar
-        let today = calendar.startOfDay(for: Date())
-        let maxDate = calendar.date(
-            byAdding: .day,
-            value: TimeSelection.futureDayLimit + 1,
-            to: today
-        ) ?? today
-
-        return today...maxDate.addingTimeInterval(-1)
-    }
 
     private var title: String {
         switch selection.mode {
@@ -727,9 +798,7 @@ private struct TimeSelectorView: View {
     }
 
     var body: some View {
-        Button {
-            isEditorPresented = true
-        } label: {
+        Button(action: onEdit) {
             HStack(spacing: OnTrackTheme.space2) {
                 Text(title)
                     .font(OnTrackFont.control)
@@ -744,12 +813,6 @@ private struct TimeSelectorView: View {
             .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
         }
         .buttonStyle(OnTrackPressButtonStyle())
-        .sheet(isPresented: $isEditorPresented) {
-            TimeEditorSheet(
-                selection: $selection,
-                dateRange: dateRange
-            )
-        }
         .onAppear {
             syncNowIfNeeded()
         }
@@ -1714,11 +1777,15 @@ private enum TrainPanelLayout {
     static let collapsedContentReserve: CGFloat = 400
 
     static var panelChromeHeight: CGFloat {
-        OnTrackTheme.space6
+        topContentPadding
             + expectedHeaderHeight
             + OnTrackTheme.controlHeight
             + expectedSectionBottomPadding
             + 1
+    }
+
+    static var topContentPadding: CGFloat {
+        OnTrackTheme.space3
     }
 
     static var expectedHeaderHeight: CGFloat {
@@ -1736,6 +1803,14 @@ private enum TrainPanelLayout {
     static var collapsedListViewportHeight: CGFloat {
         collapsedCardsHeight
     }
+
+    static var collapsedSheetHeight: CGFloat {
+        panelChromeHeight + collapsedListViewportHeight
+    }
+
+    static var collapsedDetent: PresentationDetent {
+        .height(collapsedSheetHeight)
+    }
 }
 
 private struct TrainBoardingPanel: View {
@@ -1747,19 +1822,13 @@ private struct TrainBoardingPanel: View {
     let trains: [TrainInfo]
     let isLoading: Bool
     let canLoadSchedule: Bool
-    @Binding var isExpanded: Bool
-    let maxHeight: CGFloat
-    let bottomSafeAreaInset: CGFloat
     let onSelect: (TrainInfo) -> Void
-
-    @GestureState private var panelDragTranslation: CGFloat = 0
 
     var body: some View {
         VStack(spacing: 0) {
-            panelHandle
-
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space5)
+                .padding(.top, TrainPanelLayout.topContentPadding)
                 .padding(.bottom, TrainPanelLayout.expectedSectionBottomPadding)
 
             Rectangle()
@@ -1775,18 +1844,14 @@ private struct TrainBoardingPanel: View {
             ) { train in
                 onSelect(train)
             }
-            .frame(height: trainListViewportHeight, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .top)
             .clipped()
             .contentShape(Rectangle())
-            .simultaneousGesture(panelDragGesture)
         }
-        .padding(.bottom, bottomSafeAreaInset)
         .frame(maxWidth: .infinity)
-        .frame(height: expandedPanelHeight, alignment: .top)
+        .frame(maxHeight: .infinity, alignment: .top)
         .clipped()
-        .onTrackBottomSheetSurface()
-        .offset(y: panelOffset)
+        .background(OnTrackTheme.panel)
     }
 
     private var expectedBoardingSection: some View {
@@ -1815,25 +1880,9 @@ private struct TrainBoardingPanel: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-        .simultaneousGesture(panelDragGesture)
         .transaction { transaction in
             transaction.animation = nil
         }
-    }
-
-    private var panelHandle: some View {
-        Button {
-            setExpanded(!isExpanded)
-        } label: {
-            Capsule()
-                .fill(OnTrackTheme.border)
-                .frame(width: 40, height: 4)
-                .frame(maxWidth: .infinity, minHeight: OnTrackTheme.space6)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .gesture(panelDragGesture)
-        .accessibilityLabel(isExpanded ? AppText.collapseTrainPanel : AppText.expandTrainPanel)
     }
 
     private var boardingSummary: String {
@@ -1849,91 +1898,6 @@ private struct TrainBoardingPanel: View {
         )
     }
 
-    private var trainListViewportHeight: CGFloat {
-        min(
-            trainListContentViewportHeight,
-            max(
-                OnTrackTheme.controlHeight,
-                expandedPanelHeight - TrainPanelLayout.panelChromeHeight - bottomSafeAreaInset
-            )
-        )
-    }
-
-    private var panelOffset: CGFloat {
-        panelOffset(for: panelDragTranslation)
-    }
-
-    private var expandedPanelHeight: CGFloat {
-        max(maxHeight, collapsedPanelHeight)
-    }
-
-    private var collapsedPanelHeight: CGFloat {
-        TrainPanelLayout.panelChromeHeight + collapsedTrainListViewportHeight + bottomSafeAreaInset
-    }
-
-    private var collapsedTrainListViewportHeight: CGFloat {
-        min(trainListContentViewportHeight, TrainPanelLayout.collapsedListViewportHeight)
-    }
-
-    private var trainListContentViewportHeight: CGFloat {
-        trainListContentHeight
-    }
-
-    private var collapsedPanelOffset: CGFloat {
-        max(0, expandedPanelHeight - collapsedPanelHeight)
-    }
-
-    private func panelOffset(for translationY: CGFloat) -> CGFloat {
-        let baseOffset = isExpanded ? 0 : collapsedPanelOffset
-        return min(
-            max(baseOffset + translationY, 0),
-            collapsedPanelOffset
-        )
-    }
-
-    private var trainListContentHeight: CGFloat {
-        if isLoading && trains.isEmpty {
-            return TrainPanelLayout.cardHeight * 3
-        }
-
-        if !canLoadSchedule || trains.isEmpty {
-            return TrainPanelLayout.cardHeight
-        }
-
-        return CGFloat(trains.count) * TrainPanelLayout.cardHeight
-    }
-
-    private var panelDragGesture: some Gesture {
-        DragGesture(minimumDistance: OnTrackTheme.space2)
-            .updating($panelDragTranslation) { value, state, _ in
-                guard isVerticalDrag(value) else {
-                    return
-                }
-
-                state = value.translation.height
-            }
-            .onEnded { value in
-                guard isVerticalDrag(value) else {
-                    return
-                }
-
-                setExpanded(shouldExpand(after: value))
-            }
-    }
-
-    private func isVerticalDrag(_ value: DragGesture.Value) -> Bool {
-        abs(value.translation.height) > abs(value.translation.width)
-    }
-
-    private func shouldExpand(after value: DragGesture.Value) -> Bool {
-        panelOffset(for: value.predictedEndTranslation.height) < collapsedPanelOffset / 2
-    }
-
-    private func setExpanded(_ expanded: Bool) {
-        withAnimation(.snappy(duration: 0.28, extraBounce: 0)) {
-            isExpanded = expanded
-        }
-    }
 }
 
 private struct SettingsSheet: View {
