@@ -230,6 +230,7 @@ enum TrainDisplay {
     }
 
     static func displaySchedule(trains: [TrainInfo], targetTime: String, timeMode: TimeMode) -> DisplaySchedule {
+        let displayLimit = 7
         let targetMinutes = timeToMinutes(targetTime)
         let comparisonMinutes: (TrainInfo) -> Int = { train in
             switch timeMode {
@@ -248,14 +249,16 @@ enum TrainDisplay {
         }
 
         guard let nextCatchableIndex else {
-            let displayTrains = Array(trains.suffix(3))
+            let displayTrains = Array(trains.suffix(displayLimit))
             return DisplaySchedule(trains: displayTrains, recommendedTrain: displayTrains.last)
         }
 
-        let start = max(0, nextCatchableIndex - 1)
-        let minimumEnd = start + 3
-        let scheduledContextEnd = nextScheduledIndex.map { $0 + 2 } ?? minimumEnd
-        let end = min(trains.count, max(minimumEnd, scheduledContextEnd))
+        let start = displayWindowStart(
+            trainCount: trains.count,
+            recommendedIndex: nextCatchableIndex,
+            limit: displayLimit
+        )
+        let end = min(trains.count, start + displayLimit)
 
         return DisplaySchedule(
             trains: Array(trains[start..<end]),
@@ -285,6 +288,14 @@ enum TrainDisplay {
         }
 
         return parts[0] * 60 + parts[1]
+    }
+
+    private static func displayWindowStart(trainCount: Int, recommendedIndex: Int, limit: Int) -> Int {
+        guard trainCount > limit else {
+            return 0
+        }
+
+        return min(max(0, recommendedIndex - 1), trainCount - limit)
     }
 }
 
