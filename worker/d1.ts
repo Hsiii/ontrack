@@ -1,3 +1,4 @@
+import { getTaipeiDate, getTaipeiHour } from './time';
 import type { Env, Snapshot } from './types';
 
 interface SnapshotRow {
@@ -19,6 +20,8 @@ export interface RouteInterest {
     request_count: number;
     last_seen_at: string;
 }
+
+type LiveRefreshBudgetBucket = 'background' | 'manual';
 
 const INLINE_DATA_LIMIT = 200_000;
 
@@ -195,13 +198,17 @@ export async function pruneSnapshots(
 export async function recordRouteInterest(
     env: Env,
     origin: string,
-    dest: string
+    dest: string,
+    date = new Date()
 ) {
     const routeKey = `${origin}:${dest}`;
+    const taipeiHour = getTaipeiHour(date);
+    const routeHourKey = `${routeKey}:${taipeiHour}`;
     const seenAt = new Date().toISOString();
 
-    await env.DB.prepare(
-        `
+    await env.DB.batch([
+        env.DB.prepare(
+            `
             insert into route_interest (
                 route_key,
                 origin,
@@ -216,9 +223,26 @@ export async function recordRouteInterest(
                 last_seen_at = excluded.last_seen_at,
                 updated_at = current_timestamp
         `
-    )
-        .bind(routeKey, origin, dest, seenAt)
-        .run();
+        ).bind(routeKey, origin, dest, seenAt),
+        env.DB.prepare(
+            `
+            insert into route_time_interest (
+                route_hour_key,
+                origin,
+                dest,
+                taipei_hour,
+                request_count,
+                last_seen_at,
+                updated_at
+            )
+            values (?, ?, ?, ?, 1, ?, current_timestamp)
+            on conflict(route_hour_key) do update set
+                request_count = request_count + 1,
+                last_seen_at = excluded.last_seen_at,
+                updated_at = current_timestamp
+        `
+        ).bind(routeHourKey, origin, dest, taipeiHour, seenAt),
+    ]);
 }
 
 export async function getTopRouteInterests(env: Env, limit: number) {
@@ -234,4 +258,99 @@ export async function getTopRouteInterests(env: Env, limit: number) {
         .all<RouteInterest>();
 
     return results;
+}
+
+export async function hasRecentRouteTimeInterest(
+    env: Env,
+    taipeiHour: number,
+    sinceIso: string
+) {
+    const row = await env.DB.prepare(
+        `
+            select 1
+            from route_time_interest
+            where taipei_hour = ?
+                and last_seen_at >= ?
+            limit 1
+        `
+    )
+        .bind(taipeiHour, sinceIso)
+        .first();
+
+    return Boolean(row);
+}
+
+export async function hasAnyRecentRouteTimeInterest(
+    env: Env,
+    sinceIso: string
+) {
+    const row = await env.DB.prepare(
+        `
+            select 1
+            from route_time_interest
+            where last_seen_at >= ?
+            limit 1
+        `
+    )
+        .bind(sinceIso)
+        .first();
+
+    return Boolean(row);
+}
+
+export async function hasRecentRelatedRouteTimeInterest(
+    env: Env,
+    origin: string,
+    dest: string,
+    taipeiHour: number,
+    sinceIso: string
+) {
+    const row = await env.DB.prepare(
+        `
+            select 1
+            from route_time_interest
+            where taipei_hour = ?
+                and last_seen_at >= ?
+                and (origin = ? or dest = ?)
+            limit 1
+        `
+    )
+        .bind(taipeiHour, sinceIso, origin, dest)
+        .first();
+
+    return Boolean(row);
+}
+
+export async function reserveLiveRefreshCall(
+    env: Env,
+    bucket: LiveRefreshBudgetBucket,
+    limit: number,
+    date = new Date()
+) {
+    if (limit <= 0) {
+        return false;
+    }
+
+    const taipeiDate = getTaipeiDate(date);
+    const budgetKey = `live-board:${bucket}:${taipeiDate}`;
+    const result = await env.DB.prepare(
+        `
+            insert into tdx_call_budget (
+                budget_key,
+                taipei_date,
+                bucket,
+                request_count,
+                updated_at
+            )
+            values (?, ?, ?, 1, current_timestamp)
+            on conflict(budget_key) do update set
+                request_count = request_count + 1,
+                updated_at = current_timestamp
+            where request_count < ?
+        `
+    )
+        .bind(budgetKey, taipeiDate, bucket, limit)
+        .run();
+
+    return result.meta.changes > 0;
 }
