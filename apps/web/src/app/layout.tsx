@@ -10,6 +10,29 @@ const APP_DESCRIPTION =
 const APP_URL = 'https://ontrack.hsichen.dev/';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 const ENABLE_ANALYTICS = process.env.NODE_ENV === 'production';
+const APPEARANCE_BOOTSTRAP_SCRIPT = `
+(function () {
+    try {
+        var appearanceKey = 'ontrack_appearance';
+        var legacyDarkModeKey = 'ontrack_dark_mode';
+        var mode = window.localStorage.getItem(appearanceKey);
+
+        if (mode !== 'system' && mode !== 'light' && mode !== 'dark') {
+            var legacyDarkMode = window.localStorage.getItem(legacyDarkModeKey);
+            mode = legacyDarkMode === null ? 'light' : legacyDarkMode === 'true' ? 'dark' : 'light';
+        }
+
+        var theme = mode === 'dark' || (mode === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+            ? 'dark'
+            : 'light';
+
+        document.documentElement.dataset.appearance = mode;
+        document.documentElement.dataset.theme = theme;
+        document.documentElement.style.colorScheme = theme;
+        document.querySelector('meta[name="theme-color"]')?.setAttribute('content', theme === 'dark' ? '#1e293b' : '#ffffff');
+    } catch (_) {}
+})();
+`;
 
 export const metadata: Metadata = {
     title: APP_TITLE,
@@ -140,8 +163,20 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     };
 
     return (
-        <html lang='zh-TW'>
+        <html
+            lang='zh-TW'
+            data-appearance='light'
+            data-theme='light'
+            suppressHydrationWarning
+        >
             <body>
+                <Script
+                    id='appearance-bootstrap'
+                    strategy='beforeInteractive'
+                    dangerouslySetInnerHTML={{
+                        __html: APPEARANCE_BOOTSTRAP_SCRIPT,
+                    }}
+                />
                 <div id='native-splash' className='native-splash'>
                     <img
                         src='/apple-touch-icon.png'

@@ -9,6 +9,7 @@ import { api } from './api/client';
 import { IOSInstallPrompt } from './components/IOSInstallPrompt';
 import {
     SettingsSheet,
+    type AppearanceMode,
     type ShareMessageFormat,
 } from './components/SettingsSheet';
 import { StationSelector } from './components/StationSelector';
@@ -36,6 +37,12 @@ const EMPTY_TIME_SELECTION: TimeSelection = {
 };
 const NATIVE_SPLASH_HIDE_FALLBACK_MS = 240;
 const SHARE_MESSAGE_FORMAT_KEY = 'ontrack_share_message_format';
+const APPEARANCE_MODE_KEY = 'ontrack_appearance';
+const LEGACY_DARK_MODE_KEY = 'ontrack_dark_mode';
+const THEME_COLOR_BY_MODE = {
+    light: '#ffffff',
+    dark: '#1e293b',
+} satisfies Record<'light' | 'dark', string>;
 
 type SelectedTrainState = {
     scheduleKey: string;
@@ -50,6 +57,42 @@ function getStoredShareMessageFormat(): ShareMessageFormat {
     const stored = window.localStorage.getItem(SHARE_MESSAGE_FORMAT_KEY);
 
     return stored === 'routeArrival' ? 'routeArrival' : 'arrivalOnly';
+}
+
+function getStoredAppearanceMode(): AppearanceMode {
+    if (typeof window === 'undefined') {
+        return 'light';
+    }
+
+    const stored = window.localStorage.getItem(APPEARANCE_MODE_KEY);
+
+    if (stored === 'system' || stored === 'light' || stored === 'dark') {
+        return stored;
+    }
+
+    const legacyDarkMode = window.localStorage.getItem(LEGACY_DARK_MODE_KEY);
+
+    if (legacyDarkMode !== null) {
+        return legacyDarkMode === 'true' ? 'dark' : 'light';
+    }
+
+    return 'light';
+}
+
+function getResolvedAppearanceMode(mode: AppearanceMode) {
+    if (mode !== 'system') {
+        return mode;
+    }
+
+    return window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark'
+        : 'light';
+}
+
+function setBrowserThemeColor(mode: 'light' | 'dark') {
+    document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', THEME_COLOR_BY_MODE[mode]);
 }
 
 function App() {
@@ -73,6 +116,8 @@ function App() {
     const [liveRefreshNonce, setLiveRefreshNonce] = useState(0);
     const [isRefreshingLive, setIsRefreshingLive] = useState(false);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const [appearanceMode, setAppearanceMode] =
+        useState<AppearanceMode>('light');
     const [shareMessageFormat, setShareMessageFormat] =
         useState<ShareMessageFormat>('arrivalOnly');
 
@@ -102,11 +147,38 @@ function App() {
 
     useEffect(() => {
         const timer = window.setTimeout(() => {
+            setAppearanceMode(getStoredAppearanceMode());
             setShareMessageFormat(getStoredShareMessageFormat());
         }, 0);
 
         return () => window.clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        const colorSchemeQuery = window.matchMedia(
+            '(prefers-color-scheme: dark)'
+        );
+        const applyAppearance = () => {
+            const resolvedMode = getResolvedAppearanceMode(appearanceMode);
+
+            document.documentElement.dataset.appearance = appearanceMode;
+            document.documentElement.dataset.theme = resolvedMode;
+            document.documentElement.style.colorScheme = resolvedMode;
+            setBrowserThemeColor(resolvedMode);
+        };
+
+        applyAppearance();
+
+        if (appearanceMode !== 'system') {
+            return;
+        }
+
+        colorSchemeQuery.addEventListener('change', applyAppearance);
+
+        return () => {
+            colorSchemeQuery.removeEventListener('change', applyAppearance);
+        };
+    }, [appearanceMode]);
 
     useEffect(() => {
         if ('serviceWorker' in navigator) {
@@ -187,6 +259,11 @@ function App() {
         setShareMessageFormat(format);
         window.localStorage.setItem(SHARE_MESSAGE_FORMAT_KEY, format);
     };
+    const handleSetAppearanceMode = (mode: AppearanceMode) => {
+        setAppearanceMode(mode);
+        window.localStorage.setItem(APPEARANCE_MODE_KEY, mode);
+        window.localStorage.removeItem(LEGACY_DARK_MODE_KEY);
+    };
     const handleSelectTrain = (train: TrainInfo) => {
         setSelectedTrainState({
             scheduleKey: scheduleSelectionKey,
@@ -200,6 +277,8 @@ function App() {
             <SettingsSheet
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}
+                appearanceMode={appearanceMode}
+                onAppearanceModeChange={handleSetAppearanceMode}
                 messageFormat={shareMessageFormat}
                 onMessageFormatChange={handleSetShareMessageFormat}
             />

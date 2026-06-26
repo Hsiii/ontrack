@@ -204,22 +204,6 @@
     margin: 0;
 }
 
-@media (prefers-color-scheme: dark) {
-    .page {
-        --legal-bg: #0b1220;
-        --legal-surface: #111827;
-        --legal-surface-soft: rgba(53, 125, 233, 0.16);
-        --legal-border: rgba(226, 232, 240, 0.14);
-        --legal-text: #f8fafc;
-        --legal-text-muted: #cbd5e1;
-        --legal-link: #82b2ff;
-        --legal-link-surface: rgba(53, 125, 233, 0.18);
-        --legal-shadow: 0 0 0 1px var(--legal-border);
-
-        color-scheme: dark;
-    }
-}
-
 @media (max-width: 640px) {
     .page {
         padding: var(--space-5) var(--space-4) var(--space-8);

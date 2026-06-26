@@ -10,8 +10,12 @@
 }
 
 .settings-sheet {
+    display: grid;
+    max-height: calc(100svh - var(--space-8));
+    grid-template-rows: auto auto minmax(0, 1fr);
     width: min(100%, var(--content-mobile));
     padding: var(--space-2) 0 calc(var(--space-5) + env(safe-area-inset-bottom));
+    overflow: hidden;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
     background: var(--color-bg);
     box-shadow: var(--shadow-lg);
@@ -74,11 +78,19 @@
 }
 
 .settings-list {
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     margin-inline: var(--space-5);
     border-radius: var(--radius-lg);
     background: var(--color-bg-light);
     box-shadow: var(--shadow-surface);
+    scrollbar-width: none;
+}
+
+.settings-list::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+    display: none;
 }
 
 .settings-option-group {

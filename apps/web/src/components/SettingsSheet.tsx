@@ -8,13 +8,28 @@ import { useI18n } from '../i18n/useI18n';
 import './SettingsSheet.css';
 
 export type ShareMessageFormat = 'arrivalOnly' | 'routeArrival';
+export type AppearanceMode = 'system' | 'light' | 'dark';
 
 interface SettingsSheetProps {
     isOpen: boolean;
     onClose: () => void;
+    appearanceMode: AppearanceMode;
+    onAppearanceModeChange: (mode: AppearanceMode) => void;
     messageFormat: ShareMessageFormat;
     onMessageFormatChange: (format: ShareMessageFormat) => void;
 }
+
+const APPEARANCE_OPTIONS: {
+    value: AppearanceMode;
+    labelKey:
+        | 'settings.appearanceSystem'
+        | 'settings.appearanceLight'
+        | 'settings.appearanceDark';
+}[] = [
+    { value: 'system', labelKey: 'settings.appearanceSystem' },
+    { value: 'light', labelKey: 'settings.appearanceLight' },
+    { value: 'dark', labelKey: 'settings.appearanceDark' },
+];
 
 const MESSAGE_FORMAT_OPTIONS: {
     value: ShareMessageFormat;
@@ -29,6 +44,8 @@ const MESSAGE_FORMAT_OPTIONS: {
 export function SettingsSheet({
     isOpen,
     onClose,
+    appearanceMode,
+    onAppearanceModeChange,
     messageFormat,
     onMessageFormatChange,
 }: SettingsSheetProps) {
@@ -68,6 +85,21 @@ export function SettingsSheet({
                                 isSelected={language === option.code}
                                 onClick={() =>
                                     setLanguage(option.code as LanguageCode)
+                                }
+                            />
+                        ))}
+                    </SettingsOptionGroup>
+
+                    <div className='settings-divider' />
+
+                    <SettingsOptionGroup title={t('settings.appearance')}>
+                        {APPEARANCE_OPTIONS.map((option) => (
+                            <SettingsOptionButton
+                                key={option.value}
+                                label={t(option.labelKey)}
+                                isSelected={appearanceMode === option.value}
+                                onClick={() =>
+                                    onAppearanceModeChange(option.value)
                                 }
                             />
                         ))}
