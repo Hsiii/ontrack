@@ -104,10 +104,15 @@ export function StationDropdown({
         });
     };
 
+    const blurSearchInput = useCallback(() => {
+        inputRef.current?.blur();
+    }, []);
+
     const handleDismiss = useCallback(() => {
+        blurSearchInput();
         setSearchValue('');
         setIsOpen(false);
-    }, [setIsOpen, setSearchValue]);
+    }, [blurSearchInput, setIsOpen, setSearchValue]);
 
     useEffect(() => {
         if (!isOpen) return;
@@ -209,6 +214,7 @@ export function StationDropdown({
             );
         }
 
+        blurSearchInput();
         setSearchValue('');
         setIsOpen(false);
     };

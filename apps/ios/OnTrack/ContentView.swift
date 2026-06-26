@@ -309,9 +309,7 @@ struct ContentView: View {
     }
 
     private func dismissStationPicker() {
-        withAnimation(stationPickerAnimation) {
-            stationPicker = nil
-        }
+        stationPicker = nil
     }
 
     private func loadStations() async {
@@ -1477,6 +1475,23 @@ private struct StationSearchView: View {
             || normalizedValue.contains("around island")
     }
 
+    private func dismissSearch() {
+        isSearchFocused = false
+
+        DispatchQueue.main.async {
+            onDismiss()
+        }
+    }
+
+    private func selectSearchResult(_ station: Station) {
+        isSearchFocused = false
+        let resolvedStation = selectedStation(station)
+
+        DispatchQueue.main.async {
+            onSelect(resolvedStation)
+        }
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             ZStack {
@@ -1488,7 +1503,7 @@ private struct StationSearchView: View {
                 HStack {
                     Spacer()
 
-                    Button(action: onDismiss) {
+                    Button(action: dismissSearch) {
                         Image(systemName: "xmark")
                             .font(OnTrackFont.symbol)
                             .foregroundStyle(OnTrackTheme.dimText)
@@ -1549,7 +1564,7 @@ private struct StationSearchView: View {
                                     station: row.station,
                                     role: row.role
                                 ) {
-                                    onSelect(selectedStation(row.station))
+                                    selectSearchResult(row.station)
                                 }
                             }
                         }
