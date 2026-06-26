@@ -371,9 +371,29 @@ export function TimeSelector({
         setIsEditorOpen(true);
     };
 
-    const closeEditor = () => {
+    const closeEditor = useCallback(() => {
         setIsEditorOpen(false);
-    };
+    }, []);
+
+    useEffect(() => {
+        if (!isEditorOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        const handleKeyDown = (event: KeyboardEvent) => {
+            if (event.key !== 'Escape') return;
+
+            event.preventDefault();
+            closeEditor();
+        };
+
+        document.body.style.overflow = 'hidden';
+        document.addEventListener('keydown', handleKeyDown);
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+            document.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [closeEditor, isEditorOpen]);
 
     const handleSetNow = () => {
         const nextSelection = getCurrentDateTimeSelection('now');
