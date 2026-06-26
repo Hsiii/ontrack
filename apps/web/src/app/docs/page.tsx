@@ -111,23 +111,10 @@ export default function DocsPage() {
                         <h1 className={styles.title}>
                             專為台鐵旅客打造的查車 App。
                         </h1>
-                        <div className={styles.lede}>
-                            <p>
-                                OnTrack 讓查詢台鐵資訊不再需要繁瑣的手動輸入。
-                            </p>
-                            <p>
-                                App
-                                會自動偵測目前所在車站，依照您的搭乘習慣預測路線，
-                                立即顯示最適合搭乘的班次、行車時間與即時延誤資訊。
-                                多數情況下，您需要的資訊在打開 App
-                                的瞬間就已準備完成。
-                            </p>
-                            <p>
-                                您也可以手動選擇出發站、抵達站及出發或抵達時間，
-                                查詢所有符合條件的班次與即時延誤資訊。需要分享目前搭乘的列車時，
-                                OnTrack 也能一鍵分享列車資訊給親友。
-                            </p>
-                        </div>
+                        <p className={styles.lede}>
+                            OnTrack 會自動準備常用路線、下一班列車與即時延誤，
+                            讓您打開 App 就能快速決定怎麼搭。
+                        </p>
                         <div className={styles.heroActions}>
                             <Link className={styles.primaryCta} href='/'>
                                 網頁版

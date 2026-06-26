@@ -105,18 +105,12 @@
 }
 
 .lede {
-    display: grid;
-    gap: var(--space-3);
     max-width: var(--content-prose);
     margin: 0;
     color: var(--color-text-dim);
     font-size: var(--text-base);
     line-height: 1.5;
     text-wrap: pretty;
-}
-
-.lede p {
-    margin: 0;
 }
 
 .heroActions {
