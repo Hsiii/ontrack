@@ -1,7 +1,7 @@
 {
-    "$schema": "node_modules/wrangler/config-schema.json",
+    "$schema": "../../node_modules/wrangler/config-schema.json",
     "name": "ontrack",
-    "main": "worker/index.ts",
+    "main": "src/index.ts",
     "compatibility_date": "2026-06-07",
     "d1_databases": [
         {
@@ -12,7 +12,7 @@
         },
     ],
     "assets": {
-        "directory": "./apps/web/out",
+        "directory": "../../apps/web/out",
         "not_found_handling": "single-page-application",
     },
     "routes": [
