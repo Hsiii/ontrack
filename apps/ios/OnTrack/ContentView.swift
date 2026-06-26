@@ -318,7 +318,6 @@ struct ContentView: View {
             .presentationDragIndicator(.visible)
             .presentationBackground(OnTrackTheme.panel)
             .presentationBackgroundInteraction(.enabled(upThrough: TrainPanelLayout.collapsedDetent))
-            .presentationContentInteraction(.resizes)
             .interactiveDismissDisabled()
 
         case .timeEditor:
@@ -1825,6 +1824,16 @@ private struct TrainBoardingPanel: View {
     let onSelect: (TrainInfo) -> Void
 
     var body: some View {
+        ZStack(alignment: .top) {
+            OnTrackTheme.panel
+            panelContent
+                .frame(height: panelContentHeight, alignment: .top)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .clipped()
+    }
+
+    private var panelContent: some View {
         VStack(spacing: 0) {
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space5)
@@ -1849,9 +1858,22 @@ private struct TrainBoardingPanel: View {
             .contentShape(Rectangle())
         }
         .frame(maxWidth: .infinity)
-        .frame(maxHeight: .infinity, alignment: .top)
-        .clipped()
-        .background(OnTrackTheme.panel)
+    }
+
+    private var panelContentHeight: CGFloat {
+        TrainPanelLayout.panelChromeHeight + trainListContentHeight
+    }
+
+    private var trainListContentHeight: CGFloat {
+        if isLoading && trains.isEmpty {
+            return TrainPanelLayout.cardHeight * 3
+        }
+
+        if !canLoadSchedule || trains.isEmpty {
+            return TrainPanelLayout.cardHeight
+        }
+
+        return TrainPanelLayout.cardHeight * CGFloat(trains.count)
     }
 
     private var expectedBoardingSection: some View {
