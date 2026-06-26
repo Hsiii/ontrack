@@ -830,14 +830,25 @@ private struct TimeSelectorView: View {
 }
 
 private struct TimeEditorSheet: View {
-    private static let detentHeight: CGFloat = 392
+    private static let pickerHeight: CGFloat = 216
+
+    private static var footerButtonHeight: CGFloat {
+        OnTrackTheme.controlHeight
+    }
+
+    private static var detentHeight: CGFloat {
+        OnTrackTheme.space5
+            + OnTrackTheme.controlHeight
+            + OnTrackTheme.space3
+            + pickerHeight
+            + footerButtonHeight
+    }
 
     @Binding var selection: TimeSelection
     let dateRange: ClosedRange<Date>
 
     @Environment(\.dismiss) private var dismiss
     @State private var draft: TimeSelection
-    @State private var bottomSafeAreaInset: CGFloat = 0
 
     private var modeSelection: Binding<TimeMode> {
         Binding(
@@ -911,17 +922,11 @@ private struct TimeEditorSheet: View {
         GeometryReader { proxy in
             content(
                 availableWidth: proxy.size.width,
-                bottomSafeAreaInset: proxy.safeAreaInsets.bottom
+                bottomSafeAreaInset: max(0, proxy.safeAreaInsets.bottom)
             )
             .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-            .onAppear {
-                updateBottomSafeArea(proxy.safeAreaInsets.bottom)
-            }
-            .onChange(of: proxy.safeAreaInsets.bottom) { _, inset in
-                updateBottomSafeArea(inset)
-            }
         }
-        .presentationDetents([.height(Self.detentHeight + bottomSafeAreaInset)])
+        .presentationDetents([.height(Self.detentHeight)])
         .presentationDragIndicator(.automatic)
         .presentationBackground(OnTrackTheme.background)
     }
@@ -997,7 +1002,8 @@ private struct TimeEditorSheet: View {
                     .font(OnTrackFont.title)
                     .foregroundStyle(OnTrackTheme.text)
                     .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity, minHeight: 216)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: Self.pickerHeight)
             } else {
                 MinuteIntervalDatePicker(
                     selection: selectedTime,
@@ -1008,6 +1014,7 @@ private struct TimeEditorSheet: View {
             }
         }
         .frame(maxWidth: .infinity)
+        .frame(height: Self.pickerHeight)
         .clipped()
         .tint(OnTrackTheme.primary)
     }
@@ -1020,11 +1027,12 @@ private struct TimeEditorSheet: View {
                 }
                 .font(OnTrackFont.action)
                 .foregroundStyle(OnTrackTheme.text)
-                .frame(maxWidth: .infinity, minHeight: 56)
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.footerButtonHeight)
 
                 Rectangle()
                     .fill(OnTrackTheme.border)
-                    .frame(width: 1, height: 56)
+                    .frame(width: 1, height: Self.footerButtonHeight)
 
                 Button(AppText.done) {
                     selection = draft.mode == .now ? .current(mode: .now) : draft
@@ -1032,7 +1040,8 @@ private struct TimeEditorSheet: View {
                 }
                 .font(OnTrackFont.action)
                 .foregroundStyle(OnTrackTheme.primary)
-                .frame(maxWidth: .infinity, minHeight: 56)
+                .frame(maxWidth: .infinity)
+                .frame(height: Self.footerButtonHeight)
             }
 
             if bottomSafeAreaInset > 0 {
@@ -1041,15 +1050,6 @@ private struct TimeEditorSheet: View {
             }
         }
         .background(OnTrackTheme.panel)
-    }
-
-    private func updateBottomSafeArea(_ inset: CGFloat) {
-        let safeInset = max(0, inset)
-        guard bottomSafeAreaInset != safeInset else {
-            return
-        }
-
-        bottomSafeAreaInset = safeInset
     }
 }
 
