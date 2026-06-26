@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 export default function SupportPage() {
     return (
         <LegalPage
-            eyebrow='Support'
             title='OnTrack Support'
             subtitle="Need help with OnTrack? We're here to help."
             footerLinks={[{ href: '/docs/privacy', label: 'Privacy Policy' }]}
@@ -30,7 +29,6 @@ export default function SupportPage() {
                         please contact:
                     </p>
                     <p>
-                        <strong>Email: </strong>
                         <a
                             className={styles.inlineLink}
                             href={`mailto:${SUPPORT_EMAIL}`}

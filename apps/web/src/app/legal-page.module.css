@@ -1,24 +1,25 @@
 .page {
     --legal-bg: var(--color-bg);
     --legal-surface: var(--color-bg-light);
-    --legal-surface-soft: var(--color-surface-tint);
     --legal-border: var(--color-border);
     --legal-text: var(--color-text);
     --legal-text-muted: var(--color-text-dim);
     --legal-link: var(--color-primary);
-    --legal-link-surface: var(--color-primary-subtle);
     --legal-shadow: var(--shadow-surface);
 
     min-height: 100vh;
     padding: var(--space-6) var(--space-5) var(--space-10);
-    background: var(--legal-bg);
+    background:
+        linear-gradient(180deg, var(--color-surface-tint), var(--legal-bg) 36%),
+        var(--legal-bg);
     color: var(--legal-text);
 }
 
 .shell {
     display: grid;
     gap: var(--space-8);
-    width: min(100%, var(--content-readable));
+    width: 100%;
+    max-width: var(--content-lg);
     margin: 0 auto;
 }
 
@@ -34,49 +35,53 @@
     align-items: center;
     gap: var(--space-2);
     color: var(--legal-text);
-    font-size: var(--text-sm);
-    font-weight: var(--font-bold);
     text-decoration: none;
 }
 
-.brandMark {
-    display: grid;
+.brandIcon {
     width: var(--space-8);
     height: var(--space-8);
-    place-items: center;
     border-radius: var(--radius-sm);
-    background: var(--color-primary);
-    color: var(--color-primary-contrast);
-    font-size: var(--text-sm);
+    box-shadow: var(--shadow-surface);
+}
+
+.brandText {
+    font-size: var(--text-xl);
     font-weight: var(--font-bold);
+    line-height: 1;
 }
 
 .navLinks {
-    display: flex;
-    flex-wrap: wrap;
+    display: inline-flex;
+    align-items: center;
     justify-content: flex-end;
-    gap: var(--space-3);
+    gap: var(--space-4);
 }
 
 .navLink,
 .footerLink,
 .inlineLink {
-    color: var(--legal-link);
-    font-weight: var(--font-medium);
     text-decoration: none;
 }
 
 .navLink,
 .footerLink {
+    color: var(--legal-text-muted);
     font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
 }
 
 .inlineLink {
+    color: var(--legal-link);
+    font-weight: var(--font-medium);
     overflow-wrap: anywhere;
 }
 
 .navLink:hover,
-.footerLink:hover,
+.footerLink:hover {
+    color: var(--legal-link);
+}
+
 .inlineLink:hover {
     text-decoration: underline;
 }
@@ -84,16 +89,7 @@
 .hero {
     display: grid;
     gap: var(--space-3);
-    padding-top: var(--space-4);
-}
-
-.eyebrow {
-    margin: 0;
-    color: var(--legal-link);
-    font-size: var(--text-xs);
-    font-weight: var(--font-bold);
-    letter-spacing: 0;
-    text-transform: uppercase;
+    padding-top: var(--space-8);
 }
 
 .title {
@@ -177,9 +173,6 @@
 .callout {
     display: grid;
     gap: var(--space-1);
-    padding: var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--legal-link-surface);
 }
 
 .callout strong {
@@ -187,17 +180,21 @@
 }
 
 .footer {
-    display: grid;
-    gap: var(--space-3);
-    padding-top: var(--space-2);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-4);
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--legal-border);
     color: var(--legal-text-muted);
     font-size: var(--text-sm);
 }
 
 .footerLinks {
-    display: flex;
+    display: inline-flex;
     flex-wrap: wrap;
-    gap: var(--space-3);
+    justify-content: flex-end;
+    gap: var(--space-4);
 }
 
 .copyright {
@@ -217,6 +214,10 @@
         align-items: flex-start;
     }
 
+    .navLinks {
+        gap: var(--space-3);
+    }
+
     .title {
         font-size: var(--text-2xl);
     }
@@ -227,5 +228,14 @@
 
     .section {
         padding: var(--space-4);
+    }
+
+    .footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .footerLinks {
+        justify-content: flex-start;
     }
 }

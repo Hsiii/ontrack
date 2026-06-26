@@ -5,7 +5,6 @@ import styles from './legal-page.module.css';
 
 type LegalPageProps = {
     title: string;
-    eyebrow: string;
     subtitle: string;
     children: ReactNode;
     footerLinks: Array<{
@@ -17,7 +16,6 @@ type LegalPageProps = {
 
 export function LegalPage({
     title,
-    eyebrow,
     subtitle,
     children,
     footerLinks,
@@ -28,10 +26,15 @@ export function LegalPage({
             <div className={styles.shell}>
                 <nav className={styles.nav} aria-label='Page navigation'>
                     <Link className={styles.brand} href='/'>
-                        <span className={styles.brandMark} aria-hidden='true'>
-                            OT
-                        </span>
-                        OnTrack
+                        <img
+                            className={styles.brandIcon}
+                            src='/apple-touch-icon.png'
+                            alt=''
+                            width='32'
+                            height='32'
+                            aria-hidden='true'
+                        />
+                        <span className={styles.brandText}>OnTrack</span>
                     </Link>
                     <div className={styles.navLinks}>
                         <Link className={styles.navLink} href='/docs/support'>
@@ -44,7 +47,6 @@ export function LegalPage({
                 </nav>
 
                 <header className={styles.hero}>
-                    <p className={styles.eyebrow}>{eyebrow}</p>
                     <h1 className={styles.title}>{title}</h1>
                     <p className={styles.subtitle}>{subtitle}</p>
                 </header>
@@ -52,7 +54,14 @@ export function LegalPage({
                 <div className={styles.content}>{children}</div>
 
                 <footer className={styles.footer}>
-                    <div className={styles.footerLinks}>
+                    <div>
+                        <p className={styles.copyright}>© 2026 OnTrack</p>
+                        <p className={styles.copyright}>{footerNote}</p>
+                    </div>
+                    <nav
+                        className={styles.footerLinks}
+                        aria-label='Support links'
+                    >
                         {footerLinks.map((link) => (
                             <Link
                                 className={styles.footerLink}
@@ -65,9 +74,7 @@ export function LegalPage({
                         <a className={styles.footerLink} href='#terms'>
                             Terms of Service (coming soon)
                         </a>
-                    </div>
-                    <p className={styles.copyright}>{footerNote}</p>
-                    <p className={styles.copyright}>© 2026 OnTrack</p>
+                    </nav>
                 </footer>
             </div>
         </main>

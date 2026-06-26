@@ -16,7 +16,6 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
     return (
         <LegalPage
-            eyebrow='Effective Date: June 2026'
             title='Privacy Policy'
             subtitle='OnTrack does not require an account, does not sell user data, and keeps location-based station detection on your device.'
             footerLinks={[{ href: '/docs/support', label: 'Support' }]}
@@ -190,7 +189,6 @@ export default function PrivacyPage() {
             <section className={styles.section} aria-labelledby='contact'>
                 <h2 id='contact'>Contact</h2>
                 <p>
-                    Email:{' '}
                     <a
                         className={styles.inlineLink}
                         href={`mailto:${SUPPORT_EMAIL}`}
