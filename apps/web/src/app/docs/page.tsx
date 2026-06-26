@@ -38,22 +38,22 @@ const features = [
     {
         icon: MapPin,
         title: '自動偵測最近車站',
-        body: '允許定位後，OnTrack 會優先選出附近的台鐵車站，省下手動找站的時間。',
-    },
-    {
-        icon: Clock3,
-        title: '下一班列車優先',
-        body: '依出發或抵達時間整理班次，並把延誤資訊納入下一班列車判斷。',
+        body: '開啟定位後，OnTrack 便能依您的當前位置自動判斷起點站。',
     },
     {
         icon: Navigation,
-        title: '常用目的地更快找到',
-        body: '搜尋目的地時優先顯示常用車站，通勤與轉乘不必重複輸入。',
+        title: '智慧預測目的地',
+        body: '使用幾次後，OnTrack會開始以您的搭乘習慣預測目的地並幫您填入。',
+    },
+    {
+        icon: Clock3,
+        title: '輕鬆找出下一班列車',
+        body: '整合即時延誤資料、幫您找出下一班能搭上的列車。',
     },
     {
         icon: Share2,
         title: '抵達時間快速分享',
-        body: '選好班次後，一鍵產生目的地與抵達時間訊息，方便告訴同行的人。',
+        body: '一鍵分享目的地與抵達時間訊息，快速讓親友知道你的動態。',
     },
 ] as const;
 
@@ -109,11 +109,11 @@ export default function DocsPage() {
                 <section className={styles.hero}>
                     <div className={styles.heroCopy}>
                         <h1 className={styles.title}>
-                            專為台鐵旅客打造的查車 App。
+                            專為台鐵旅客打造的時刻表 App。
                         </h1>
                         <p className={styles.lede}>
-                            OnTrack 會自動準備常用路線、下一班列車與即時延誤，
-                            讓您打開 App 就能快速決定怎麼搭。
+                            自動規劃路線、顯示即時班次與延誤資訊，讓您打開 App
+                            的瞬間就能知道這趟怎麼搭。
                         </p>
                         <div className={styles.heroActions}>
                             <Link className={styles.primaryCta} href='/'>
@@ -149,7 +149,7 @@ export default function DocsPage() {
                     aria-labelledby='features-title'
                 >
                     <div className={styles.sectionIntro}>
-                        <h2 id='features-title'>查車需要的資訊放在同一頁。</h2>
+                        <h2 id='features-title'>重要資訊一目了然。</h2>
                     </div>
                     <div className={styles.featureGrid}>
                         {features.map((feature) => {

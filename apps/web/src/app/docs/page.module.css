@@ -110,7 +110,7 @@
     color: var(--color-text-dim);
     font-size: var(--text-base);
     line-height: 1.5;
-    text-wrap: pretty;
+    text-wrap: balance;
 }
 
 .heroActions {
@@ -141,7 +141,7 @@
 
 .heroMedia {
     display: grid;
-    justify-items: center;
+    justify-items: end;
     overflow: hidden;
 }
 
@@ -155,7 +155,7 @@
 .featureSection {
     display: grid;
     gap: var(--space-5);
-    padding: var(--space-4) 0;
+    margin: calc(var(--space-6) * 2) 0;
 }
 
 .sectionIntro {
@@ -165,7 +165,7 @@
 }
 
 .sectionIntro h2 {
-    margin: 0;
+    margin: 0 0 var(--space-3);
     font-size: var(--text-xl);
     line-height: 1.2;
     text-wrap: balance;
@@ -279,6 +279,10 @@
 
     .phoneImage {
         width: min(100%, var(--docs-phone-mobile-width));
+    }
+
+    .heroMedia {
+        justify-items: center;
     }
 
     .footer {
