@@ -343,20 +343,6 @@ select {
     }
 }
 
-.message-bar-fixed {
-    position: fixed;
-    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - var(--space-8));
-    max-width: calc(var(--content-app) - var(--space-8));
-    padding: var(--space-2);
-    background: var(--color-bg-light);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-lg);
-    z-index: 100;
-}
-
 .skeleton {
     display: inline-block;
     border-radius: var(--radius-sm);

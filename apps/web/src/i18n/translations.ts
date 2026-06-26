@@ -58,6 +58,8 @@ export const translations = {
         'train.duration': '車程 {duration}',
         'train.noTrainsAvailable': '查無可搭乘班次',
         'train.refreshLiveStatus': '更新即時狀態',
+        'train.plannedRide': '預計搭乘',
+        'train.plannedBoardingMessage': '{type} {number}・{time} 到 {station}',
 
         'error.failedToLoadSchedule': '無法取得時刻表',
         'error.failedToLoadStations': '無法載入車站資料',
@@ -68,6 +70,7 @@ export const translations = {
         'common.retry': '重試',
 
         'share.arrivalMessage': '{time}到{station}',
+        'share.routeArrivalMessage': '{origin}→{station} {time}到',
         'share.noTrainMessage': '好像沒車搭了',
         'share.message': '分享訊息',
         'share.shareMessage': '分享訊息',
@@ -130,6 +133,9 @@ export const translations = {
         'train.duration': 'Duration {duration}',
         'train.noTrainsAvailable': 'No trains available',
         'train.refreshLiveStatus': 'Refresh live status',
+        'train.plannedRide': 'Planned ride',
+        'train.plannedBoardingMessage':
+            '{type} {number} · arrive {station} {time}',
 
         'error.failedToLoadSchedule': 'Failed to load schedule',
         'error.failedToLoadStations': 'Failed to load stations',
@@ -140,6 +146,7 @@ export const translations = {
         'common.retry': 'Retry',
 
         'share.arrivalMessage': 'Arrive at {station} by {time}',
+        'share.routeArrivalMessage': '{origin} to {station}, arrive by {time}',
         'share.noTrainMessage': 'No more trains available',
         'share.message': 'Share message',
         'share.shareMessage': 'Share message',

@@ -11,7 +11,6 @@ import {
     SettingsSheet,
     type ShareMessageFormat,
 } from './components/SettingsSheet';
-import { ShareCard } from './components/ShareCard';
 import { StationSelector } from './components/StationSelector';
 import { StationSelectorSkeleton } from './components/StationSelectorSkeleton';
 import {
@@ -21,7 +20,7 @@ import {
     TimeSelector,
     type TimeSelection,
 } from './components/TimeSelector';
-import { TrainList } from './components/TrainList';
+import { TrainBoardingPanel } from './components/TrainBoardingPanel';
 import { usePersistence } from './hooks/usePersistence';
 import { useI18n } from './i18n/useI18n';
 import type { Station, TrainInfo } from './types';
@@ -37,6 +36,11 @@ const EMPTY_TIME_SELECTION: TimeSelection = {
 };
 const NATIVE_SPLASH_HIDE_FALLBACK_MS = 240;
 const SHARE_MESSAGE_FORMAT_KEY = 'ontrack_share_message_format';
+
+type SelectedTrainState = {
+    scheduleKey: string;
+    train: TrainInfo;
+};
 
 function getStoredShareMessageFormat(): ShareMessageFormat {
     if (typeof window === 'undefined') {
@@ -60,7 +64,8 @@ function App() {
     } = usePersistence();
 
     const [stations, setStations] = useState<Station[]>([]);
-    const [selectedTrain, setSelectedTrain] = useState<TrainInfo | null>(null);
+    const [selectedTrainState, setSelectedTrainState] =
+        useState<SelectedTrainState | null>(null);
     const [timeSelection, setTimeSelection] =
         useState<TimeSelection>(EMPTY_TIME_SELECTION);
     const [stationsLoading, setStationsLoading] = useState(true);
@@ -165,10 +170,28 @@ function App() {
     const isTimeInitialized =
         timeSelection.dateDigits.length === 4 &&
         timeSelection.timeDigits.length === 4;
-    const canRefreshLive = Boolean(isTimeInitialized && originId && destId);
+    const canLoadSchedule = Boolean(isTimeInitialized && originId && destId);
+    const canRefreshLive = canLoadSchedule;
+    const scheduleSelectionKey = [
+        originId,
+        destId,
+        scheduleDate,
+        scheduleTime,
+        timeSelection.mode,
+    ].join('-');
+    const selectedTrain =
+        selectedTrainState?.scheduleKey === scheduleSelectionKey
+            ? selectedTrainState.train
+            : null;
     const handleSetShareMessageFormat = (format: ShareMessageFormat) => {
         setShareMessageFormat(format);
         window.localStorage.setItem(SHARE_MESSAGE_FORMAT_KEY, format);
+    };
+    const handleSelectTrain = (train: TrainInfo) => {
+        setSelectedTrainState({
+            scheduleKey: scheduleSelectionKey,
+            train,
+        });
     };
 
     return (
@@ -239,25 +262,20 @@ function App() {
                         )}
                     </section>
 
-                    {isTimeInitialized && originId && destId && (
-                        <TrainList
-                            key={`${originId}-${destId}`}
-                            originId={originId}
-                            destId={destId}
-                            date={scheduleDate}
-                            time={scheduleTime}
-                            timeMode={timeSelection.mode}
-                            onSelect={setSelectedTrain}
-                            selectedTrainNo={selectedTrain?.trainNo || null}
-                            refreshLiveNonce={liveRefreshNonce}
-                            onRefreshingLiveChange={setIsRefreshingLive}
-                        />
-                    )}
-
-                    <ShareCard
-                        train={selectedTrain}
+                    <TrainBoardingPanel
+                        canLoadSchedule={canLoadSchedule}
+                        originId={originId}
+                        destId={destId}
                         originName={originName}
                         destName={destName}
+                        date={scheduleDate}
+                        time={scheduleTime}
+                        timeMode={timeSelection.mode}
+                        selectedTrain={selectedTrain}
+                        messageFormat={shareMessageFormat}
+                        onSelectTrain={handleSelectTrain}
+                        refreshLiveNonce={liveRefreshNonce}
+                        onRefreshingLiveChange={setIsRefreshingLive}
                     />
                 </main>
             </div>

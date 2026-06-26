@@ -30,7 +30,7 @@ const TRAIN_TYPE_EN: Record<string, string> = {
  * Examples (zh-TW): "自強(商務專開列車)" → "自強"
  * Examples (en):    "自強(商務專開列車)" → "TC"
  */
-function parseTrainType(trainType: string, lang?: string): string {
+export function parseTrainType(trainType: string, lang?: string): string {
     // Remove content in parentheses and any suffix like "號"
     const base = trainType.split('(')[0].replace(/號$/, '');
     if (lang === 'en') {
@@ -40,7 +40,7 @@ function parseTrainType(trainType: string, lang?: string): string {
 }
 
 /** Add minutes to a HH:mm time string */
-function addMinutes(time: string, minutes: number): string {
+export function addMinutes(time: string, minutes: number): string {
     const [h, m] = time.split(':').map(Number);
     const total = h * 60 + m + minutes;
     const newH = Math.floor(total / 60) % 24;
@@ -129,6 +129,7 @@ interface TrainListProps {
     selectedTrainNo: string | null;
     refreshLiveNonce?: number;
     onRefreshingLiveChange?: (isRefreshing: boolean) => void;
+    showHeading?: boolean;
 }
 
 export function TrainList({
@@ -141,6 +142,7 @@ export function TrainList({
     selectedTrainNo,
     refreshLiveNonce = 0,
     onRefreshingLiveChange,
+    showHeading = true,
 }: TrainListProps) {
     const { t, language } = useI18n();
     const [allTrains, setAllTrains] = useState<TrainInfo[]>([]);
@@ -271,10 +273,15 @@ export function TrainList({
     if (!originId || !destId) return null;
 
     return (
-        <section aria-labelledby='train-list-heading'>
-            <h2 id='train-list-heading' className='label-dim'>
-                {t('app.selectTrain')}
-            </h2>
+        <section
+            aria-labelledby={showHeading ? 'train-list-heading' : undefined}
+            aria-label={!showHeading ? t('app.selectTrain') : undefined}
+        >
+            {showHeading && (
+                <h2 id='train-list-heading' className='label-dim'>
+                    {t('app.selectTrain')}
+                </h2>
+            )}
 
             {error ? (
                 <div className='card-panel train-list-error'>
