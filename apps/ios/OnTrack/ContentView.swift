@@ -718,9 +718,15 @@ private struct TimeSelectorView: View {
             AppText.leaveNow
         case .departure, .arrival:
             "\(selection.mode.title) \(Formatters.displayTime.string(from: selection.date))"
-        case .lastTrain:
-            "\(selection.mode.title) \(Formatters.scheduleDate.string(from: selection.date))"
         }
+    }
+
+    private var dateLabel: String? {
+        guard selection.mode != .now else {
+            return nil
+        }
+
+        return Formatters.scheduleDate.string(from: selection.date)
     }
 
     var body: some View {
@@ -728,9 +734,18 @@ private struct TimeSelectorView: View {
             isEditorPresented = true
         } label: {
             HStack(spacing: OnTrackTheme.space2) {
-                Text(title)
-                    .font(OnTrackFont.control)
-                    .foregroundStyle(OnTrackTheme.text)
+                VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+                    Text(title)
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(OnTrackTheme.text)
+
+                    if let dateLabel {
+                        Text(dateLabel)
+                            .font(OnTrackFont.caption)
+                            .foregroundStyle(OnTrackTheme.dimText)
+                    }
+                }
+                .lineLimit(1)
 
                 Image(systemName: "chevron.down")
                     .font(OnTrackFont.chevron)
@@ -779,17 +794,12 @@ private struct TimeEditorSheet: View {
                 switch draft.mode {
                 case .arrival:
                     .arrival
-                case .lastTrain:
-                    .lastTrain
                 case .now, .departure:
                     .departure
                 }
             },
             set: { mode in
                 draft.mode = mode
-                if mode == .lastTrain {
-                    draft.date = lastTrainDate(for: draft.date)
-                }
             }
         )
     }
@@ -812,11 +822,6 @@ private struct TimeEditorSheet: View {
         Binding(
             get: { draft.date },
             set: { date in
-                if draft.mode == .lastTrain {
-                    draft.date = lastTrainDate(for: date)
-                    return
-                }
-
                 if draft.mode == .now {
                     draft.mode = .departure
                 }
@@ -830,34 +835,63 @@ private struct TimeEditorSheet: View {
         self._selection = selection
         self.dateRange = dateRange
 
-        var initialDraft = selection.wrappedValue
-        if initialDraft.mode == .lastTrain {
-            initialDraft.date = lastTrainDate(for: initialDraft.date)
+        self._draft = State(initialValue: selection.wrappedValue)
+    }
+
+    private func shortcutButton(
+        title: String,
+        systemName: String,
+        isActive: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: OnTrackTheme.space1) {
+                Image(systemName: systemName)
+                    .font(OnTrackFont.symbol)
+
+                Text(title)
+                    .font(OnTrackFont.label)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(isActive ? OnTrackTheme.primary : OnTrackTheme.dimText)
+            .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight)
+            .background(
+                RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl)
+                    .fill(OnTrackTheme.panel)
+            )
         }
-        self._draft = State(initialValue: initialDraft)
+        .buttonStyle(OnTrackPressButtonStyle())
     }
 
     var body: some View {
         VStack(spacing: 0) {
             GeometryReader { proxy in
-                ZStack {
-                    HStack {
-                        Button {
+                HStack(spacing: OnTrackTheme.space2) {
+                    HStack(spacing: OnTrackTheme.space1) {
+                        shortcutButton(
+                            title: AppText.now,
+                            systemName: "clock.arrow.circlepath",
+                            isActive: isNowSelected
+                        ) {
                             draft = .current(mode: .now)
-                        } label: {
-                            Image(systemName: "clock.arrow.circlepath")
-                                .font(OnTrackFont.icon)
-                                .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
-                                .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
                         }
-                        .buttonStyle(OnTrackPressButtonStyle())
                         .accessibilityLabel(AppText.now)
 
-                        Spacer()
+                        shortcutButton(
+                            title: AppText.lastTrain,
+                            systemName: "train.side.front.car",
+                            isActive: draft.mode == .departure
+                                && Formatters.displayTime.string(from: draft.date) == TimeSelection.lastTrainTime
+                        ) {
+                            draft.mode = .departure
+                            draft.date = lastTrainDate(for: draft.date)
+                        }
+                        .accessibilityLabel(AppText.lastTrain)
                     }
+                    .frame(maxWidth: .infinity)
 
                     Picker(AppText.timeMode, selection: modeSelection) {
-                        ForEach([TimeMode.departure, TimeMode.arrival, TimeMode.lastTrain]) { mode in
+                        ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
                             Text(mode.title).tag(mode)
                         }
                     }
@@ -867,7 +901,7 @@ private struct TimeEditorSheet: View {
                             OnTrackTheme.timeModePickerMaxWidth,
                             max(
                                 OnTrackTheme.timeModePickerMinWidth,
-                                proxy.size.width - OnTrackTheme.controlHeight * 2
+                                proxy.size.width / 2
                             )
                         ),
                         minHeight: OnTrackTheme.controlHeight
@@ -879,10 +913,10 @@ private struct TimeEditorSheet: View {
             .padding(.top, OnTrackTheme.space5)
 
             DatePicker(
-                draft.mode == .lastTrain ? AppText.date : AppText.time,
+                AppText.time,
                 selection: selectedTime,
                 in: dateRange,
-                displayedComponents: draft.mode == .lastTrain ? [.date] : [.date, .hourAndMinute]
+                displayedComponents: [.date, .hourAndMinute]
             )
             .labelsHidden()
             .datePickerStyle(.wheel)
