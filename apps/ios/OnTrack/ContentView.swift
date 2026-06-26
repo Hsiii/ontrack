@@ -8,6 +8,7 @@ private let scheduleRefreshInterval: TimeInterval = 5 * 60
 private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
 private let manualOriginProtectionInterval: TimeInterval = 10 * 60
+private let timePickerMinuteInterval = 10
 private let stationPickerAnimation = Animation.snappy(duration: 0.28, extraBounce: 0)
 
 private enum ShareMessageFormat: String, CaseIterable, Identifiable {
@@ -878,14 +879,25 @@ private struct TimeEditorSheet: View {
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.top, OnTrackTheme.space5)
 
-            DatePicker(
-                draft.mode == .lastTrain ? AppText.date : AppText.time,
-                selection: selectedTime,
-                in: dateRange,
-                displayedComponents: draft.mode == .lastTrain ? [.date] : [.date, .hourAndMinute]
-            )
-            .labelsHidden()
-            .datePickerStyle(.wheel)
+            Group {
+                if draft.mode == .lastTrain {
+                    DatePicker(
+                        AppText.date,
+                        selection: selectedTime,
+                        in: dateRange,
+                        displayedComponents: [.date]
+                    )
+                    .labelsHidden()
+                    .datePickerStyle(.wheel)
+                } else {
+                    MinuteIntervalDatePicker(
+                        selection: selectedTime,
+                        dateRange: dateRange,
+                        minuteInterval: timePickerMinuteInterval
+                    )
+                    .accessibilityLabel(AppText.time)
+                }
+            }
             .frame(maxWidth: .infinity)
             .clipped()
             .tint(OnTrackTheme.primary)
@@ -972,6 +984,80 @@ private struct RouteSelectorView: View {
         }
         .onTrackPanelSurface()
         .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
+    }
+}
+
+private struct MinuteIntervalDatePicker: UIViewRepresentable {
+    @Binding var selection: Date
+    let dateRange: ClosedRange<Date>
+    let minuteInterval: Int
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(selection: $selection)
+    }
+
+    func makeUIView(context: Context) -> UIDatePicker {
+        let picker = UIDatePicker()
+
+        picker.calendar = Formatters.taipeiCalendar
+        picker.timeZone = Formatters.taipeiTimeZone
+        picker.datePickerMode = .dateAndTime
+        picker.preferredDatePickerStyle = .wheels
+        picker.minuteInterval = minuteInterval
+        picker.minimumDate = dateRange.lowerBound
+        picker.maximumDate = dateRange.upperBound
+        picker.date = clampedDate(selection)
+        picker.addTarget(
+            context.coordinator,
+            action: #selector(Coordinator.dateChanged(_:)),
+            for: .valueChanged
+        )
+
+        return picker
+    }
+
+    func updateUIView(_ picker: UIDatePicker, context: Context) {
+        context.coordinator.selection = $selection
+        picker.calendar = Formatters.taipeiCalendar
+        picker.timeZone = Formatters.taipeiTimeZone
+        picker.datePickerMode = .dateAndTime
+        picker.preferredDatePickerStyle = .wheels
+        picker.minimumDate = dateRange.lowerBound
+        picker.maximumDate = dateRange.upperBound
+
+        if picker.minuteInterval != minuteInterval {
+            picker.minuteInterval = minuteInterval
+        }
+
+        let nextDate = clampedDate(selection)
+        if abs(picker.date.timeIntervalSince(nextDate)) > 0.5 {
+            picker.setDate(nextDate, animated: false)
+        }
+    }
+
+    private func clampedDate(_ date: Date) -> Date {
+        if date < dateRange.lowerBound {
+            return dateRange.lowerBound
+        }
+
+        if date > dateRange.upperBound {
+            return dateRange.upperBound
+        }
+
+        return date
+    }
+
+    final class Coordinator: NSObject {
+        var selection: Binding<Date>
+
+        init(selection: Binding<Date>) {
+            self.selection = selection
+        }
+
+        @MainActor
+        @objc func dateChanged(_ picker: UIDatePicker) {
+            selection.wrappedValue = picker.date
+        }
     }
 }
 
