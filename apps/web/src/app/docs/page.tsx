@@ -1,13 +1,12 @@
-import { ArrowRight, LifeBuoy, Shield, TrainFront } from 'lucide-react';
+import { ArrowRight, LifeBuoy, Shield } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import styles from './page.module.css';
 
 export const metadata: Metadata = {
-    title: 'OnTrack Docs | 快速台鐵查詢指南',
-    description:
-        'OnTrack 是為通勤情境設計的台鐵查詢工具，支援常用目的地、即時到站與分享下一班列車。',
+    title: 'OnTrack Help | Support and Privacy',
+    description: 'OnTrack 支援入口，提供常見問題、聯絡方式與隱私權政策。',
     alternates: {
         canonical: 'https://ontrack.hsichen.dev/docs',
     },
@@ -16,17 +15,17 @@ export const metadata: Metadata = {
 const docsLinks = [
     {
         icon: LifeBuoy,
-        title: '需要協助',
-        body: '定位不到車站、列車時間看起來不對，或想回報問題時從這裡開始。',
+        title: '支援',
+        body: '定位、列車時間、分享或其他問題，查看常見解法並聯絡我們。',
         href: '/docs/support',
         cta: '查看支援',
     },
     {
         icon: Shield,
         title: '隱私權',
-        body: '了解位置權限、診斷資料與第三方服務如何用於提供查詢功能。',
+        body: '了解 OnTrack 如何使用位置權限、診斷資料與鐵路資料服務。',
         href: '/docs/privacy',
-        cta: '閱讀說明',
+        cta: '閱讀政策',
     },
 ] as const;
 
@@ -36,27 +35,28 @@ export default function DocsPage() {
             <div className={styles.shell}>
                 <nav className={styles.nav} aria-label='Docs navigation'>
                     <Link className={styles.brand} href='/'>
-                        <span className={styles.brandMark} aria-hidden='true'>
-                            <TrainFront size={20} />
-                        </span>
+                        <img
+                            className={styles.brandIcon}
+                            src='/apple-touch-icon.png'
+                            alt=''
+                            width='32'
+                            height='32'
+                            aria-hidden='true'
+                        />
                         OnTrack
+                    </Link>
+                    <Link className={styles.navLink} href='/'>
+                        開啟 App
                     </Link>
                 </nav>
 
                 <section className={styles.hero}>
                     <div className={styles.heroCopy}>
-                        <p className={styles.eyebrow}>Docs</p>
-                        <h1 className={styles.title}>第一次使用 OnTrack</h1>
+                        <p className={styles.eyebrow}>Help</p>
+                        <h1 className={styles.title}>OnTrack 支援</h1>
                         <p className={styles.lede}>
-                            先選出發站、目的地與時間。允許定位後，OnTrack
-                            可以優先顯示附近車站，讓你更快查到下一班台鐵列車。
+                            需要協助、查看隱私權，或回到查詢工具，從這裡開始。
                         </p>
-                        <div className={styles.actions}>
-                            <Link className={styles.primaryAction} href='/'>
-                                開始查車
-                                <ArrowRight size={16} />
-                            </Link>
-                        </div>
                     </div>
                 </section>
 

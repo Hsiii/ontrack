@@ -29,14 +29,18 @@
     text-decoration: none;
 }
 
-.brandMark {
-    display: grid;
+.brandIcon {
     width: var(--space-8);
     height: var(--space-8);
-    place-items: center;
     border-radius: var(--radius-sm);
-    background: var(--color-primary);
-    color: var(--color-primary-contrast);
+    box-shadow: var(--shadow-surface);
+}
+
+.navLink {
+    color: var(--color-text-dim);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    text-decoration: none;
 }
 
 .hero {
@@ -60,7 +64,7 @@
 }
 
 .title {
-    max-width: var(--content-title);
+    max-width: var(--content-readable);
     margin: 0;
     font-size: var(--text-3xl);
     font-weight: var(--font-bold);
@@ -76,31 +80,6 @@
     font-size: var(--text-lg);
     line-height: 1.5;
     text-wrap: pretty;
-}
-
-.actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-3);
-    align-items: center;
-}
-
-.primaryAction {
-    display: inline-flex;
-    min-height: var(--space-10);
-    align-items: center;
-    justify-content: center;
-    gap: var(--space-2);
-    border-radius: var(--radius-md);
-    padding: var(--space-3) var(--space-5);
-    font-size: var(--text-sm);
-    font-weight: var(--font-semibold);
-    text-decoration: none;
-}
-
-.primaryAction {
-    background: var(--color-primary);
-    color: var(--color-primary-contrast);
 }
 
 .cardIcon {
