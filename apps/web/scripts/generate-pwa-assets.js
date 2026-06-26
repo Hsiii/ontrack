@@ -12,56 +12,17 @@ import { fileURLToPath } from 'url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 const splashDir = path.join(publicDir, 'splash');
+const repoRoot = path.resolve(__dirname, '..', '..', '..');
+const sourceIconPath = path.join(repoRoot, 'assets', 'app-icon.png');
+const splashBackground = '#f8fafc';
 
 // Create splash directory if it doesn't exist
 if (!fs.existsSync(splashDir)) {
     fs.mkdirSync(splashDir, { recursive: true });
 }
 
-// Shared constant: icon size in CSS pixels (must match .native-splash svg)
+// Shared constant: icon size in CSS pixels (must match .native-splash img)
 const ICON_SIZE_CSS = 100;
-
-// SVG template for splash screens
-const createSplashSVG = (width, height, dpr, safeAreaTop = 0) => {
-    // Convert CSS pixels to physical pixels using the device pixel ratio
-    const iconSize = ICON_SIZE_CSS * dpr;
-    const halfIcon = iconSize / 2;
-    // Offset icon down by half safe area so it centers on viewport, not full screen
-    const yOffset = safeAreaTop / 2;
-
-    return `
-<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="#0f172a"/>
-  <g transform="translate(${width / 2 - halfIcon}, ${height / 2 - halfIcon + yOffset})">
-    <svg width="${iconSize}" height="${iconSize}" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/>
-      <path d="m9 15-1-1"/>
-      <path d="m15 15 1-1"/>
-      <path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5Z"/>
-      <path d="m8 19-2 3"/>
-      <path d="m16 19 2 3"/>
-    </svg>
-  </g>
-</svg>
-`;
-};
-
-// SVG template for app icons
-const createIconSVG = (size) => `
-<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="#0f172a" rx="${size * 0.2}"/>
-  <g transform="translate(${size * 0.15}, ${size * 0.15})">
-    <svg width="${size * 0.7}" height="${size * 0.7}" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-      <path d="M8 3.1V7a4 4 0 0 0 8 0V3.1"/>
-      <path d="m9 15-1-1"/>
-      <path d="m15 15 1-1"/>
-      <path d="M9 19c-2.8 0-5-2.2-5-5v-4a8 8 0 0 1 16 0v4c0 2.8-2.2 5-5 5Z"/>
-      <path d="m8 19-2 3"/>
-      <path d="m16 19 2 3"/>
-    </svg>
-  </g>
-</svg>
-`;
 
 // Splash screen sizes for iOS devices (with device pixel ratios and safe area insets)
 // safeAreaTop is the status bar/notch/Dynamic Island height in physical pixels
@@ -172,54 +133,53 @@ async function generateAssets() {
     try {
         sharp = (await import('sharp')).default;
     } catch (e) {
-        console.log('Sharp not installed. Creating SVG placeholders instead.');
-        console.log('To generate PNG files, run: npm install -D sharp');
-        console.log('Then run this script again.\n');
-
-        // Create SVG placeholders
-        for (const { name, width, height, dpr, safeAreaTop } of splashSizes) {
-            const svgPath = path.join(splashDir, name.replace('.png', '.svg'));
-            fs.writeFileSync(
-                svgPath,
-                createSplashSVG(width, height, dpr, safeAreaTop)
-            );
-            console.log(
-                `Created SVG placeholder: splash/${name.replace('.png', '.svg')}`
-            );
-        }
-
-        for (const { name, size } of iconSizes) {
-            if (name !== 'favicon.ico') {
-                const svgPath = path.join(
-                    publicDir,
-                    name.replace('.png', '.svg')
-                );
-                fs.writeFileSync(svgPath, createIconSVG(size));
-                console.log(
-                    `Created SVG placeholder: ${name.replace('.png', '.svg')}`
-                );
-            }
-        }
-
-        console.log("\nNote: SVG splash screens won't work on iOS.");
-        console.log('Install sharp and re-run to generate proper PNG files.');
+        console.error(
+            'Sharp is required to generate app icons and splash PNGs.'
+        );
+        console.error('Install dependencies, then run this script again.');
         return;
     }
 
-    console.log('Generating PWA assets with sharp...\n');
+    if (!fs.existsSync(sourceIconPath)) {
+        throw new Error(`Missing app icon source: ${sourceIconPath}`);
+    }
+
+    console.log('Generating PWA assets from assets/app-icon.png...\n');
 
     // Generate splash screens
     for (const { name, width, height, dpr, safeAreaTop } of splashSizes) {
-        const svg = createSplashSVG(width, height, dpr, safeAreaTop);
-        await sharp(Buffer.from(svg)).png().toFile(path.join(splashDir, name));
+        const iconSize = Math.round(ICON_SIZE_CSS * dpr);
+        const halfIcon = iconSize / 2;
+        const yOffset = safeAreaTop / 2;
+        const icon = await sharp(sourceIconPath)
+            .resize(iconSize, iconSize, { fit: 'contain' })
+            .png()
+            .toBuffer();
+
+        await sharp({
+            create: {
+                width,
+                height,
+                channels: 4,
+                background: splashBackground,
+            },
+        })
+            .composite([
+                {
+                    input: icon,
+                    left: Math.round(width / 2 - halfIcon),
+                    top: Math.round(height / 2 - halfIcon + yOffset),
+                },
+            ])
+            .png()
+            .toFile(path.join(splashDir, name));
         console.log(`Generated: splash/${name}`);
     }
 
     // Generate icons
     for (const { name, size } of iconSizes) {
-        const svg = createIconSVG(size);
         if (name === 'favicon.ico') {
-            await sharp(Buffer.from(svg))
+            await sharp(sourceIconPath)
                 .resize(32, 32)
                 .png()
                 .toFile(path.join(publicDir, 'favicon.png'));
@@ -227,7 +187,8 @@ async function generateAssets() {
                 `Generated: favicon.png (convert to .ico manually if needed)`
             );
         } else {
-            await sharp(Buffer.from(svg))
+            await sharp(sourceIconPath)
+                .resize(size, size)
                 .png()
                 .toFile(path.join(publicDir, name));
             console.log(`Generated: ${name}`);

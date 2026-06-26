@@ -122,10 +122,9 @@ body {
         var(--motion-splash-delay) forwards;
 }
 
-.native-splash svg {
+.native-splash img {
     width: var(--splash-icon-size);
     height: var(--splash-icon-size);
-    color: var(--color-primary);
 }
 
 @keyframes nativeSplashOut {
