@@ -799,6 +799,10 @@ private struct TimeEditorSheet: View {
         draft.mode == .now
     }
 
+    private var isLastTrainSelected: Bool {
+        draft.mode == .lastTrain
+    }
+
     private static func lastTrainDate(for date: Date) -> Date {
         let calendar = Formatters.taipeiCalendar
         return calendar.date(
@@ -846,7 +850,7 @@ private struct TimeEditorSheet: View {
                         Button {
                             draft = .current(mode: .now)
                         } label: {
-                            Image(systemName: "clock.arrow.circlepath")
+                            Image(systemName: "clock.arrow.trianglehead.2.counterclockwise.rotate.90")
                                 .font(OnTrackFont.icon)
                                 .foregroundStyle(isNowSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
                                 .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
@@ -855,10 +859,22 @@ private struct TimeEditorSheet: View {
                         .accessibilityLabel(AppText.now)
 
                         Spacer()
+
+                        Button {
+                            draft.mode = .lastTrain
+                            draft.date = Self.lastTrainDate(for: draft.date)
+                        } label: {
+                            Image(systemName: "moon")
+                                .font(OnTrackFont.icon)
+                                .foregroundStyle(isLastTrainSelected ? OnTrackTheme.primary : OnTrackTheme.dimText)
+                                .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+                        }
+                        .buttonStyle(OnTrackPressButtonStyle())
+                        .accessibilityLabel(AppText.lastTrain)
                     }
 
                     Picker(AppText.timeMode, selection: modeSelection) {
-                        ForEach([TimeMode.departure, TimeMode.arrival, TimeMode.lastTrain]) { mode in
+                        ForEach([TimeMode.departure, TimeMode.arrival]) { mode in
                             Text(mode.title).tag(mode)
                         }
                     }
