@@ -1,4 +1,4 @@
-import { Send } from 'lucide-react';
+import { Share } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { TrainInfo } from '../types';
@@ -115,7 +115,7 @@ export function TrainBoardingPanel({
                     aria-label={t('share.shareMessage')}
                     title={t('share.shareMessage')}
                 >
-                    <Send aria-hidden='true' />
+                    <Share aria-hidden='true' />
                 </button>
             </div>
 
