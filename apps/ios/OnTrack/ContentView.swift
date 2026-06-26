@@ -965,9 +965,8 @@ private struct RouteSelectorView: View {
             )
 
             HStack(spacing: OnTrackTheme.space3) {
-                RouteDots()
+                Color.clear
                     .frame(width: 24, height: OnTrackTheme.routeDividerHeight)
-
                 Rectangle()
                     .fill(OnTrackTheme.border)
                     .frame(height: 1)
@@ -1166,18 +1165,6 @@ private struct RouteGlyph: View {
             }
         }
         .frame(width: 24, height: 24)
-    }
-}
-
-private struct RouteDots: View {
-    var body: some View {
-        VStack(spacing: OnTrackTheme.space1) {
-            ForEach(0..<3, id: \.self) { _ in
-                Circle()
-                    .fill(OnTrackTheme.dimText.opacity(0.72))
-                    .frame(width: OnTrackTheme.space1, height: OnTrackTheme.space1)
-            }
-        }
     }
 }
 
@@ -2017,7 +2004,7 @@ private enum OnTrackTheme {
     static let radiusControl: CGFloat = 8
     static let radiusPanel: CGFloat = 12
     static let controlHeight: CGFloat = 44
-    static let routeDividerHeight: CGFloat = 20
+    static let routeDividerHeight: CGFloat = 1
     static let routeRowHeight: CGFloat = 56
     static let timeModePickerMaxWidth: CGFloat = 260
     static let timeModePickerMinWidth: CGFloat = 192
