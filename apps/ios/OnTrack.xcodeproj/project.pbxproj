@@ -25,7 +25,7 @@
         A10000000000000000000014 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
         A10000000000000000000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
         A10000000000000000000016 /* DestinationAutofill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationAutofill.swift; sourceTree = "<group>"; };
-        A10000000000000000000017 /* config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = config.json; path = "../../../lib/destination-autofill/config.json"; sourceTree = "<group>"; };
+        A10000000000000000000017 /* config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = config.json; path = "../../../packages/config/destination-autofill.json"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */

@@ -1,4 +1,4 @@
-import destinationAutofillConfig from '../../../../lib/destination-autofill/config.json';
+import destinationAutofillConfig from '../../../../packages/config/destination-autofill.json';
 
 const FREQUENT_DESTINATIONS_KEY = 'ontrack_frequent_destinations';
 const LEGACY_RECENT_STATIONS_KEY = 'ontrack_recent_stations';
