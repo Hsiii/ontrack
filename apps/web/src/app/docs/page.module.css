@@ -1,6 +1,9 @@
 .page {
     min-height: 100vh;
     padding: var(--space-6) var(--space-5);
+    background:
+        linear-gradient(180deg, var(--color-surface-tint), var(--color-bg) 42%),
+        var(--color-bg);
     color: var(--color-text);
 }
 
@@ -8,7 +11,7 @@
     display: grid;
     gap: var(--space-6);
     width: 100%;
-    max-width: var(--content-readable);
+    max-width: var(--content-lg);
     margin: 0 auto;
 }
 
@@ -37,16 +40,24 @@
 }
 
 .navLink {
+    display: inline-flex;
+    min-height: var(--space-10);
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-border-strong);
+    border-radius: var(--radius-lg);
+    padding: var(--space-2) var(--space-4);
     color: var(--color-text-dim);
     font-size: var(--text-sm);
-    font-weight: var(--font-medium);
+    font-weight: var(--font-semibold);
     text-decoration: none;
 }
 
 .hero {
     display: grid;
     gap: var(--space-5);
-    padding: var(--space-4) 0;
+    overflow: hidden;
+    padding: var(--space-8) 0;
 }
 
 .heroCopy {
@@ -94,12 +105,13 @@
 
 .linkGrid {
     display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-4);
 }
 
 .linkCard {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-columns: auto minmax(0, 1fr);
     gap: var(--space-4);
     align-items: center;
     padding: var(--space-5);
@@ -127,6 +139,7 @@
 
 .cardCta {
     display: inline-flex;
+    grid-column: 2;
     align-items: center;
     gap: var(--space-2);
     color: var(--color-primary);
@@ -136,16 +149,16 @@
 }
 
 @media (max-width: 760px) {
+    .hero,
+    .linkGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero {
+        padding: var(--space-4) 0;
+    }
+
     .title {
         font-size: var(--text-2xl);
-    }
-
-    .linkCard {
-        grid-template-columns: auto minmax(0, 1fr);
-    }
-
-    .cardCta {
-        grid-column: 2;
-        justify-self: start;
     }
 }

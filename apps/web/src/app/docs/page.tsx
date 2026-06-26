@@ -55,7 +55,7 @@ export default function DocsPage() {
                         <p className={styles.eyebrow}>Help</p>
                         <h1 className={styles.title}>OnTrack 支援</h1>
                         <p className={styles.lede}>
-                            需要協助、查看隱私權，或回到查詢工具，從這裡開始。
+                            查車工具在首頁；支援與隱私權資訊放在這裡。
                         </p>
                     </div>
                 </section>
