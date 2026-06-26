@@ -1228,7 +1228,7 @@ private struct TrainListView: View {
             if !canLoadSchedule {
                 emptyState(AppText.chooseRoute)
             } else if isLoading && trains.isEmpty {
-                VStack(spacing: OnTrackTheme.space2) {
+                VStack(spacing: 0) {
                     ForEach(0..<3, id: \.self) { _ in
                         SkeletonTrainCard()
                     }
@@ -1236,7 +1236,7 @@ private struct TrainListView: View {
             } else if trains.isEmpty {
                 emptyState(AppText.noTrainsAvailable)
             } else {
-                VStack(spacing: OnTrackTheme.space2) {
+                VStack(spacing: 0) {
                     ForEach(trains) { train in
                         TrainCard(
                             train: train,
@@ -1329,17 +1329,20 @@ private struct TrainCard: View {
                 .fixedSize(horizontal: true, vertical: false)
             }
             .padding(.horizontal, OnTrackTheme.space4)
-            .padding(.vertical, OnTrackTheme.space3)
-            .frame(maxWidth: .infinity, minHeight: 64)
-            .background(
-                isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
-                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
+            .frame(
+                maxWidth: .infinity,
+                minHeight: TrainPanelLayout.cardHeight,
+                maxHeight: TrainPanelLayout.cardHeight
             )
-            .onTrackSurfaceRing(
-                ringColor: isSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
-            )
+            .contentShape(Rectangle())
+            .background(isSelected ? OnTrackTheme.primary.opacity(0.06) : Color.clear)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(OnTrackTheme.border)
+                    .frame(height: 1)
+            }
         }
-        .buttonStyle(OnTrackPressButtonStyle())
+        .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(accessibilityLabel)
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
@@ -1708,24 +1711,30 @@ private struct StationSearchRow: View {
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
     static let collapsedVisibleCards: CGFloat = 3.5
-    static let collapsedVisibleGaps: CGFloat = 3
     static let collapsedContentReserve: CGFloat = 400
 
     static var panelChromeHeight: CGFloat {
         OnTrackTheme.space6
-            + OnTrackTheme.space5
-            + OnTrackTheme.space1
+            + expectedHeaderHeight
             + OnTrackTheme.controlHeight
-            + OnTrackTheme.space4
+            + expectedSectionBottomPadding
             + 1
     }
 
+    static var expectedHeaderHeight: CGFloat {
+        OnTrackTheme.space4
+    }
+
+    static var expectedSectionBottomPadding: CGFloat {
+        OnTrackTheme.space2
+    }
+
     static var collapsedCardsHeight: CGFloat {
-        cardHeight * collapsedVisibleCards + OnTrackTheme.space2 * collapsedVisibleGaps
+        cardHeight * collapsedVisibleCards
     }
 
     static var collapsedListViewportHeight: CGFloat {
-        collapsedCardsHeight + OnTrackTheme.space3
+        collapsedCardsHeight
     }
 }
 
@@ -1751,7 +1760,7 @@ private struct TrainBoardingPanel: View {
 
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space4)
-                .padding(.bottom, OnTrackTheme.space4)
+                .padding(.bottom, TrainPanelLayout.expectedSectionBottomPadding)
 
             Rectangle()
                 .fill(OnTrackTheme.border)
@@ -1766,8 +1775,6 @@ private struct TrainBoardingPanel: View {
             ) { train in
                 onSelect(train)
             }
-            .padding(.horizontal, OnTrackTheme.space4)
-            .padding(.vertical, OnTrackTheme.space3)
             .frame(height: trainListViewportHeight, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .top)
             .clipped()
@@ -1782,11 +1789,11 @@ private struct TrainBoardingPanel: View {
     }
 
     private var expectedBoardingSection: some View {
-        VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(AppText.expectedBoarding)
                 .font(OnTrackFont.label)
                 .foregroundStyle(OnTrackTheme.dimText)
-                .frame(height: OnTrackTheme.space5, alignment: .leading)
+                .frame(height: TrainPanelLayout.expectedHeaderHeight, alignment: .bottomLeading)
 
             HStack(spacing: OnTrackTheme.space2) {
                 Text(boardingSummary)
@@ -1868,7 +1875,7 @@ private struct TrainBoardingPanel: View {
     }
 
     private var trainListContentViewportHeight: CGFloat {
-        trainListContentHeight + OnTrackTheme.space6
+        trainListContentHeight
     }
 
     private func panelHeight(for translationY: CGFloat) -> CGFloat {
@@ -1881,7 +1888,7 @@ private struct TrainBoardingPanel: View {
 
     private var trainListContentHeight: CGFloat {
         if isLoading && trains.isEmpty {
-            return TrainPanelLayout.cardHeight * 3 + OnTrackTheme.space2 * 2
+            return TrainPanelLayout.cardHeight * 3
         }
 
         if !canLoadSchedule || trains.isEmpty {
@@ -1889,7 +1896,6 @@ private struct TrainBoardingPanel: View {
         }
 
         return CGFloat(trains.count) * TrainPanelLayout.cardHeight
-            + CGFloat(max(0, trains.count - 1)) * OnTrackTheme.space2
     }
 
     private var panelDragGesture: some Gesture {
@@ -2179,10 +2185,14 @@ private struct PanelEmptyState: View {
 
 private struct SkeletonTrainCard: View {
     var body: some View {
-        RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
+        Rectangle()
             .fill(OnTrackTheme.panel)
-            .onTrackSurfaceRing()
-            .frame(height: 64)
+            .frame(height: TrainPanelLayout.cardHeight)
+            .overlay(alignment: .bottom) {
+                Rectangle()
+                    .fill(OnTrackTheme.border)
+                    .frame(height: 1)
+            }
             .opacity(0.7)
     }
 }
