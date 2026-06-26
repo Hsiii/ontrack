@@ -1,16 +1,13 @@
-<h1 align="center">OnTrack</h1>
-
-<p align="center">
-  <a href="https://ontrack.hsichen.dev">ontrack.hsichen.dev</a> — a Taiwan Railway app for people who are tired of using train apps. | <a href="./README.zh.md">繁體中文</a>
-</p>
-
-<p align="center">
-  <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/apps/web/public/demo.png" width="280" />
-</p>
+<div align="center">
+  <h1>OnTrack</h1>
+  <p>Check train status with zero taps.</p>
+  <p>
+    <img alt="demo" src="https://raw.githubusercontent.com/Hsiii/OnTrack/main/apps/web/public/demo.png" width="280" />
+  </p>
+  <a href="./README.zh.md">繁體中文</a>  
+</div>
 
 ## Features
-
-Check train status and arrival time with zero taps:
 
 - Real-time train schedules from [TDX](https://tdx.transportdata.tw/)
 - Auto-detect nearest start station
@@ -18,9 +15,11 @@ Check train status and arrival time with zero taps:
 - Auto-select the next departing train while taking delays into account
 - Quick destination and arrival time sharing
 
-## Install as an App
+## Install
 
 ### iOS (Safari)
+
+(App Store release comming soon)
 
 1. Open the app in Safari on [ontrack.hsichen.dev](https://ontrack.hsichen.dev/)
 2. Tap the share button (bottom center)
