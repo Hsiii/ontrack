@@ -80,7 +80,6 @@ struct ContentView: View {
     @State private var originSource: OriginSelectionSource = .manual
     @State private var destinationSource: DestinationSelectionSource = .cached
     @State private var activeSheet: ActiveSheet? = .trainPanel
-    @State private var trainPanelDetent: PresentationDetent = TrainPanelLayout.collapsedDetent(rowCount: 1)
     @State private var suppressTrainPanelRestore = false
 
     private let scheduleRefreshTimer = Timer.publish(
@@ -259,12 +258,6 @@ struct ContentView: View {
             .task(id: scheduleTaskID) {
                 await loadSchedule()
             }
-            .onChange(of: scheduleTaskID) { _, _ in
-                trainPanelDetent = trainPanelCollapsedDetent
-            }
-            .onChange(of: trainPanelRowCount) { _, _ in
-                trainPanelDetent = trainPanelCollapsedDetent
-            }
             .onReceive(scheduleRefreshTimer) { _ in
                 Task {
                     await loadSchedule()
@@ -327,8 +320,7 @@ struct ContentView: View {
                 onSelect: { selectedTrain = $0 }
             )
             .presentationDetents(
-                [trainPanelCollapsedDetent, .large],
-                selection: $trainPanelDetent
+                [trainPanelCollapsedDetent]
             )
             .presentationDragIndicator(.hidden)
             .presentationBackground(OnTrackTheme.panel)
@@ -408,7 +400,6 @@ struct ContentView: View {
                 return
             }
 
-            trainPanelDetent = trainPanelCollapsedDetent
             activeSheet = .trainPanel
         }
     }
