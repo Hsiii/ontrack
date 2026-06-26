@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RefreshCw, Settings } from 'lucide-react';
 
 import './App.css';
 
-import { api } from './api/client';
+import { api, isShowcaseMode } from './api/client';
 import { IOSInstallPrompt } from './components/IOSInstallPrompt';
 import {
     SettingsSheet,
@@ -22,6 +22,7 @@ import {
     type TimeSelection,
 } from './components/TimeSelector';
 import { TrainBoardingPanel } from './components/TrainBoardingPanel';
+import { storyStations } from './fixtures/storyFixtures';
 import { usePersistence } from './hooks/usePersistence';
 import { useI18n } from './i18n/useI18n';
 import type { Station, TrainInfo } from './types';
@@ -95,6 +96,18 @@ function setBrowserThemeColor(mode: 'light' | 'dark') {
         ?.setAttribute('content', THEME_COLOR_BY_MODE[mode]);
 }
 
+function getShowcaseTimeSelection(): TimeSelection {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+
+    return {
+        mode: 'departure',
+        dateDigits: `${month}${day}`,
+        timeDigits: '0910',
+    };
+}
+
 function App() {
     const { t, language } = useI18n();
     const {
@@ -120,6 +133,7 @@ function App() {
         useState<AppearanceMode>('light');
     const [shareMessageFormat, setShareMessageFormat] =
         useState<ShareMessageFormat>('arrivalOnly');
+    const hasAppliedShowcaseRouteRef = useRef(false);
 
     useEffect(() => {
         api.getStations()
@@ -133,6 +147,14 @@ function App() {
     }, [t]);
 
     useEffect(() => {
+        if (isShowcaseMode()) {
+            const timer = window.setTimeout(() => {
+                setTimeSelection(getShowcaseTimeSelection());
+            }, 0);
+
+            return () => window.clearTimeout(timer);
+        }
+
         const timer = window.setTimeout(() => {
             setTimeSelection((currentTimeSelection) =>
                 currentTimeSelection.dateDigits.length === 4 &&
@@ -144,6 +166,21 @@ function App() {
 
         return () => window.clearTimeout(timer);
     }, []);
+
+    useEffect(() => {
+        if (!isShowcaseMode() || hasAppliedShowcaseRouteRef.current) {
+            return;
+        }
+
+        hasAppliedShowcaseRouteRef.current = true;
+        const timer = window.setTimeout(() => {
+            setOriginId(storyStations[0].id);
+            setDestId(storyStations[2].id);
+            setAutoDetectOrigin(true);
+        }, 0);
+
+        return () => window.clearTimeout(timer);
+    }, [setAutoDetectOrigin, setDestId, setOriginId]);
 
     useEffect(() => {
         const timer = window.setTimeout(() => {

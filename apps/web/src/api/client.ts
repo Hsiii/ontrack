@@ -1,3 +1,4 @@
+import { storySchedule, storyStations } from '../fixtures/storyFixtures';
 import type { ScheduleResponse, Station } from '../types';
 
 // In-flight request cache to prevent duplicate simultaneous requests
@@ -6,6 +7,14 @@ const inflightRequests = new Map<string, Promise<unknown>>();
 // Client-side cache for stations (rarely change, cache for 24 hours)
 let stationsCache: { data: Station[]; expires: number } | null = null;
 const STATIONS_CACHE_TTL = 24 * 60 * 60 * 1000; // 24 hours
+
+export function isShowcaseMode() {
+    return (
+        process.env.NODE_ENV !== 'production' &&
+        typeof window !== 'undefined' &&
+        new URLSearchParams(window.location.search).has('showcase')
+    );
+}
 
 async function fetchJson<T>(url: string, retryCount = 0): Promise<T> {
     // Check if there's already an in-flight request for this URL
@@ -50,6 +59,10 @@ async function fetchJson<T>(url: string, retryCount = 0): Promise<T> {
 
 export const api = {
     getStations: async (): Promise<Station[]> => {
+        if (isShowcaseMode()) {
+            return storyStations;
+        }
+
         const now = Date.now();
 
         // Return cached data if still valid
@@ -70,6 +83,10 @@ export const api = {
         date?: string,
         options: { refreshLive?: boolean } = {}
     ) => {
+        if (isShowcaseMode()) {
+            return storySchedule;
+        }
+
         const params = new URLSearchParams({ origin, dest });
         if (date) params.append('date', date);
         if (options.refreshLive) params.append('refreshLive', '1');
