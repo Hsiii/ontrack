@@ -9,6 +9,7 @@
     "scripts": {
         "dev": "bun run --filter @ontrack/web dev",
         "build": "bun run --filter @ontrack/web build && tsc -p apps/worker/tsconfig.json",
+        "deploy": "bun run build && wrangler deploy --config apps/worker/wrangler.jsonc",
         "ios": "scripts/ios-run-device.sh",
         "ios:mock": "scripts/ios-run-mock-device.sh",
         "ios:check": "scripts/ios-check.sh",
