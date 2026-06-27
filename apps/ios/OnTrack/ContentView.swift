@@ -1354,7 +1354,7 @@ private struct TrainCard: View {
         case .delayed:
             OnTrackTheme.danger
         case .onTime:
-            OnTrackTheme.success
+            OnTrackTheme.primary
         case .cancelled, .unknown:
             OnTrackTheme.dimText
         }
@@ -1411,7 +1411,7 @@ private struct TrainCard: View {
             )
             .contentShape(Rectangle())
             .onTrackSurfaceRing(
-                ringColor: isSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+                ringColor: OnTrackTheme.border
             )
         }
         .buttonStyle(.plain)
@@ -1903,20 +1903,11 @@ private struct TrainBoardingPanel: View {
             .layoutPriority(1)
 
             ShareLink(item: message ?? "") {
-                HStack(spacing: OnTrackTheme.space2) {
-                    Image(systemName: "square.and.arrow.up")
-                        .font(OnTrackFont.symbol)
-
-                    Text(AppText.shareVia)
-                        .font(OnTrackFont.action)
-                }
-                .foregroundStyle(message == nil ? OnTrackTheme.dimText : OnTrackTheme.primaryContrast)
-                .padding(.horizontal, OnTrackTheme.space4)
-                .frame(minHeight: OnTrackTheme.controlHeight)
-                .background(
-                    message == nil ? OnTrackTheme.border : OnTrackTheme.primary,
-                    in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl)
-                )
+                Image(systemName: "square.and.arrow.up")
+                    .font(OnTrackFont.icon)
+                    .foregroundStyle(message == nil ? OnTrackTheme.dimText : OnTrackTheme.primary)
+                    .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
+                    .contentShape(Rectangle())
             }
             .disabled(message == nil)
             .buttonStyle(OnTrackPressButtonStyle())
@@ -2368,7 +2359,6 @@ private enum OnTrackTheme {
     }
 
     static let primary = Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
-    static let primaryContrast = Color.white
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
 
