@@ -58,24 +58,6 @@ export default function SupportPage() {
                 <p>We typically respond within 1-3 business days.</p>
             </section>
 
-            <section className={styles.section} aria-labelledby='ios-app'>
-                <h2 id='ios-app'>iOS App Availability</h2>
-                <div className={styles.callout}>
-                    <p>
-                        The native iOS app is currently under App Store review.
-                        Until it is approved and available on the App Store, use
-                        the web app at{' '}
-                        <a
-                            className={styles.inlineLink}
-                            href='https://ontrack.hsichen.dev/'
-                        >
-                            ontrack.hsichen.dev
-                        </a>
-                        .
-                    </p>
-                </div>
-            </section>
-
             <section className={styles.section} aria-labelledby='faq'>
                 <h2 id='faq'>Frequently Asked Questions</h2>
                 <div className={styles.faqList}>
