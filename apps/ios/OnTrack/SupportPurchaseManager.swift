@@ -8,6 +8,7 @@ final class SupportPurchaseManager: ObservableObject {
     @Published private(set) var supporterProduct: Product?
     @Published private(set) var isSupporter = false
     @Published private(set) var isLoading = false
+    @Published private(set) var thankYouDialogID = 0
     @Published var statusMessage: String?
 
     private var updatesTask: Task<Void, Never>?
@@ -49,7 +50,7 @@ final class SupportPurchaseManager: ObservableObject {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
                 isSupporter = true
-                statusMessage = AppText.supportThanks
+                thankYouDialogID += 1
                 await transaction.finish()
             case .pending:
                 statusMessage = AppText.purchasePending
@@ -124,7 +125,7 @@ final class SupportPurchaseManager: ObservableObject {
 
                 if transaction.productID == Self.supporterProductID {
                     self.isSupporter = true
-                    self.statusMessage = AppText.supportThanks
+                    self.thankYouDialogID += 1
                 }
 
                 await transaction.finish()

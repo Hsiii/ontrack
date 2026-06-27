@@ -18,48 +18,6 @@
     <string>$(MARKETING_VERSION)</string>
     <key>CFBundleVersion</key>
     <string>$(CURRENT_PROJECT_VERSION)</string>
-    <key>CFBundleIcons</key>
-    <dict>
-        <key>CFBundleAlternateIcons</key>
-        <dict>
-            <key>Dark</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array>
-                    <string>AppIconDark</string>
-                </array>
-                <key>UIPrerenderedIcon</key>
-                <false/>
-            </dict>
-            <key>Sage</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array>
-                    <string>AppIconSage</string>
-                </array>
-                <key>UIPrerenderedIcon</key>
-                <false/>
-            </dict>
-            <key>Amethyst</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array>
-                    <string>AppIconAmethyst</string>
-                </array>
-                <key>UIPrerenderedIcon</key>
-                <false/>
-            </dict>
-            <key>Ember</key>
-            <dict>
-                <key>CFBundleIconFiles</key>
-                <array>
-                    <string>AppIconEmber</string>
-                </array>
-                <key>UIPrerenderedIcon</key>
-                <false/>
-            </dict>
-        </dict>
-    </dict>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>OnTrack uses your location to choose the nearest departure station.</string>
     <key>UILaunchScreen</key>

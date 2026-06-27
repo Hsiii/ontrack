@@ -390,12 +390,17 @@ enum AppText {
     static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
     static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }
     static var supportOnTrack: String { isZh ? "支持 OnTrack" : "Support OnTrack" }
-    static var supportOnTrackBody: String {
+    static var supportOnTrackFootnote: String {
         isZh
-            ? "OnTrack 會保持快速、安靜且免費。如果它幫你省下通勤時間，一次性小額支持能幫助持續開發。"
-            : "OnTrack stays fast, calm, and free. If it saves you time, a one-time tip helps keep development going."
+            ? "一次性小額支持能幫助 OnTrack 持續開發。"
+            : "A one-time tip helps keep OnTrack development going."
     }
-    static var supportThanks: String { isZh ? "謝謝你支持 OnTrack。" : "Thanks for supporting OnTrack." }
+    static var supportThanks: String { isZh ? "謝謝你支持 OnTrack" : "Thanks for supporting OnTrack" }
+    static var supportThanksBody: String {
+        isZh
+            ? "你已解鎖 App 圖示，以及 Sage、Amethyst、Ember 主題。"
+            : "You unlocked App Icon options plus the Sage, Amethyst, and Ember themes."
+    }
     static var supported: String { isZh ? "已支持" : "Supported" }
     static var restorePurchases: String { isZh ? "回復購買" : "Restore Purchases" }
     static var purchasePending: String { isZh ? "購買正在等待確認。" : "Purchase is pending confirmation." }

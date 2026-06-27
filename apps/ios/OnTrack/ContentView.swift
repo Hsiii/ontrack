@@ -68,13 +68,13 @@ private enum AppIconSetting: String, CaseIterable, Identifiable {
         case .primary:
             nil
         case .dark:
-            "Dark"
+            "AppIconDark"
         case .sage:
-            "Sage"
+            "AppIconSage"
         case .amethyst:
-            "Amethyst"
+            "AppIconAmethyst"
         case .ember:
-            "Ember"
+            "AppIconEmber"
         }
     }
 
@@ -2041,6 +2041,7 @@ private struct SettingsSheet: View {
     @ObservedObject var purchaseManager: SupportPurchaseManager
 
     @State private var selectedAppIconRaw = AppIconSetting.current.rawValue
+    @State private var showsSupportThanks = false
 
     var body: some View {
         GeometryReader { proxy in
@@ -2055,6 +2056,14 @@ private struct SettingsSheet: View {
         .presentationBackground(OnTrackTheme.panel)
         .tint(OnTrackTheme.primary)
         .preferredColorScheme(appearanceSetting.preferredColorScheme)
+        .onChange(of: purchaseManager.thankYouDialogID) { _, dialogID in
+            showsSupportThanks = dialogID > 0
+        }
+        .alert(AppText.supportThanks, isPresented: $showsSupportThanks) {
+            Button(AppText.done, role: .cancel) {}
+        } message: {
+            Text(AppText.supportThanksBody)
+        }
     }
 
     private func content(topSafeAreaInset: CGFloat, bottomSafeAreaInset: CGFloat) -> some View {
@@ -2367,45 +2376,27 @@ private struct SettingsSupportGroup: View {
     var body: some View {
         SettingsOptionGroup(title: AppText.supportOnTrack) {
             VStack(alignment: .leading, spacing: OnTrackTheme.space3) {
-                Text(purchaseManager.isSupporter ? AppText.supportThanks : AppText.supportOnTrackBody)
-                    .font(OnTrackFont.body)
-                    .foregroundStyle(OnTrackTheme.dimText)
-                    .fixedSize(horizontal: false, vertical: true)
-
-                HStack(spacing: OnTrackTheme.space3) {
-                    Button {
+                VStack(spacing: 0) {
+                    SettingsActionButton(
+                        title: purchaseTitle,
+                        systemName: purchaseManager.isSupporter ? "checkmark.circle" : "heart",
+                        isLoading: purchaseManager.isLoading,
+                        isDisabled: purchaseManager.isSupporter || purchaseManager.isLoading
+                    ) {
                         Task {
                             await purchaseManager.purchaseSupporterPack()
                         }
-                    } label: {
-                        HStack(spacing: OnTrackTheme.space2) {
-                            if purchaseManager.isLoading {
-                                ProgressView()
-                                    .controlSize(.small)
-                                    .tint(OnTrackTheme.panel)
-                            }
-
-                            Text(purchaseTitle)
-                                .font(OnTrackFont.control)
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.82)
-                        }
-                        .foregroundStyle(OnTrackTheme.panel)
-                        .padding(.horizontal, OnTrackTheme.space4)
-                        .frame(height: OnTrackTheme.controlHeight)
-                        .background(OnTrackTheme.primary, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl))
                     }
-                    .buttonStyle(OnTrackPressButtonStyle())
-                    .disabled(purchaseManager.isSupporter || purchaseManager.isLoading)
 
-                    Button(AppText.restorePurchases) {
+                    SettingsActionButton(
+                        title: AppText.restorePurchases,
+                        systemName: "arrow.clockwise",
+                        isDisabled: purchaseManager.isLoading
+                    ) {
                         Task {
                             await purchaseManager.restorePurchases()
                         }
                     }
-                    .font(OnTrackFont.control)
-                    .foregroundStyle(OnTrackTheme.dimText)
-                    .disabled(purchaseManager.isLoading)
                 }
 
                 if let statusMessage = purchaseManager.statusMessage {
@@ -2413,9 +2404,15 @@ private struct SettingsSupportGroup: View {
                         .font(OnTrackFont.caption)
                         .foregroundStyle(OnTrackTheme.dimText)
                 }
+
+                if !purchaseManager.isSupporter {
+                    Text(AppText.supportOnTrackFootnote)
+                        .font(OnTrackFont.caption)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
             }
-            .padding(.horizontal, OnTrackTheme.space4)
-            .padding(.vertical, OnTrackTheme.space3)
+            .padding(.vertical, OnTrackTheme.space2)
         }
     }
 
@@ -2429,6 +2426,47 @@ private struct SettingsSupportGroup: View {
         }
 
         return AppText.leaveTip(price: product.displayPrice)
+    }
+}
+
+private struct SettingsActionButton: View {
+    let title: String
+    let systemName: String
+    var isLoading = false
+    var isDisabled = false
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: OnTrackTheme.space3) {
+                Group {
+                    if isLoading {
+                        ProgressView()
+                            .controlSize(.small)
+                            .tint(OnTrackTheme.dimText)
+                    } else {
+                        Image(systemName: systemName)
+                            .font(OnTrackFont.symbol)
+                            .foregroundStyle(OnTrackTheme.dimText)
+                    }
+                }
+                .frame(width: OnTrackTheme.space6, height: OnTrackTheme.space6)
+
+                Text(title)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(isDisabled ? OnTrackTheme.dimText : OnTrackTheme.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+
+                Spacer()
+            }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: OnTrackTheme.controlHeight)
+            .contentShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl))
+        }
+        .buttonStyle(OnTrackPressButtonStyle())
+        .disabled(isDisabled)
     }
 }
 
