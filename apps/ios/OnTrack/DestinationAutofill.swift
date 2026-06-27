@@ -328,6 +328,10 @@ private struct DestinationAutofillConfig: Decodable {
     let priorStationNames: [String]
 
     static func load() -> DestinationAutofillConfig {
+        bundledConfig() ?? fallback
+    }
+
+    private static func bundledConfig() -> DestinationAutofillConfig? {
         for resourceName in ["config", "destination-autofill", "destination-autofill-config"] {
             guard let url = Bundle.main.url(forResource: resourceName, withExtension: "json"),
                   let config = decode(url: url)
@@ -338,7 +342,9 @@ private struct DestinationAutofillConfig: Decodable {
             return config
         }
 
-        fatalError("Missing bundled destination autofill JSON config")
+        return Bundle.main.urls(forResourcesWithExtension: "json", subdirectory: nil)?
+            .compactMap { decode(url: $0) }
+            .first
     }
 
     func weights(originSamples: Int, globalSamples: Int) -> ScoreWeights {
@@ -360,6 +366,52 @@ private struct DestinationAutofillConfig: Decodable {
 
         return try? JSONDecoder().decode(DestinationAutofillConfig.self, from: data)
     }
+
+    private static let fallback = DestinationAutofillConfig(
+        maxFrequentDestinations: 24,
+        decayDays: 45,
+        hourBuckets: [
+            HourBucket(key: "0-5", startHour: 0, endHour: 5),
+            HourBucket(key: "6-9", startHour: 6, endHour: 9),
+            HourBucket(key: "10-15", startHour: 10, endHour: 15),
+            HourBucket(key: "16-19", startHour: 16, endHour: 19),
+            HourBucket(key: "20-23", startHour: 20, endHour: 23)
+        ],
+        scoreProfiles: ScoreProfiles(
+            origin: ScoreProfile(
+                minOriginSamples: 3,
+                minGlobalSamples: nil,
+                weights: ScoreWeights(userOD: 0.55, timeContext: 0.2, userGlobal: 0.18, prior: 0.07)
+            ),
+            global: ScoreProfile(
+                minOriginSamples: nil,
+                minGlobalSamples: 3,
+                weights: ScoreWeights(userOD: 0.2, timeContext: 0.15, userGlobal: 0.5, prior: 0.15)
+            ),
+            coldStart: ScoreProfile(
+                minOriginSamples: nil,
+                minGlobalSamples: nil,
+                weights: ScoreWeights(userOD: 0, timeContext: 0, userGlobal: 0.35, prior: 0.65)
+            )
+        ),
+        unknownStationPrior: UnknownStationPrior(base: 0.1, indexPenalty: 0.002),
+        priorStationNames: [
+            "新竹",
+            "臺北",
+            "台北",
+            "板橋",
+            "桃園",
+            "臺中",
+            "台中",
+            "臺南",
+            "台南",
+            "高雄",
+            "新左營",
+            "松山",
+            "彰化",
+            "嘉義"
+        ]
+    )
 }
 
 private struct HourBucket: Decodable {
