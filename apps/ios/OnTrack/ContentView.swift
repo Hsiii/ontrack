@@ -1395,7 +1395,7 @@ private struct TrainCard: View {
             .frame(maxWidth: .infinity)
             .frame(height: TrainPanelLayout.cardHeight)
             .background(
-                isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
+                isSelected ? OnTrackTheme.primarySubtle : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             )
             .contentShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel))
@@ -2119,8 +2119,13 @@ private struct SettingsOptionButton: View {
                 }
             }
             .padding(.horizontal, OnTrackTheme.space4)
+            .frame(maxWidth: .infinity, alignment: .leading)
             .frame(minHeight: OnTrackTheme.controlHeight)
-            .contentShape(Rectangle())
+            .background(
+                isSelected ? OnTrackTheme.primarySubtle : Color.clear,
+                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl))
         }
         .buttonStyle(OnTrackPressButtonStyle())
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
@@ -2385,6 +2390,13 @@ private enum OnTrackTheme {
     }
 
     static let primary = Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+    static var primarySubtle: Color {
+        adaptiveColor(
+            light: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.12),
+            dark: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.20)
+        )
+    }
+
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
 
