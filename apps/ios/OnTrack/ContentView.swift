@@ -1955,105 +1955,123 @@ private struct TrainBoardingPanel: View {
 private struct SettingsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
+    private let headerHeight = OnTrackTheme.space5 + OnTrackTheme.iconButtonSize + OnTrackTheme.routeDividerHeight
+
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
 
     var body: some View {
         GeometryReader { proxy in
-            content(bottomSafeAreaInset: proxy.safeAreaInsets.bottom)
+            content(
+                topSafeAreaInset: proxy.safeAreaInsets.top,
+                bottomSafeAreaInset: proxy.safeAreaInsets.bottom
+            )
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
         }
         .presentationDetents([.large])
         .presentationDragIndicator(.automatic)
         .presentationBackground(OnTrackTheme.panel)
         .tint(OnTrackTheme.primary)
+        .preferredColorScheme(appearanceSetting.preferredColorScheme)
     }
 
-    private func content(bottomSafeAreaInset: CGFloat) -> some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                settingsHeader
-
-                SettingsOptionGroup(title: AppText.language) {
-                    ForEach(AppLanguageSetting.allCases) { setting in
-                        SettingsOptionButton(
-                            title: languageTitle(setting),
-                            isSelected: languageCode == setting.rawValue
-                        ) {
-                            languageCode = setting.rawValue
+    private func content(topSafeAreaInset: CGFloat, bottomSafeAreaInset: CGFloat) -> some View {
+        ZStack(alignment: .top) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
+                    SettingsOptionGroup(title: AppText.language) {
+                        ForEach(AppLanguageSetting.allCases) { setting in
+                            SettingsOptionButton(
+                                title: languageTitle(setting),
+                                isSelected: languageCode == setting.rawValue
+                            ) {
+                                languageCode = setting.rawValue
+                            }
                         }
                     }
-                }
 
-                SettingsDivider()
+                    SettingsDivider()
 
-                SettingsOptionGroup(title: AppText.appearance) {
-                    ForEach(AppAppearanceSetting.allCases) { setting in
-                        SettingsOptionButton(
-                            title: appearanceTitle(setting),
-                            isSelected: appearanceRaw == setting.rawValue
-                        ) {
-                            appearanceRaw = setting.rawValue
+                    SettingsOptionGroup(title: AppText.appearance) {
+                        ForEach(AppAppearanceSetting.allCases) { setting in
+                            SettingsOptionButton(
+                                title: appearanceTitle(setting),
+                                isSelected: appearanceRaw == setting.rawValue
+                            ) {
+                                appearanceRaw = setting.rawValue
+                            }
                         }
                     }
-                }
 
-                SettingsDivider()
+                    SettingsDivider()
 
-                SettingsOptionGroup(title: AppText.defaultMessageFormat) {
-                    ForEach(ShareMessageFormat.allCases) { format in
-                        SettingsOptionButton(
-                            title: format.title,
-                            isSelected: messageFormatRaw == format.rawValue
-                        ) {
-                            messageFormatRaw = format.rawValue
+                    SettingsOptionGroup(title: AppText.defaultMessageFormat) {
+                        ForEach(ShareMessageFormat.allCases) { format in
+                            SettingsOptionButton(
+                                title: format.title,
+                                isSelected: messageFormatRaw == format.rawValue
+                            ) {
+                                messageFormatRaw = format.rawValue
+                            }
                         }
                     }
+
+                    SettingsDivider()
+
+                    SettingsOptionGroup(title: AppText.links) {
+                        SettingsLinkRow(
+                            title: AppText.support,
+                            systemName: "questionmark.circle",
+                            url: supportURL
+                        )
+
+                        SettingsLinkRow(
+                            title: AppText.privacyPolicy,
+                            systemName: "hand.raised",
+                            url: privacyURL
+                        )
+                    }
                 }
-
-                SettingsDivider()
-
-                SettingsOptionGroup(title: AppText.links) {
-                    SettingsLinkRow(
-                        title: AppText.support,
-                        systemName: "questionmark.circle",
-                        url: supportURL
-                    )
-
-                    SettingsLinkRow(
-                        title: AppText.privacyPolicy,
-                        systemName: "hand.raised",
-                        url: privacyURL
-                    )
-                }
+                .padding(.horizontal, OnTrackTheme.space5)
+                .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
+                .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
             }
-            .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.top, OnTrackTheme.space6 + OnTrackTheme.space2)
-            .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+            .scrollIndicators(.hidden)
+
+            settingsHeader(topSafeAreaInset: topSafeAreaInset)
         }
-        .scrollIndicators(.hidden)
         .background(OnTrackTheme.panel)
     }
 
-    private var settingsHeader: some View {
-        HStack {
-            Text(AppText.settings)
-                .font(OnTrackFont.title)
-                .foregroundStyle(OnTrackTheme.text)
-                .frame(maxWidth: .infinity, alignment: .leading)
+    private func settingsHeader(topSafeAreaInset: CGFloat) -> some View {
+        VStack(spacing: 0) {
+            HStack {
+                Text(AppText.settings)
+                    .font(OnTrackFont.title)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            Button(action: dismiss.callAsFunction) {
-                Image(systemName: "xmark")
-                    .font(OnTrackFont.symbol)
-                    .foregroundStyle(OnTrackTheme.dimText)
-                    .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
-                    .contentShape(Rectangle())
+                Button(action: dismiss.callAsFunction) {
+                    Image(systemName: "xmark")
+                        .font(OnTrackFont.symbol)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(OnTrackPressButtonStyle())
+                .accessibilityLabel(AppText.cancel)
             }
-            .buttonStyle(OnTrackPressButtonStyle())
-            .accessibilityLabel(AppText.cancel)
+            .padding(.top, topSafeAreaInset + OnTrackTheme.space5)
+            .padding(.horizontal, OnTrackTheme.space5)
+
+            SettingsDivider()
         }
-        .padding(.bottom, OnTrackTheme.space4)
+        .background(OnTrackTheme.panel)
+    }
+
+    private var appearanceSetting: AppAppearanceSetting {
+        AppAppearanceSetting(rawValue: appearanceRaw) ?? AppAppearanceSetting.current
     }
 
     private func languageTitle(_ setting: AppLanguageSetting) -> String {
