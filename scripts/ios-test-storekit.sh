@@ -7,11 +7,11 @@ STOREKIT_CONFIG="$IOS_ROOT_DIR/apps/ios/OnTrack/OnTrack.storekit"
 SCHEME_PATH="$IOS_ROOT_DIR/apps/ios/OnTrack.xcodeproj/xcshareddata/xcschemes/OnTrack.xcscheme"
 PRODUCT_ID="ontrack.supporter_pack"
 
-OPEN_XCODE=0
-if [[ "${1:-}" == "--open" ]]; then
-    OPEN_XCODE=1
+OPEN_XCODE=1
+if [[ "${1:-}" == "--no-open" ]]; then
+    OPEN_XCODE=0
 elif [[ $# -gt 0 ]]; then
-    ios_die "Usage: scripts/ios-test-storekit.sh [--open]"
+    ios_die "Usage: scripts/ios-test-storekit.sh [--no-open]"
 fi
 
 [[ -f "$STOREKIT_CONFIG" ]] || ios_die "Missing StoreKit config: $STOREKIT_CONFIG"
@@ -31,11 +31,13 @@ echo "  Config:  $STOREKIT_CONFIG"
 echo "  Scheme:  $SCHEME_PATH"
 echo
 echo "To test on iPhone:"
-echo "  1. Open $IOS_PROJECT_PATH"
+echo "  1. Use the opened Xcode project"
 echo "  2. Select the OnTrack scheme and your iPhone"
 echo "  3. Run from Xcode"
 echo "  4. Open Settings > Support OnTrack"
 
 if [[ "$OPEN_XCODE" == "1" ]]; then
+    echo
+    echo "Opening $IOS_PROJECT_PATH..."
     open "$IOS_PROJECT_PATH"
 fi
