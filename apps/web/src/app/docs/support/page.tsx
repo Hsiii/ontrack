@@ -3,13 +3,28 @@ import type { Metadata } from 'next';
 import { LegalPage, legalPageStyles as styles } from '../../LegalPage';
 
 const SUPPORT_EMAIL = 'its.hsichen@gmail.com';
+const SUPPORT_URL = 'https://ontrack.hsichen.dev/docs/support';
+const APP_DESCRIPTION =
+    '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 
 export const metadata: Metadata = {
     title: 'OnTrack Support',
-    description:
-        'Get help with OnTrack, contact support, and read answers to common questions about station detection, train times, sharing, and bug reports.',
+    description: APP_DESCRIPTION,
     alternates: {
-        canonical: 'https://ontrack.hsichen.dev/docs/support',
+        canonical: SUPPORT_URL,
+    },
+    openGraph: {
+        title: 'OnTrack Support',
+        description: APP_DESCRIPTION,
+        url: SUPPORT_URL,
+        siteName: 'OnTrack',
+        locale: 'zh_TW',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary',
+        title: 'OnTrack Support',
+        description: APP_DESCRIPTION,
     },
 };
 

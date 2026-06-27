@@ -3,13 +3,28 @@ import type { Metadata } from 'next';
 import { LegalPage, legalPageStyles as styles } from '../../LegalPage';
 
 const SUPPORT_EMAIL = 'its.hsichen@gmail.com';
+const PRIVACY_URL = 'https://ontrack.hsichen.dev/docs/privacy';
+const APP_DESCRIPTION =
+    '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 
 export const metadata: Metadata = {
     title: 'Privacy Policy | OnTrack',
-    description:
-        'Read how OnTrack handles location, schedule requests, route-demand aggregates, local preferences, and analytics.',
+    description: APP_DESCRIPTION,
     alternates: {
-        canonical: 'https://ontrack.hsichen.dev/docs/privacy',
+        canonical: PRIVACY_URL,
+    },
+    openGraph: {
+        title: 'Privacy Policy | OnTrack',
+        description: APP_DESCRIPTION,
+        url: PRIVACY_URL,
+        siteName: 'OnTrack',
+        locale: 'zh_TW',
+        type: 'website',
+    },
+    twitter: {
+        card: 'summary',
+        title: 'Privacy Policy | OnTrack',
+        description: APP_DESCRIPTION,
     },
 };
 
