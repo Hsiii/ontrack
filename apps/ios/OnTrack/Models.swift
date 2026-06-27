@@ -433,6 +433,41 @@ enum AppText {
             : "Could not check your App Store purchases right now. Please try again later."
     }
     static var noPurchasesRestored: String { isZh ? "沒有可恢復的購買。" : "No purchases to restore." }
+    static var apiInvalidRequest: String {
+        isZh
+            ? "OnTrack 無法建立這次請求。請重新選擇車站後再試。"
+            : "OnTrack could not build this request. Choose the stations again and try once more."
+    }
+    static var apiInvalidResponse: String {
+        isZh
+            ? "OnTrack 伺服器回傳了無法讀取的回應，請稍後再試。"
+            : "OnTrack returned a response the app could not read. Please try again later."
+    }
+    static var apiInvalidData: String {
+        isZh
+            ? "OnTrack 收到的時刻表資料格式不正確，請稍後再試。"
+            : "OnTrack received schedule data in an unexpected format. Please try again later."
+    }
+    static var apiNetworkUnavailable: String {
+        isZh
+            ? "無法連線到 OnTrack。請檢查網路後再試一次。"
+            : "Could not reach OnTrack. Check your connection and try again."
+    }
+    static var apiServiceUnavailable: String {
+        isZh
+            ? "OnTrack 鐵路資料暫時忙碌，請稍後再試。"
+            : "OnTrack railway data is temporarily at capacity. Please try again later."
+    }
+    static var apiUpstreamUnavailable: String {
+        isZh
+            ? "台鐵資料暫時無法使用。資料服務恢復後 OnTrack 就會正常運作。"
+            : "Taiwan railway data is temporarily unavailable. OnTrack will work again when the data service recovers."
+    }
+    static var apiSystemDown: String {
+        isZh
+            ? "OnTrack 系統暫時無法取得鐵路資料，請稍後再試。"
+            : "OnTrack cannot get railway data right now. Please try again later."
+    }
     static var links: String { isZh ? "連結" : "Links" }
     static var support: String { isZh ? "支援" : "Support" }
     static var privacyPolicy: String { isZh ? "隱私權" : "Privacy Policy" }
@@ -455,6 +490,22 @@ enum AppText {
 
     static func plannedBoardingMessage(type: String, number: String, time: String, station: String) -> String {
         isZh ? "\(expectedBoarding)\(type) \(number)，\(time)到\(station)" : "\(expectedBoarding) \(type) \(number), \(time) to \(station)"
+    }
+
+    static func apiRequestFailed(statusCode: Int) -> String {
+        isZh
+            ? "OnTrack 請求失敗（\(statusCode)），請稍後再試。"
+            : "OnTrack request failed (\(statusCode)). Please try again later."
+    }
+
+    static func apiServerMessage(_ message: String, requestId: String?) -> String {
+        guard let requestId, !requestId.isEmpty else {
+            return message
+        }
+
+        return isZh
+            ? "\(message)\n支援代碼：\(requestId)"
+            : "\(message)\nSupport code: \(requestId)"
     }
 
     static func trainAccessibilityLabel(

@@ -12,6 +12,7 @@ import {
     refreshLiveBoardForCron,
     refreshLiveBoardForManual,
 } from './refresh';
+import { TDXServiceError } from './tdx';
 import type {
     Env,
     LiveDataStatus,
@@ -34,6 +35,14 @@ const LIVE_BOARD_REFRESH_CRONS = new Set([
     '0 0-5,23 * * *',
 ]);
 const DAILY_REFRESH_CRON = '50 19 * * *';
+type ApiErrorCode =
+    | 'bad_request'
+    | 'not_found'
+    | 'unauthorized'
+    | 'service_capacity'
+    | 'upstream_unavailable'
+    | 'service_unavailable'
+    | 'internal_error';
 
 function json(data: unknown, init: ResponseInit = {}) {
     return new Response(JSON.stringify(data), {
@@ -44,6 +53,36 @@ function json(data: unknown, init: ResponseInit = {}) {
             ...init.headers,
         },
     });
+}
+
+function jsonError(
+    code: ApiErrorCode,
+    message: string,
+    status: number,
+    requestId: string,
+    init: ResponseInit = {}
+) {
+    return json(
+        {
+            error: {
+                code,
+                message,
+                requestId,
+            },
+        },
+        {
+            ...init,
+            status,
+        }
+    );
+}
+
+function getRequestId(request: Request) {
+    return (
+        request.headers.get('cf-ray') ??
+        request.headers.get('x-request-id') ??
+        crypto.randomUUID()
+    );
 }
 
 function waitUntilLogged(
@@ -158,27 +197,41 @@ function getLiveDataStatus(
     };
 }
 
-async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
+async function handleSchedule(
+    url: URL,
+    env: Env,
+    ctx: ExecutionContext,
+    requestId: string
+) {
     const origin = url.searchParams.get('origin');
     const dest = url.searchParams.get('dest');
     const date = url.searchParams.get('date');
     const forceLiveRefresh = url.searchParams.get('refreshLive') === '1';
 
     if (!origin || !dest) {
-        return json(
-            { error: 'Missing origin or dest parameters' },
-            { status: 400 }
+        return jsonError(
+            'bad_request',
+            'Choose both an origin and destination, then try again.',
+            400,
+            requestId
         );
     }
 
     if (!isValidStationId(origin) || !isValidStationId(dest)) {
-        return json({ error: 'Invalid station ID format' }, { status: 400 });
+        return jsonError(
+            'bad_request',
+            'One of the selected stations is invalid. Choose the stations again.',
+            400,
+            requestId
+        );
     }
 
     if (date && !isValidDate(date)) {
-        return json(
-            { error: 'Invalid date format. Use YYYY-MM-DD' },
-            { status: 400 }
+        return jsonError(
+            'bad_request',
+            'The selected date is invalid. Choose a date again.',
+            400,
+            requestId
         );
     }
 
@@ -269,14 +322,24 @@ async function handleSchedule(url: URL, env: Env, ctx: ExecutionContext) {
     );
 }
 
-async function handleRefresh(request: Request, env: Env) {
+async function handleRefresh(request: Request, env: Env, requestId: string) {
     if (!env.REFRESH_SECRET) {
-        return json({ error: 'Manual refresh disabled' }, { status: 404 });
+        return jsonError(
+            'not_found',
+            'This OnTrack endpoint is not available.',
+            404,
+            requestId
+        );
     }
 
     const authHeader = request.headers.get('authorization');
     if (authHeader !== `Bearer ${env.REFRESH_SECRET}`) {
-        return json({ error: 'Unauthorized' }, { status: 401 });
+        return jsonError(
+            'unauthorized',
+            'This OnTrack request is not authorized.',
+            401,
+            requestId
+        );
     }
 
     await Promise.all([
@@ -288,6 +351,7 @@ async function handleRefresh(request: Request, env: Env) {
 
 async function handleApi(request: Request, env: Env, ctx: ExecutionContext) {
     const url = new URL(request.url);
+    const requestId = getRequestId(request);
 
     try {
         if (url.pathname === '/api/stations') {
@@ -295,19 +359,57 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext) {
         }
 
         if (url.pathname === '/api/schedule') {
-            return handleSchedule(url, env, ctx);
+            return handleSchedule(url, env, ctx, requestId);
         }
 
         if (url.pathname === '/api/refresh') {
-            return handleRefresh(request, env);
+            return handleRefresh(request, env, requestId);
         }
 
-        return json({ error: 'Not found' }, { status: 404 });
+        return jsonError(
+            'not_found',
+            'This OnTrack endpoint is not available.',
+            404,
+            requestId
+        );
     } catch (error) {
-        console.error('Worker API error:', error);
-        return json(
-            { error: 'Failed to fetch schedule data. Please try again.' },
-            { status: 500 }
+        console.error(
+            JSON.stringify({
+                event: 'worker_api_error',
+                requestId,
+                path: url.pathname,
+                errorName: error instanceof Error ? error.name : typeof error,
+                errorMessage:
+                    error instanceof Error ? error.message : String(error),
+                errorStack: error instanceof Error ? error.stack : undefined,
+            })
+        );
+
+        if (error instanceof TDXServiceError) {
+            if (error.kind === 'capacity') {
+                return jsonError(
+                    'service_capacity',
+                    'OnTrack railway data is temporarily at capacity. Please try again later.',
+                    503,
+                    requestId
+                );
+            }
+
+            if (error.kind === 'upstream') {
+                return jsonError(
+                    'upstream_unavailable',
+                    'Taiwan railway data is temporarily unavailable. OnTrack will work again when the data service recovers.',
+                    503,
+                    requestId
+                );
+            }
+        }
+
+        return jsonError(
+            'service_unavailable',
+            'OnTrack railway data is temporarily unavailable. Please try again later.',
+            503,
+            requestId
         );
     }
 }

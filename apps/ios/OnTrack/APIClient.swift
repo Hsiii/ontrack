@@ -5,6 +5,7 @@ actor APIClient {
 
     private let baseURL = URL(string: "https://ontrack.hsichen.dev")!
     private let decoder = JSONDecoder()
+    private let errorDecoder = JSONDecoder()
 
     func stations() async throws -> [Station] {
 #if DEBUG
@@ -55,17 +56,32 @@ actor APIClient {
     }
 
     private func get<T: Decodable>(_ url: URL) async throws -> T {
-        let (data, response) = try await URLSession.shared.data(from: url)
+        let data: Data
+        let response: URLResponse
+
+        do {
+            (data, response) = try await URLSession.shared.data(from: url)
+        } catch let error as URLError {
+            throw APIError.networkUnavailable(error)
+        }
 
         guard let httpResponse = response as? HTTPURLResponse else {
             throw APIError.invalidResponse
         }
 
         guard (200..<300).contains(httpResponse.statusCode) else {
-            throw APIError.requestFailed(httpResponse.statusCode)
+            let errorResponse = try? errorDecoder.decode(APIErrorResponse.self, from: data)
+            throw APIError.requestFailed(
+                statusCode: httpResponse.statusCode,
+                serverError: errorResponse?.error
+            )
         }
 
-        return try decoder.decode(T.self, from: data)
+        do {
+            return try decoder.decode(T.self, from: data)
+        } catch {
+            throw APIError.invalidData
+        }
     }
 
 #if DEBUG
@@ -80,6 +96,16 @@ actor APIClient {
             || ProcessInfo.processInfo.arguments.contains("--showcase-data")
     }
 #endif
+}
+
+private struct APIErrorResponse: Decodable {
+    let error: APIServerError
+}
+
+struct APIServerError: Decodable {
+    let code: String
+    let message: String
+    let requestId: String?
 }
 
 #if DEBUG
@@ -255,16 +281,56 @@ private enum MockAPI {
 enum APIError: LocalizedError {
     case invalidURL
     case invalidResponse
-    case requestFailed(Int)
+    case invalidData
+    case networkUnavailable(URLError)
+    case requestFailed(statusCode: Int, serverError: APIServerError?)
 
     var errorDescription: String? {
         switch self {
         case .invalidURL:
-            "The request URL could not be built."
+            AppText.apiInvalidRequest
         case .invalidResponse:
-            "The server returned an invalid response."
-        case .requestFailed(let statusCode):
-            "The request failed with status \(statusCode)."
+            AppText.apiInvalidResponse
+        case .invalidData:
+            AppText.apiInvalidData
+        case .networkUnavailable:
+            AppText.apiNetworkUnavailable
+        case .requestFailed(let statusCode, let serverError):
+            requestFailedDescription(statusCode: statusCode, serverError: serverError)
+        }
+    }
+
+    private func requestFailedDescription(
+        statusCode: Int,
+        serverError: APIServerError?
+    ) -> String {
+        if let serverError {
+            return AppText.apiServerMessage(serverMessage(for: serverError), requestId: serverError.requestId)
+        }
+
+        if statusCode == 429 || statusCode == 503 {
+            return AppText.apiServiceUnavailable
+        }
+
+        if statusCode >= 500 {
+            return AppText.apiSystemDown
+        }
+
+        return AppText.apiRequestFailed(statusCode: statusCode)
+    }
+
+    private func serverMessage(for serverError: APIServerError) -> String {
+        switch serverError.code {
+        case "bad_request":
+            return AppText.apiInvalidRequest
+        case "service_capacity":
+            return AppText.apiServiceUnavailable
+        case "upstream_unavailable":
+            return AppText.apiUpstreamUnavailable
+        case "service_unavailable", "internal_error":
+            return AppText.apiSystemDown
+        default:
+            return serverError.message
         }
     }
 }

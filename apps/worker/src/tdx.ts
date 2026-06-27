@@ -6,6 +6,28 @@ const TOKEN_URL =
 let cachedToken: string | null = null;
 let tokenExpiresAt = 0;
 
+export type TDXServiceErrorKind =
+    | 'authentication'
+    | 'capacity'
+    | 'upstream'
+    | 'invalid-response';
+
+export class TDXServiceError extends Error {
+    readonly kind: TDXServiceErrorKind;
+    readonly status: number | null;
+
+    constructor(
+        kind: TDXServiceErrorKind,
+        status: number | null,
+        message: string
+    ) {
+        super(message);
+        this.name = 'TDXServiceError';
+        this.kind = kind;
+        this.status = status;
+    }
+}
+
 function getResponseBytes(response: Response, bodyText?: string) {
     const contentLength = response.headers.get('Content-Length');
     if (contentLength) {
@@ -65,7 +87,9 @@ async function getAccessToken(env: Env): Promise<string | null> {
 
     if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(
+        throw new TDXServiceError(
+            response.status === 429 ? 'capacity' : 'authentication',
+            response.status,
             `Failed to get TDX token: ${response.status} ${errorText}. Refusing Visitor Mode because credentials are configured.`
         );
     }
@@ -76,7 +100,9 @@ async function getAccessToken(env: Env): Promise<string | null> {
     };
 
     if (!data.access_token) {
-        throw new Error(
+        throw new TDXServiceError(
+            'invalid-response',
+            null,
             'TDX token response did not include access_token. Refusing Visitor Mode because credentials are configured.'
         );
     }
@@ -157,7 +183,9 @@ export async function fetchTDXWithCache<T>(
             bytes: getResponseBytes(response, errorBody),
             authenticated: Boolean(token),
         });
-        throw new Error(
+        throw new TDXServiceError(
+            classifyTDXStatus(response.status),
+            response.status,
             `TDX API Error: ${response.status} ${response.statusText} - ${errorBody}`
         );
     }
@@ -189,8 +217,28 @@ export async function fetchTDX<T>(
     const response = await fetchTDXWithCache<T>(env, path, options);
 
     if (!response.data) {
-        throw new Error(`TDX returned no data for ${path}`);
+        throw new TDXServiceError(
+            'invalid-response',
+            null,
+            `TDX returned no data for ${path}`
+        );
     }
 
     return response.data;
+}
+
+function classifyTDXStatus(status: number): TDXServiceErrorKind {
+    if (status === 429) {
+        return 'capacity';
+    }
+
+    if (status === 401 || status === 403) {
+        return 'authentication';
+    }
+
+    if (status >= 500) {
+        return 'upstream';
+    }
+
+    return 'invalid-response';
 }
