@@ -125,6 +125,15 @@
     justify-content: center;
 }
 
+.availabilityNote {
+    max-width: var(--content-prose);
+    margin: calc(var(--space-2) * -1) 0 0;
+    color: var(--color-text-dim);
+    font-size: var(--text-sm);
+    line-height: 1.6;
+    text-wrap: balance;
+}
+
 .primaryCta {
     display: inline-flex;
     min-height: var(--space-10);

@@ -84,9 +84,9 @@ export default function DocsPage() {
                         </Link>
                         <Link
                             className={styles.navTextLink}
-                            href='/docs/support'
+                            href='/docs/support#ios-app'
                         >
-                            iOS
+                            iOS 狀態
                         </Link>
                     </div>
                 </nav>
@@ -103,14 +103,17 @@ export default function DocsPage() {
                             <Link className={styles.primaryCta} href='/'>
                                 網頁版
                             </Link>
-                            {/* TODO: Replace with App Store URL when the listing is live. */}
                             <Link
                                 className={styles.secondaryCta}
-                                href='/docs/support'
+                                href='/docs/support#ios-app'
                             >
-                                iOS App
+                                iOS 審查中
                             </Link>
                         </div>
+                        <p className={styles.availabilityNote}>
+                            iOS App 目前仍在 App Store
+                            審查中；審查完成前，iPhone 使用者請先使用網頁版。
+                        </p>
                     </div>
                 </section>
 

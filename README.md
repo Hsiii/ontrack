@@ -19,9 +19,9 @@
 
 ## Install
 
-Use the iOS app on iPhone. The web app remains available at
-[ontrack.hsichen.dev](https://ontrack.hsichen.dev/) and can still be installed
-on Android.
+The native iOS app is currently under App Store review. Until it is available,
+use the web app at [ontrack.hsichen.dev](https://ontrack.hsichen.dev/) on
+iPhone. The web app can also be installed on Android.
 
 ### Android (Chrome)
 
