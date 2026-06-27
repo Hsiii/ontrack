@@ -294,6 +294,8 @@ struct ContentView: View {
                                     origin: originStation,
                                     destination: destinationStation,
                                     isLoading: isLoadingStations,
+                                    originGlyphColor: OnTrackTheme.routeDot(for: appearanceSetting),
+                                    destinationGlyphColor: OnTrackTheme.routeFlag(for: appearanceSetting),
                                     onPickOrigin: { openStationPicker(.origin) },
                                     onPickDestination: { openStationPicker(.destination) },
                                     onSwap: swapStations
@@ -1161,6 +1163,8 @@ private struct RouteSelectorView: View {
     let origin: Station?
     let destination: Station?
     let isLoading: Bool
+    let originGlyphColor: Color
+    let destinationGlyphColor: Color
     let onPickOrigin: () -> Void
     let onPickDestination: () -> Void
     let onSwap: () -> Void
@@ -1173,6 +1177,7 @@ private struct RouteSelectorView: View {
                 station: origin,
                 isLoading: isLoading,
                 glyph: .origin,
+                glyphColor: originGlyphColor,
                 onTap: onPickOrigin
             )
 
@@ -1192,6 +1197,7 @@ private struct RouteSelectorView: View {
                 station: destination,
                 isLoading: isLoading,
                 glyph: .destination,
+                glyphColor: destinationGlyphColor,
                 trailingAction: AnyView(
                     IconPlainButton(
                         systemName: "arrow.up.arrow.down",
@@ -1295,6 +1301,7 @@ private struct StationTrigger: View {
     let station: Station?
     let isLoading: Bool
     let glyph: RouteGlyphKind
+    let glyphColor: Color
     var trailingAction: AnyView?
     let onTap: () -> Void
 
@@ -1303,6 +1310,7 @@ private struct StationTrigger: View {
         station: Station?,
         isLoading: Bool,
         glyph: RouteGlyphKind,
+        glyphColor: Color,
         trailingAction: AnyView? = nil,
         onTap: @escaping () -> Void
     ) {
@@ -1310,6 +1318,7 @@ private struct StationTrigger: View {
         self.station = station
         self.isLoading = isLoading
         self.glyph = glyph
+        self.glyphColor = glyphColor
         self.trailingAction = trailingAction
         self.onTap = onTap
     }
@@ -1318,7 +1327,7 @@ private struct StationTrigger: View {
         HStack(alignment: .center, spacing: 0) {
             Button(action: onTap) {
                 HStack(spacing: OnTrackTheme.space3) {
-                    RouteGlyph(kind: glyph)
+                    RouteGlyph(kind: glyph, color: glyphColor)
 
                     if isLoading {
                         ProgressView()
@@ -1362,18 +1371,19 @@ private struct StationTrigger: View {
 
 private struct RouteGlyph: View {
     let kind: RouteGlyphKind
+    let color: Color
 
     var body: some View {
         Group {
             switch kind {
             case .origin:
                 Circle()
-                    .fill(OnTrackTheme.routeGlyph)
+                    .fill(color)
                     .frame(width: OnTrackTheme.space2, height: OnTrackTheme.space2)
             case .destination:
                 Image(systemName: "flag.fill")
                     .font(OnTrackFont.routeGlyph)
-                    .foregroundStyle(OnTrackTheme.routeGlyph)
+                    .foregroundStyle(color)
             }
         }
         .frame(width: OnTrackTheme.routeGlyphColumnWidth, height: 24)
@@ -2911,7 +2921,19 @@ private enum OnTrackTheme {
     }
 
     static var dimText: Color {
-        switch AppAppearanceSetting.current {
+        dimText(for: AppAppearanceSetting.current)
+    }
+
+    static func routeDot(for setting: AppAppearanceSetting) -> Color {
+        dimText(for: setting)
+    }
+
+    static func routeFlag(for setting: AppAppearanceSetting) -> Color {
+        primary(for: setting)
+    }
+
+    private static func dimText(for setting: AppAppearanceSetting) -> Color {
+        switch setting {
         case .sage:
             return Color(red: 83 / 255, green: 105 / 255, blue: 74 / 255)
         case .amethyst:
@@ -2929,7 +2951,11 @@ private enum OnTrackTheme {
     }
 
     static var primary: Color {
-        switch AppAppearanceSetting.current {
+        primary(for: AppAppearanceSetting.current)
+    }
+
+    private static func primary(for setting: AppAppearanceSetting) -> Color {
+        switch setting {
         case .sage:
             Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255)
         case .amethyst:
@@ -2940,6 +2966,7 @@ private enum OnTrackTheme {
             Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
         }
     }
+
     static var primarySubtle: Color {
         switch AppAppearanceSetting.current {
         case .sage:
@@ -2956,10 +2983,6 @@ private enum OnTrackTheme {
             light: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.12),
             dark: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.20)
         )
-    }
-
-    static var routeGlyph: Color {
-        primary
     }
 
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
