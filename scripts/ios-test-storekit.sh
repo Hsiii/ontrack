@@ -3,7 +3,8 @@ set -euo pipefail
 
 source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ios-common.sh"
 
-STOREKIT_CONFIG="$IOS_ROOT_DIR/apps/ios/OnTrack/OnTrack.storekit"
+STOREKIT_TEMPLATE="$IOS_ROOT_DIR/apps/ios/OnTrack/OnTrack.storekit"
+STOREKIT_CONFIG="$IOS_ROOT_DIR/apps/ios/OnTrack/OnTrack.local.storekit"
 SCHEME_PATH="$IOS_ROOT_DIR/apps/ios/OnTrack.xcodeproj/xcshareddata/xcschemes/OnTrack.xcscheme"
 PRODUCT_ID="ontrack.supporter_pack"
 
@@ -14,22 +15,47 @@ elif [[ $# -gt 0 ]]; then
     ios_die "Usage: scripts/ios-test-storekit.sh [--no-open]"
 fi
 
-[[ -f "$STOREKIT_CONFIG" ]] || ios_die "Missing StoreKit config: $STOREKIT_CONFIG"
+[[ -f "$STOREKIT_TEMPLATE" ]] || ios_die "Missing StoreKit template: $STOREKIT_TEMPLATE"
 [[ -f "$SCHEME_PATH" ]] || ios_die "Missing shared scheme: $SCHEME_PATH"
+
+python3 - "$STOREKIT_TEMPLATE" "$STOREKIT_CONFIG" <<'PY'
+import json
+import sys
+import uuid
+
+template_path, output_path = sys.argv[1:]
+with open(template_path, "r", encoding="utf-8") as template_file:
+    config = json.load(template_file)
+
+config["identifier"] = f"ONTRACK_LOCAL_STOREKIT_{uuid.uuid4().hex.upper()}"
+
+with open(output_path, "w", encoding="utf-8") as output_file:
+    json.dump(config, output_file, ensure_ascii=False, indent=2)
+    output_file.write("\n")
+PY
 
 python3 -m json.tool "$STOREKIT_CONFIG" >/dev/null
 
-grep -q "\"productID\" : \"$PRODUCT_ID\"" "$STOREKIT_CONFIG" \
-    || ios_die "StoreKit config does not include product ID $PRODUCT_ID."
+python3 - "$STOREKIT_CONFIG" "$PRODUCT_ID" <<'PY'
+import json
+import sys
 
-grep -q "OnTrack.storekit" "$SCHEME_PATH" \
-    || ios_die "OnTrack scheme is not linked to OnTrack.storekit."
+config_path, product_id = sys.argv[1:]
+with open(config_path, "r", encoding="utf-8") as config_file:
+    config = json.load(config_file)
+
+if not any(product.get("productID") == product_id for product in config.get("products", [])):
+    raise SystemExit(f"StoreKit config does not include product ID {product_id}.")
+PY
+
+grep -q "OnTrack.local.storekit" "$SCHEME_PATH" \
+    || ios_die "OnTrack scheme is not linked to OnTrack.local.storekit."
 
 echo "StoreKit config is ready:"
 echo "  Product: $PRODUCT_ID"
 echo "  Config:  $STOREKIT_CONFIG"
 echo "  Scheme:  $SCHEME_PATH"
-echo "  Flow:    starts unpurchased, then unlocks after local purchase"
+echo "  Flow:    generated fresh, starts unpurchased, then unlocks after local purchase"
 echo
 echo "To test on iPhone:"
 echo "  1. Use the opened Xcode project"

@@ -18,6 +18,7 @@ build
 *.ipa
 *.xcuserstate
 xcuserdata/
+apps/ios/OnTrack/OnTrack.local.storekit
 *.local
 
 # Editor directories and files

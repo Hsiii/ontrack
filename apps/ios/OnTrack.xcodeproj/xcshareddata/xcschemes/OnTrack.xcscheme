@@ -52,7 +52,7 @@
          </BuildableReference>
       </BuildableProductRunnable>
       <StoreKitConfigurationFileReference
-         identifier = "../../OnTrack/OnTrack.storekit">
+         identifier = "../../OnTrack/OnTrack.local.storekit">
       </StoreKitConfigurationFileReference>
       <EnvironmentVariables>
          <EnvironmentVariable
