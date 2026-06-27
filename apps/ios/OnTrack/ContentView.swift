@@ -176,6 +176,12 @@ struct ContentView: View {
                     .ignoresSafeArea()
 
                 GeometryReader { proxy in
+                    let trainPanelRowCount = TrainPanelLayout.rowCount(
+                        isLoading: isLoadingSchedule,
+                        canLoadSchedule: canLoadSchedule,
+                        trainCount: trains.count
+                    )
+
                     ZStack(alignment: .bottom) {
                         ScrollView {
                             VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
@@ -214,7 +220,7 @@ struct ContentView: View {
                             .frame(maxWidth: 480)
                             .padding(.horizontal, OnTrackTheme.space5)
                             .padding(.top, OnTrackTheme.space3)
-                            .padding(.bottom, TrainPanelLayout.contentReserve + proxy.safeAreaInsets.bottom)
+                            .padding(.bottom, TrainPanelLayout.contentReserve(rowCount: trainPanelRowCount) + proxy.safeAreaInsets.bottom)
                             .frame(maxWidth: .infinity)
                         }
                         .scrollIndicators(.hidden)
@@ -230,7 +236,6 @@ struct ContentView: View {
                                 trains: trains,
                                 isLoading: isLoadingSchedule,
                                 canLoadSchedule: canLoadSchedule,
-                                availableHeight: max(0, proxy.size.height - proxy.safeAreaInsets.bottom),
                                 onSelect: { selectedTrain = $0 }
                             )
                             .padding(.bottom, proxy.safeAreaInsets.bottom)
@@ -1301,7 +1306,7 @@ private struct TrainListView: View {
             if !canLoadSchedule {
                 emptyState(AppText.chooseRoute)
             } else if isLoading && trains.isEmpty {
-                VStack(spacing: 0) {
+                VStack(spacing: TrainPanelLayout.cardGap) {
                     ForEach(0..<3, id: \.self) { _ in
                         SkeletonTrainCard()
                     }
@@ -1309,7 +1314,7 @@ private struct TrainListView: View {
             } else if trains.isEmpty {
                 emptyState(AppText.noTrainsAvailable)
             } else {
-                VStack(spacing: 0) {
+                VStack(spacing: TrainPanelLayout.cardGap) {
                     ForEach(trains) { train in
                         TrainCard(
                             train: train,
@@ -1349,7 +1354,7 @@ private struct TrainCard: View {
         case .delayed:
             OnTrackTheme.danger
         case .onTime:
-            OnTrackTheme.primary
+            OnTrackTheme.success
         case .cancelled, .unknown:
             OnTrackTheme.dimText
         }
@@ -1398,18 +1403,16 @@ private struct TrainCard: View {
                 .fixedSize(horizontal: true, vertical: false)
             }
             .padding(.horizontal, OnTrackTheme.space5)
-            .frame(
-                maxWidth: .infinity,
-                minHeight: TrainPanelLayout.cardHeight,
-                maxHeight: TrainPanelLayout.cardHeight
+            .padding(.vertical, OnTrackTheme.space3)
+            .frame(maxWidth: .infinity, minHeight: TrainPanelLayout.cardHeight)
+            .background(
+                isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
+                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             )
             .contentShape(Rectangle())
-            .background(isSelected ? OnTrackTheme.primary.opacity(0.06) : Color.clear)
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(OnTrackTheme.border)
-                    .frame(height: 1)
-            }
+            .onTrackSurfaceRing(
+                ringColor: isSelected ? OnTrackTheme.primary.opacity(0.72) : OnTrackTheme.border
+            )
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
@@ -1779,36 +1782,23 @@ private struct StationSearchRow: View {
 
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
-    static let collapsedTrainRows: CGFloat = 3.5
-    static let previewRowReserve = 4
+    static let maxVisibleRows = 4
     static let loadingRows = 3
     static let emptyStateRows = 1
 
-    static var contentReserve: CGFloat {
-        collapsedHeight(rowCount: previewRowReserve)
-    }
-
-    static var panelChromeHeight: CGFloat {
-        topContentPadding
-            + expectedHeaderHeight
-            + OnTrackTheme.controlHeight
-            + expectedSectionBottomPadding
-            + 1
-    }
-
-    static var topContentPadding: CGFloat {
-        OnTrackTheme.space4
-    }
-
-    static var expectedHeaderHeight: CGFloat {
-        OnTrackTheme.space5
-    }
-
-    static var expectedSectionBottomPadding: CGFloat {
+    static var cardGap: CGFloat {
         OnTrackTheme.space2
     }
 
-    static var expandedTopInset: CGFloat {
+    static var stackGap: CGFloat {
+        OnTrackTheme.space3
+    }
+
+    static var panelBottomPadding: CGFloat {
+        OnTrackTheme.space3
+    }
+
+    static var shareCardMinHeight: CGFloat {
         OnTrackTheme.controlHeight + OnTrackTheme.space6
     }
 
@@ -1824,31 +1814,24 @@ private enum TrainPanelLayout {
         return trainCount
     }
 
-    static func collapsedHeight(rowCount: Int) -> CGFloat {
-        panelChromeHeight
-            + cardHeight * min(CGFloat(max(emptyStateRows, rowCount)), collapsedTrainRows)
+    static func visibleTrainStackHeight(rowCount: Int) -> CGFloat {
+        trainStackHeight(rowCount: min(maxVisibleRows, max(emptyStateRows, rowCount)))
     }
 
-    static func expandedHeight(availableHeight: CGFloat, rowCount: Int) -> CGFloat {
-        let collapsedHeight = collapsedHeight(rowCount: rowCount)
-        let naturalHeight = panelHeight(rowCount: rowCount)
-        let availableExpandedHeight = max(
-            collapsedHeight,
-            availableHeight - expandedTopInset
-        )
-
-        return min(max(collapsedHeight, naturalHeight), availableExpandedHeight)
+    static func contentReserve(rowCount: Int) -> CGFloat {
+        visibleTrainStackHeight(rowCount: rowCount)
+            + stackGap
+            + shareCardMinHeight
+            + panelBottomPadding
+            + OnTrackTheme.space3
     }
 
-    static func panelHeight(rowCount: Int) -> CGFloat {
-        panelChromeHeight + cardHeight * CGFloat(max(emptyStateRows, rowCount))
+    private static func trainStackHeight(rowCount: Int) -> CGFloat {
+        let rows = CGFloat(max(emptyStateRows, rowCount))
+        let gaps = CGFloat(max(0, rowCount - 1))
+
+        return cardHeight * rows + cardGap * gaps
     }
-
-}
-
-private enum TrainPanelDetent {
-    case collapsed
-    case expanded
 }
 
 private struct TrainBoardingPanel: View {
@@ -1858,84 +1841,17 @@ private struct TrainBoardingPanel: View {
     let trains: [TrainInfo]
     let isLoading: Bool
     let canLoadSchedule: Bool
-    let availableHeight: CGFloat
     let onSelect: (TrainInfo) -> Void
 
-    @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @State private var detent: TrainPanelDetent = .collapsed
-
     var body: some View {
-        let collapsedHeight = TrainPanelLayout.collapsedHeight(rowCount: trainListRowCount)
-        let expandedHeight = TrainPanelLayout.expandedHeight(
-            availableHeight: availableHeight,
-            rowCount: trainListRowCount
-        )
-
-        panelContent(
-            collapsedHeight: collapsedHeight,
-            expandedHeight: expandedHeight
-        )
-            .frame(
-                height: panelHeight(
-                    collapsedHeight: collapsedHeight,
-                    expandedHeight: expandedHeight
-                ),
-                alignment: .top
-            )
-            .frame(maxWidth: .infinity, alignment: .top)
-            .background(OnTrackTheme.panel)
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(OnTrackTheme.border)
-                    .frame(height: 1)
-            }
-            .clipped()
-            .animation(panelSettleAnimation, value: detent)
-            .onChange(of: canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)) { _, isExpandable in
-                guard !isExpandable else { return }
-                detent = .collapsed
-            }
-    }
-
-    private func panelContent(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some View {
-        VStack(spacing: 0) {
-            expectedBoardingSection
-                .padding(.horizontal, OnTrackTheme.space5)
-                .padding(.top, TrainPanelLayout.topContentPadding)
-                .padding(.bottom, TrainPanelLayout.expectedSectionBottomPadding)
-                .simultaneousGesture(panelSnapGesture(
-                    collapsedHeight: collapsedHeight,
-                    expandedHeight: expandedHeight,
-                    allowsCollapse: true
-                ))
-
-            Rectangle()
-                .fill(OnTrackTheme.border)
-                .frame(height: 1)
-
-            ScrollView {
-                TrainListView(
-                    trains: trains,
-                    selectedTrain: selectedTrain,
-                    isLoading: isLoading,
-                    canLoadSchedule: canLoadSchedule,
-                    usePlainEmptyState: true
-                ) { train in
-                    onSelect(train)
-                }
-            }
-            .scrollDisabled(detent == .collapsed)
-            .scrollIndicators(.hidden)
-            .frame(maxWidth: .infinity, alignment: .top)
-            .clipped()
-            .contentShape(Rectangle())
-            .simultaneousGesture(panelSnapGesture(
-                collapsedHeight: collapsedHeight,
-                expandedHeight: expandedHeight,
-                allowsCollapse: false
-            ))
+        VStack(spacing: TrainPanelLayout.stackGap) {
+            trainCards
+            shareCard
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: 480)
+        .padding(.horizontal, OnTrackTheme.space5)
+        .padding(.bottom, TrainPanelLayout.panelBottomPadding)
+        .frame(maxWidth: .infinity, alignment: .bottom)
     }
 
     private var trainListRowCount: Int {
@@ -1946,95 +1862,71 @@ private struct TrainBoardingPanel: View {
         )
     }
 
-    private var panelSettleAnimation: Animation? {
-        reduceMotion ? nil : .snappy(duration: 0.24, extraBounce: 0)
-    }
-
-    private func panelHeight(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> CGFloat {
-        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight),
-              detent == .expanded else {
-            return collapsedHeight
-        }
-
-        return expandedHeight
-    }
-
-    private func panelSnapGesture(
-        collapsedHeight: CGFloat,
-        expandedHeight: CGFloat,
-        allowsCollapse: Bool
-    ) -> some Gesture {
-        DragGesture(minimumDistance: OnTrackTheme.space2)
-            .onEnded { value in
-                settlePanel(
-                    after: value,
-                    collapsedHeight: collapsedHeight,
-                    expandedHeight: expandedHeight,
-                    allowsCollapse: allowsCollapse
-                )
+    private var trainCards: some View {
+        ScrollView {
+            TrainListView(
+                trains: trains,
+                selectedTrain: selectedTrain,
+                isLoading: isLoading,
+                canLoadSchedule: canLoadSchedule,
+                usePlainEmptyState: true
+            ) { train in
+                onSelect(train)
             }
-    }
-
-    private func settlePanel(
-        after value: DragGesture.Value,
-        collapsedHeight: CGFloat,
-        expandedHeight: CGFloat,
-        allowsCollapse: Bool
-    ) {
-        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
-            detent = .collapsed
-            return
+            .frame(maxWidth: .infinity)
         }
-
-        let projectedDrag = value.predictedEndTranslation.height
-
-        if projectedDrag < -OnTrackTheme.space4 {
-            withAnimation(panelSettleAnimation) {
-                detent = .expanded
-            }
-        } else if allowsCollapse, projectedDrag > OnTrackTheme.space4 {
-            withAnimation(panelSettleAnimation) {
-                detent = .collapsed
-            }
-        }
+        .scrollDisabled(trainListRowCount <= TrainPanelLayout.maxVisibleRows)
+        .scrollIndicators(.hidden)
+        .defaultScrollAnchor(.bottom)
+        .frame(
+            maxHeight: TrainPanelLayout.visibleTrainStackHeight(rowCount: trainListRowCount),
+            alignment: .bottom
+        )
+        .clipped()
     }
 
-    private func canExpand(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> Bool {
-        expandedHeight - collapsedHeight > OnTrackTheme.space4
-    }
+    private var shareCard: some View {
+        HStack(spacing: OnTrackTheme.space3) {
+            VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+                Text(AppText.expectedBoarding)
+                    .font(OnTrackFont.label)
+                    .foregroundStyle(OnTrackTheme.dimText)
 
-    private var expectedBoardingSection: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(AppText.expectedBoarding)
-                .font(OnTrackFont.label)
-                .foregroundStyle(OnTrackTheme.dimText)
-                .frame(height: TrainPanelLayout.expectedHeaderHeight, alignment: .bottomLeading)
-
-            HStack(spacing: OnTrackTheme.space2) {
                 Text(boardingSummary)
                     .font(OnTrackFont.control)
                     .foregroundStyle(selectedTrain == nil ? OnTrackTheme.dimText : OnTrackTheme.text)
                     .lineLimit(1)
                     .truncationMode(.tail)
                     .monospacedDigit()
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                ShareLink(item: message ?? "") {
-                    PanelActionIcon(
-                        systemName: "square.and.arrow.up",
-                        color: message == nil ? OnTrackTheme.dimText : OnTrackTheme.primary
-                    )
-                }
-                .disabled(message == nil)
-                .accessibilityLabel(AppText.shareVia)
             }
-            .frame(height: OnTrackTheme.controlHeight, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
+
+            ShareLink(item: message ?? "") {
+                HStack(spacing: OnTrackTheme.space2) {
+                    Image(systemName: "square.and.arrow.up")
+                        .font(OnTrackFont.symbol)
+
+                    Text(AppText.shareVia)
+                        .font(OnTrackFont.action)
+                }
+                .foregroundStyle(message == nil ? OnTrackTheme.dimText : OnTrackTheme.primaryContrast)
+                .padding(.horizontal, OnTrackTheme.space4)
+                .frame(minHeight: OnTrackTheme.controlHeight)
+                .background(
+                    message == nil ? OnTrackTheme.border : OnTrackTheme.primary,
+                    in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl)
+                )
+            }
+            .disabled(message == nil)
+            .buttonStyle(OnTrackPressButtonStyle())
+            .accessibilityLabel(AppText.shareVia)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .contentShape(Rectangle())
-        .transaction { transaction in
-            transaction.animation = nil
-        }
+        .padding(.leading, OnTrackTheme.space4)
+        .padding(.trailing, OnTrackTheme.space2)
+        .padding(.vertical, OnTrackTheme.space2)
+        .frame(maxWidth: .infinity, minHeight: TrainPanelLayout.shareCardMinHeight)
+        .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusPanel)
     }
 
     private var boardingSummary: String {
@@ -2346,19 +2238,16 @@ private struct PanelEmptyState: View {
             .foregroundStyle(OnTrackTheme.dimText)
             .frame(maxWidth: .infinity, minHeight: TrainPanelLayout.cardHeight)
             .padding(.horizontal, OnTrackTheme.space4)
+            .onTrackPanelSurface()
     }
 }
 
 private struct SkeletonTrainCard: View {
     var body: some View {
-        Rectangle()
+        RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             .fill(OnTrackTheme.panel)
             .frame(height: TrainPanelLayout.cardHeight)
-            .overlay(alignment: .bottom) {
-                Rectangle()
-                    .fill(OnTrackTheme.border)
-                    .frame(height: 1)
-            }
+            .onTrackSurfaceRing()
             .opacity(0.7)
     }
 }
@@ -2479,6 +2368,7 @@ private enum OnTrackTheme {
     }
 
     static let primary = Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+    static let primaryContrast = Color.white
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
 
