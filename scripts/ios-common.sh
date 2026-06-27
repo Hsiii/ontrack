@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+APP_STORE_AUTH_ARGS=()
+IOS_PROVISIONING_ARGS=()
+
 IOS_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IOS_PROJECT_PATH="${IOS_PROJECT:-$IOS_ROOT_DIR/apps/ios/OnTrack.xcodeproj}"
 IOS_SCHEME_NAME="${IOS_SCHEME:-OnTrack}"

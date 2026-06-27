@@ -15,6 +15,7 @@
         "iphone:simulator": "scripts/ios-build.sh",
         "iphone:archive": "scripts/ios-archive.sh",
         "iphone:export": "scripts/ios-export.sh",
+        "iphone:upload": "scripts/ios-upload.sh",
         "iphone:release": "scripts/ios-release.sh",
         "lint": "eslint .",
         "format": "prettier --write .",
