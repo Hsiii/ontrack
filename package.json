@@ -13,6 +13,7 @@
         "ios": "scripts/ios-run-device.sh",
         "ios:mock": "scripts/ios-run-mock-device.sh",
         "ios:check": "scripts/ios-check.sh",
+        "ios:store": "scripts/ios-test-storekit.sh",
         "ios:simulator": "scripts/ios-build.sh",
         "ios:archive": "scripts/ios-archive.sh",
         "ios:export": "scripts/ios-export.sh",
