@@ -394,7 +394,7 @@ enum AppText {
     static var supportOnTrack: String { isZh ? "支持 OnTrack" : "Support OnTrack" }
     static var supportOnTrackFootnote: String {
         isZh
-            ? "一次性小額支持能幫助 OnTrack 持續開發。"
+            ? "幫助 OnTrack 持續開發並保持精準、快速。"
             : "A one-time tip helps keep OnTrack development going."
     }
     static var supportThanks: String { isZh ? "謝謝你支持 OnTrack" : "Thanks for supporting OnTrack" }
