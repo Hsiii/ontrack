@@ -1395,7 +1395,7 @@ private struct TrainCard: View {
             }
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.vertical, OnTrackTheme.space3)
-            .frame(maxWidth: .infinity, minHeight: TrainPanelLayout.cardHeight)
+            .frame(maxWidth: .infinity, height: TrainPanelLayout.cardHeight)
             .background(
                 isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
@@ -1790,10 +1790,6 @@ private enum TrainPanelLayout {
         OnTrackTheme.space3
     }
 
-    static var shareCardMinHeight: CGFloat {
-        OnTrackTheme.controlHeight + OnTrackTheme.space6
-    }
-
     static func rowCount(isLoading: Bool, canLoadSchedule: Bool, trainCount: Int) -> Int {
         if isLoading && trainCount == 0 {
             return loadingRows
@@ -1817,7 +1813,7 @@ private enum TrainPanelLayout {
     static func contentReserve(rowCount: Int, bottomInset: CGFloat) -> CGFloat {
         visibleTrainStackHeight(rowCount: rowCount)
             + stackGap
-            + shareCardMinHeight
+            + cardHeight
             + bottomInset
             + OnTrackTheme.space3
     }
@@ -1911,7 +1907,7 @@ private struct TrainBoardingPanel: View {
         .padding(.leading, OnTrackTheme.space4)
         .padding(.trailing, OnTrackTheme.space2)
         .padding(.vertical, OnTrackTheme.space2)
-        .frame(maxWidth: .infinity, minHeight: TrainPanelLayout.shareCardMinHeight)
+        .frame(maxWidth: .infinity, height: TrainPanelLayout.cardHeight)
         .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusPanel)
     }
 
