@@ -385,7 +385,7 @@ enum AppText {
     }
 
     static func boardingSummary(type: String, number: String, time: String, station: String) -> String {
-        isZh ? "\(type) \(number) | \(time) 到 \(station)" : "\(type) \(number) | \(time) to \(station)"
+        isZh ? "\(type) \(number) \(time) 到 \(station)" : "\(type) \(number) \(time) to \(station)"
     }
 
     static func plannedBoardingMessage(type: String, number: String, time: String, station: String) -> String {
