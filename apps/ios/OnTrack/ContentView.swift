@@ -1783,16 +1783,13 @@ private enum TrainPanelLayout {
     static let previewRowReserve = 4
     static let loadingRows = 3
     static let emptyStateRows = 1
-    static let grabberWidth: CGFloat = 40
-    static let grabberHeight: CGFloat = 4
 
     static var contentReserve: CGFloat {
         collapsedHeight(rowCount: previewRowReserve)
     }
 
     static var panelChromeHeight: CGFloat {
-        grabberTouchHeight
-            + topContentPadding
+        topContentPadding
             + expectedHeaderHeight
             + OnTrackTheme.controlHeight
             + expectedSectionBottomPadding
@@ -1801,12 +1798,6 @@ private enum TrainPanelLayout {
 
     static var topContentPadding: CGFloat {
         OnTrackTheme.space4
-    }
-
-    static var grabberTouchHeight: CGFloat {
-        OnTrackTheme.space2
-            + grabberHeight
-            + OnTrackTheme.space2
     }
 
     static var expectedHeaderHeight: CGFloat {
@@ -1871,7 +1862,6 @@ private struct TrainBoardingPanel: View {
     let onSelect: (TrainInfo) -> Void
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-    @GestureState private var dragTranslation: CGFloat = 0
     @State private var detent: TrainPanelDetent = .collapsed
 
     var body: some View {
@@ -1886,7 +1876,7 @@ private struct TrainBoardingPanel: View {
             expandedHeight: expandedHeight
         )
             .frame(
-                height: currentHeight(
+                height: panelHeight(
                     collapsedHeight: collapsedHeight,
                     expandedHeight: expandedHeight
                 ),
@@ -1909,15 +1899,14 @@ private struct TrainBoardingPanel: View {
 
     private func panelContent(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some View {
         VStack(spacing: 0) {
-            panelGrabber(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)
-
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space5)
                 .padding(.top, TrainPanelLayout.topContentPadding)
                 .padding(.bottom, TrainPanelLayout.expectedSectionBottomPadding)
-                .simultaneousGesture(panelDragGesture(
+                .simultaneousGesture(panelSnapGesture(
                     collapsedHeight: collapsedHeight,
-                    expandedHeight: expandedHeight
+                    expandedHeight: expandedHeight,
+                    allowsCollapse: true
                 ))
 
             Rectangle()
@@ -1935,10 +1924,16 @@ private struct TrainBoardingPanel: View {
                     onSelect(train)
                 }
             }
+            .scrollDisabled(detent == .collapsed)
             .scrollIndicators(.hidden)
             .frame(maxWidth: .infinity, alignment: .top)
             .clipped()
             .contentShape(Rectangle())
+            .simultaneousGesture(panelSnapGesture(
+                collapsedHeight: collapsedHeight,
+                expandedHeight: expandedHeight,
+                allowsCollapse: false
+            ))
         }
         .frame(maxWidth: .infinity)
     }
@@ -1952,83 +1947,55 @@ private struct TrainBoardingPanel: View {
     }
 
     private var panelSettleAnimation: Animation? {
-        reduceMotion ? nil : .interactiveSpring(response: 0.32, dampingFraction: 0.86)
+        reduceMotion ? nil : .snappy(duration: 0.24, extraBounce: 0)
     }
 
-    private func panelGrabber(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some View {
-        Button {
-            togglePanel(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)
-        } label: {
-            Capsule()
-                .fill(OnTrackTheme.dimText.opacity(0.32))
-                .frame(
-                    width: TrainPanelLayout.grabberWidth,
-                    height: TrainPanelLayout.grabberHeight
-                )
-                .frame(maxWidth: .infinity)
-                .padding(.top, OnTrackTheme.space2)
-                .padding(.bottom, OnTrackTheme.space2)
-                .contentShape(Rectangle())
+    private func panelHeight(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> CGFloat {
+        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight),
+              detent == .expanded else {
+            return collapsedHeight
         }
-        .buttonStyle(.plain)
-        .accessibilityLabel(detent == .expanded ? AppText.collapseTrainPanel : AppText.expandTrainPanel)
-        .gesture(panelDragGesture(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight))
+
+        return expandedHeight
     }
 
-    private func panelDragGesture(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some Gesture {
-        DragGesture(minimumDistance: OnTrackTheme.space1)
-            .updating($dragTranslation) { value, state, _ in
-                guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
-                    return
-                }
-
-                state = value.translation.height
-            }
+    private func panelSnapGesture(
+        collapsedHeight: CGFloat,
+        expandedHeight: CGFloat,
+        allowsCollapse: Bool
+    ) -> some Gesture {
+        DragGesture(minimumDistance: OnTrackTheme.space2)
             .onEnded { value in
                 settlePanel(
                     after: value,
                     collapsedHeight: collapsedHeight,
-                    expandedHeight: expandedHeight
+                    expandedHeight: expandedHeight,
+                    allowsCollapse: allowsCollapse
                 )
             }
-    }
-
-    private func currentHeight(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> CGFloat {
-        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
-            return collapsedHeight
-        }
-
-        let baseHeight = detent == .expanded ? expandedHeight : collapsedHeight
-        let proposedHeight = baseHeight - dragTranslation
-        return min(max(proposedHeight, collapsedHeight), expandedHeight)
     }
 
     private func settlePanel(
         after value: DragGesture.Value,
         collapsedHeight: CGFloat,
-        expandedHeight: CGFloat
+        expandedHeight: CGFloat,
+        allowsCollapse: Bool
     ) {
         guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
             detent = .collapsed
             return
         }
 
-        let baseHeight = detent == .expanded ? expandedHeight : collapsedHeight
-        let projectedHeight = baseHeight - value.predictedEndTranslation.height
-        let snapThreshold = collapsedHeight + (expandedHeight - collapsedHeight) * 0.45
+        let projectedDrag = value.predictedEndTranslation.height
 
-        withAnimation(panelSettleAnimation) {
-            detent = projectedHeight >= snapThreshold ? .expanded : .collapsed
-        }
-    }
-
-    private func togglePanel(collapsedHeight: CGFloat, expandedHeight: CGFloat) {
-        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
-            return
-        }
-
-        withAnimation(panelSettleAnimation) {
-            detent = detent == .expanded ? .collapsed : .expanded
+        if projectedDrag < -OnTrackTheme.space4 {
+            withAnimation(panelSettleAnimation) {
+                detent = .expanded
+            }
+        } else if allowsCollapse, projectedDrag > OnTrackTheme.space4 {
+            withAnimation(panelSettleAnimation) {
+                detent = .collapsed
+            }
         }
     }
 
