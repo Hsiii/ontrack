@@ -2098,7 +2098,7 @@ private struct SettingsSheet: View {
                             selectedRawValue: appearanceRaw,
                             title: appearanceTitle
                         ) { setting in
-                            appearanceRaw = setting.rawValue
+                            setAppearance(setting)
                         }
                     }
 
@@ -2206,6 +2206,11 @@ private struct SettingsSheet: View {
         case .ember:
             AppText.emberTheme
         }
+    }
+
+    private func setAppearance(_ setting: AppAppearanceSetting) {
+        UserDefaults.standard.set(setting.rawValue, forKey: AppPreferenceKey.appearance)
+        appearanceRaw = setting.rawValue
     }
 
     private func setAppIcon(_ setting: AppIconSetting) {
@@ -2767,9 +2772,13 @@ private extension AppAppearanceSetting {
 private enum OnTrackTheme {
     static var background: Color {
         switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 246 / 255, green: 250 / 255, blue: 244 / 255)
+        case .amethyst:
+            return Color(red: 24 / 255, green: 22 / 255, blue: 32 / 255)
         case .ember:
             return Color(red: 35 / 255, green: 31 / 255, blue: 31 / 255)
-        case .system, .light, .dark, .sage, .amethyst:
+        case .system, .light, .dark:
             break
         }
 
@@ -2781,9 +2790,13 @@ private enum OnTrackTheme {
 
     static var panel: Color {
         switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 255 / 255, green: 255 / 255, blue: 252 / 255)
+        case .amethyst:
+            return Color(red: 38 / 255, green: 34 / 255, blue: 50 / 255)
         case .ember:
             return Color(red: 48 / 255, green: 42 / 255, blue: 42 / 255)
-        case .system, .light, .dark, .sage, .amethyst:
+        case .system, .light, .dark:
             break
         }
 
@@ -2794,21 +2807,54 @@ private enum OnTrackTheme {
     }
 
     static var border: Color {
-        adaptiveColor(
+        switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255).opacity(0.18)
+        case .amethyst:
+            return Color(red: 173 / 255, green: 150 / 255, blue: 218 / 255).opacity(0.18)
+        case .ember:
+            return Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255).opacity(0.16)
+        case .system, .light, .dark:
+            break
+        }
+
+        return adaptiveColor(
             light: UIColor.black.withAlphaComponent(0.10),
             dark: UIColor.white.withAlphaComponent(0.10)
         )
     }
 
     static var text: Color {
-        adaptiveColor(
+        switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 25 / 255, green: 42 / 255, blue: 24 / 255)
+        case .amethyst:
+            return Color(red: 245 / 255, green: 240 / 255, blue: 255 / 255)
+        case .ember:
+            return Color(red: 255 / 255, green: 246 / 255, blue: 239 / 255)
+        case .system, .light, .dark:
+            break
+        }
+
+        return adaptiveColor(
             light: UIColor(red: 15 / 255, green: 23 / 255, blue: 42 / 255, alpha: 1),
             dark: UIColor(red: 241 / 255, green: 245 / 255, blue: 249 / 255, alpha: 1)
         )
     }
 
     static var dimText: Color {
-        adaptiveColor(
+        switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 83 / 255, green: 105 / 255, blue: 74 / 255)
+        case .amethyst:
+            return Color(red: 189 / 255, green: 178 / 255, blue: 213 / 255)
+        case .ember:
+            return Color(red: 205 / 255, green: 184 / 255, blue: 172 / 255)
+        case .system, .light, .dark:
+            break
+        }
+
+        return adaptiveColor(
             light: UIColor(red: 71 / 255, green: 85 / 255, blue: 105 / 255, alpha: 1),
             dark: UIColor(red: 148 / 255, green: 163 / 255, blue: 184 / 255, alpha: 1)
         )
@@ -2848,7 +2894,18 @@ private enum OnTrackTheme {
     static let success = Color(red: 34 / 255, green: 197 / 255, blue: 94 / 255)
 
     static var surfaceShadow: Color {
-        adaptiveColor(
+        switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 34 / 255, green: 65 / 255, blue: 28 / 255).opacity(0.07)
+        case .amethyst:
+            return Color.black.opacity(0.18)
+        case .ember:
+            return Color.black.opacity(0.18)
+        case .system, .light, .dark:
+            break
+        }
+
+        return adaptiveColor(
             light: UIColor.black.withAlphaComponent(0.04),
             dark: UIColor.black.withAlphaComponent(0.12)
         )

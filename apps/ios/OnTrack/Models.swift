@@ -405,7 +405,7 @@ enum AppText {
     static var restorePurchases: String { isZh ? "恢復購買" : "Restore Purchases" }
     static var purchasePending: String { isZh ? "購買正在等待確認。" : "Purchase is pending confirmation." }
     static var purchaseUnavailable: String { isZh ? "目前無法購買" : "Purchase Unavailable" }
-    static var noPurchasesRestored: String { isZh ? "沒有可回復的購買。" : "No purchases to restore." }
+    static var noPurchasesRestored: String { isZh ? "沒有可恢復的購買。" : "No purchases to restore." }
     static var links: String { isZh ? "連結" : "Links" }
     static var support: String { isZh ? "支援" : "Support" }
     static var privacyPolicy: String { isZh ? "隱私權" : "Privacy Policy" }
