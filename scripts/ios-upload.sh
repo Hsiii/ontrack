@@ -11,7 +11,7 @@ IOS_SIGNING_STYLE_VALUE="${IOS_SIGNING_STYLE:-automatic}"
 IOS_STRIP_SWIFT_SYMBOLS_VALUE="${IOS_STRIP_SWIFT_SYMBOLS:-true}"
 IOS_UPLOAD_SYMBOLS_VALUE="${IOS_UPLOAD_SYMBOLS:-true}"
 
-[[ -d "$ARCHIVE_PATH" ]] || ios_die "Archive not found at $ARCHIVE_PATH. Run bun run iphone:archive first."
+[[ -d "$ARCHIVE_PATH" ]] || ios_die "Archive not found at $ARCHIVE_PATH. Run bun run ios:archive first."
 [[ -n "${APPLE_TEAM_ID:-}" ]] || ios_die "APPLE_TEAM_ID is required for uploading an iOS archive."
 
 ios_set_app_store_auth_args
