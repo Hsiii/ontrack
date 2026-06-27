@@ -54,6 +54,12 @@
       <StoreKitConfigurationFileReference
          identifier = "../../OnTrack/OnTrack.local.storekit">
       </StoreKitConfigurationFileReference>
+      <CommandLineArguments>
+         <CommandLineArgument
+            argument = "--fresh-storekit-flow"
+            isEnabled = "YES">
+         </CommandLineArgument>
+      </CommandLineArguments>
       <EnvironmentVariables>
          <EnvironmentVariable
             key = "ONTRACK_FRESH_STOREKIT_FLOW"

@@ -12,24 +12,29 @@ final class SupportPurchaseManager: ObservableObject {
     @Published var statusMessage: String?
 
     private var updatesTask: Task<Void, Never>?
+    private var usesFreshStoreKitFlow = false
+    private var acceptsFreshStoreKitTransactions = false
 
     deinit {
         updatesTask?.cancel()
     }
 
     func start() async {
+#if DEBUG
+        usesFreshStoreKitFlow = ProcessInfo.processInfo.environment["ONTRACK_FRESH_STOREKIT_FLOW"] == "1"
+            || ProcessInfo.processInfo.arguments.contains("--fresh-storekit-flow")
+#endif
+
         if updatesTask == nil {
             updatesTask = listenForTransactions()
         }
 
         await loadProducts()
 
-#if DEBUG
-        if ProcessInfo.processInfo.environment["ONTRACK_FRESH_STOREKIT_FLOW"] == "1" {
+        if usesFreshStoreKitFlow {
             isSupporter = false
             return
         }
-#endif
 
         await refreshEntitlements()
     }
@@ -57,6 +62,7 @@ final class SupportPurchaseManager: ObservableObject {
             switch result {
             case .success(let verification):
                 let transaction = try checkVerified(verification)
+                acceptsFreshStoreKitTransactions = true
                 isSupporter = true
                 thankYouDialogID += 1
                 await transaction.finish()
@@ -83,6 +89,7 @@ final class SupportPurchaseManager: ObservableObject {
 
         do {
             try await AppStore.sync()
+            acceptsFreshStoreKitTransactions = true
             await refreshEntitlements()
             statusMessage = isSupporter ? AppText.supportThanks : AppText.noPurchasesRestored
         } catch {
@@ -132,6 +139,11 @@ final class SupportPurchaseManager: ObservableObject {
                 }
 
                 if transaction.productID == Self.supporterProductID {
+                    guard !self.usesFreshStoreKitFlow || self.acceptsFreshStoreKitTransactions else {
+                        await transaction.finish()
+                        continue
+                    }
+
                     self.isSupporter = true
                     self.thankYouDialogID += 1
                 }
