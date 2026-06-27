@@ -181,6 +181,9 @@ struct ContentView: View {
                         canLoadSchedule: canLoadSchedule,
                         trainCount: trains.count
                     )
+                    let trainPanelBottomInset = TrainPanelLayout.bottomInset(
+                        safeAreaInset: proxy.safeAreaInsets.bottom
+                    )
 
                     ZStack(alignment: .bottom) {
                         ScrollView {
@@ -220,7 +223,10 @@ struct ContentView: View {
                             .frame(maxWidth: 480)
                             .padding(.horizontal, OnTrackTheme.space5)
                             .padding(.top, OnTrackTheme.space3)
-                            .padding(.bottom, TrainPanelLayout.contentReserve(rowCount: trainPanelRowCount) + proxy.safeAreaInsets.bottom)
+                            .padding(.bottom, TrainPanelLayout.contentReserve(
+                                rowCount: trainPanelRowCount,
+                                bottomInset: trainPanelBottomInset
+                            ))
                             .frame(maxWidth: .infinity)
                         }
                         .scrollIndicators(.hidden)
@@ -238,7 +244,7 @@ struct ContentView: View {
                                 canLoadSchedule: canLoadSchedule,
                                 onSelect: { selectedTrain = $0 }
                             )
-                            .padding(.bottom, proxy.safeAreaInsets.bottom)
+                            .padding(.bottom, trainPanelBottomInset)
                             .transition(.move(edge: .bottom))
                         }
                     }
@@ -1818,11 +1824,15 @@ private enum TrainPanelLayout {
         trainStackHeight(rowCount: min(maxVisibleRows, max(emptyStateRows, rowCount)))
     }
 
-    static func contentReserve(rowCount: Int) -> CGFloat {
+    static func bottomInset(safeAreaInset: CGFloat) -> CGFloat {
+        max(safeAreaInset, panelBottomPadding)
+    }
+
+    static func contentReserve(rowCount: Int, bottomInset: CGFloat) -> CGFloat {
         visibleTrainStackHeight(rowCount: rowCount)
             + stackGap
             + shareCardMinHeight
-            + panelBottomPadding
+            + bottomInset
             + OnTrackTheme.space3
     }
 
@@ -1850,7 +1860,6 @@ private struct TrainBoardingPanel: View {
         }
         .frame(maxWidth: 480)
         .padding(.horizontal, OnTrackTheme.space5)
-        .padding(.bottom, TrainPanelLayout.panelBottomPadding)
         .frame(maxWidth: .infinity, alignment: .bottom)
     }
 
