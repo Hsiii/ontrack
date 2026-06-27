@@ -1928,7 +1928,7 @@ private struct TrainBoardingPanel: View {
         .padding(.vertical, OnTrackTheme.space2)
         .frame(maxWidth: .infinity)
         .frame(height: TrainPanelLayout.cardHeight)
-        .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusPanel)
+        .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusPanel, castsShadow: false)
     }
 
     private var boardingSummary: String {
@@ -2272,7 +2272,7 @@ private struct SkeletonTrainCard: View {
         RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             .fill(OnTrackTheme.panel)
             .frame(height: TrainPanelLayout.cardHeight)
-            .onTrackSurfaceRing()
+            .onTrackSurfaceRing(castsShadow: false)
             .opacity(0.7)
     }
 }
