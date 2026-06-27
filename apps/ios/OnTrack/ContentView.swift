@@ -817,8 +817,8 @@ private struct TimeSelectorView: View {
                     .foregroundStyle(OnTrackTheme.dimText)
             }
             .padding(.horizontal, OnTrackTheme.space4)
-            .frame(minHeight: OnTrackTheme.controlHeight)
-            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
+            .frame(minHeight: OnTrackTheme.iconButtonSize)
+            .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl, castsShadow: false)
         }
         .buttonStyle(OnTrackPressButtonStyle())
         .onAppear {
@@ -1083,12 +1083,12 @@ private struct RouteSelectorView: View {
 
             HStack(spacing: OnTrackTheme.space3) {
                 Color.clear
-                    .frame(width: 24, height: OnTrackTheme.routeDividerHeight)
+                    .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.routeDividerHeight)
                 Rectangle()
                     .fill(OnTrackTheme.border)
                     .frame(height: 1)
             }
-            .padding(.leading, OnTrackTheme.space4)
+            .padding(.leading, 0)
             .padding(.trailing, OnTrackTheme.space4)
             .frame(height: OnTrackTheme.routeDividerHeight)
 
@@ -1111,7 +1111,7 @@ private struct RouteSelectorView: View {
                 onTap: onPickDestination
             )
         }
-        .onTrackPanelSurface()
+        .onTrackPanelSurface(castsShadow: false)
         .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
     }
 }
@@ -1237,7 +1237,7 @@ private struct StationTrigger: View {
 
                     Spacer()
                 }
-                .padding(.leading, OnTrackTheme.space4)
+                .padding(.leading, 0)
                 .padding(.trailing, OnTrackTheme.space4)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: OnTrackTheme.routeRowHeight)
@@ -1250,7 +1250,6 @@ private struct StationTrigger: View {
 
             if let trailingAction {
                 trailingAction
-                    .padding(.trailing, OnTrackTheme.space2)
             }
         }
         .frame(height: OnTrackTheme.routeRowHeight)
@@ -1281,7 +1280,7 @@ private struct RouteGlyph: View {
                     .foregroundStyle(OnTrackTheme.dimText)
             }
         }
-        .frame(width: 24, height: 24)
+        .frame(width: OnTrackTheme.iconButtonSize, height: 24)
     }
 }
 
@@ -2190,7 +2189,7 @@ private struct IconPlainButton: View {
                         .foregroundStyle(OnTrackTheme.dimText)
                 }
             }
-            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+            .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
         }
         .buttonStyle(OnTrackPressButtonStyle())
     }
@@ -2212,7 +2211,7 @@ private struct IconSquare: View {
                     .foregroundStyle(OnTrackTheme.dimText)
             }
         }
-            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+            .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
             .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusControl)
     }
 }
@@ -2224,7 +2223,7 @@ private struct PanelActionIcon: View {
         Image(systemName: systemName)
             .font(OnTrackFont.icon)
             .foregroundStyle(OnTrackTheme.dimText)
-            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+            .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
             .contentShape(Rectangle())
     }
 }
@@ -2299,21 +2298,28 @@ private enum OnTrackFont {
 private extension View {
     func onTrackPanelSurface(
         cornerRadius: CGFloat = OnTrackTheme.radiusPanel,
-        ringColor: Color = OnTrackTheme.border
+        ringColor: Color = OnTrackTheme.border,
+        castsShadow: Bool = true
     ) -> some View {
         background(OnTrackTheme.panel, in: RoundedRectangle(cornerRadius: cornerRadius))
-            .onTrackSurfaceRing(cornerRadius: cornerRadius, ringColor: ringColor)
+            .onTrackSurfaceRing(cornerRadius: cornerRadius, ringColor: ringColor, castsShadow: castsShadow)
     }
 
     func onTrackSurfaceRing(
         cornerRadius: CGFloat = OnTrackTheme.radiusPanel,
-        ringColor: Color = OnTrackTheme.border
+        ringColor: Color = OnTrackTheme.border,
+        castsShadow: Bool = true
     ) -> some View {
         overlay {
             RoundedRectangle(cornerRadius: cornerRadius)
                 .stroke(ringColor, lineWidth: 1)
         }
-        .shadow(color: OnTrackTheme.surfaceShadow, radius: 8, x: 0, y: 4)
+        .shadow(
+            color: castsShadow ? OnTrackTheme.surfaceShadow : .clear,
+            radius: castsShadow ? 8 : 0,
+            x: 0,
+            y: castsShadow ? 4 : 0
+        )
     }
 
     func onTrackCircleSurface() -> some View {
@@ -2418,6 +2424,7 @@ private enum OnTrackTheme {
     static let radiusPanel: CGFloat = 12
     static let radiusSheet: CGFloat = 24
     static let controlHeight: CGFloat = 44
+    static let iconButtonSize: CGFloat = 44
     static let routeDividerHeight: CGFloat = 1
     static let routeRowHeight: CGFloat = 56
     static let timeModePickerMaxWidth: CGFloat = 260
