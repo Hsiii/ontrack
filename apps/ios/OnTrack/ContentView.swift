@@ -8,7 +8,6 @@ private let scheduleRefreshInterval: TimeInterval = 5 * 60
 private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
 private let manualOriginProtectionInterval: TimeInterval = 10 * 60
-private let sheetSwapDelay: TimeInterval = 0.28
 private let timePickerMinuteInterval = 10
 private let stationPickerAnimation = Animation.snappy(duration: 0.28, extraBounce: 0)
 private let supportURL = URL(string: "https://ontrack.hsichen.dev/docs/support")!
@@ -49,7 +48,6 @@ private enum ShareMessageFormat: String, CaseIterable, Identifiable {
 }
 
 private enum ActiveSheet: String, Identifiable {
-    case trainPanel
     case timeEditor
     case settings
 
@@ -81,8 +79,7 @@ struct ContentView: View {
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
     @State private var destinationSource: DestinationSelectionSource = .cached
-    @State private var activeSheet: ActiveSheet? = .trainPanel
-    @State private var suppressTrainPanelRestore = false
+    @State private var activeSheet: ActiveSheet?
 
     private let scheduleRefreshTimer = Timer.publish(
         every: scheduleRefreshInterval,
@@ -128,18 +125,6 @@ struct ContentView: View {
 
     private var canLoadSchedule: Bool {
         originStation != nil && destinationStation != nil
-    }
-
-    private var trainPanelRowCount: Int {
-        TrainPanelLayout.rowCount(
-            isLoading: isLoadingSchedule,
-            canLoadSchedule: canLoadSchedule,
-            trainCount: trains.count
-        )
-    }
-
-    private var trainPanelCollapsedDetent: PresentationDetent {
-        TrainPanelLayout.collapsedDetent(rowCount: trainPanelRowCount)
     }
 
     private var shareMessage: String? {
@@ -235,6 +220,19 @@ struct ContentView: View {
                         .refreshable {
                             await loadSchedule(refreshLive: true)
                         }
+
+                        if stationPicker == nil {
+                            TrainBoardingPanel(
+                                message: shareMessage,
+                                selectedTrain: selectedTrain,
+                                destination: destinationStation,
+                                trains: trains,
+                                isLoading: isLoadingSchedule,
+                                canLoadSchedule: canLoadSchedule,
+                                onSelect: { selectedTrain = $0 }
+                            )
+                            .transition(.move(edge: .bottom))
+                        }
                     }
                 }
                 .ignoresSafeArea(edges: .bottom)
@@ -312,7 +310,7 @@ struct ContentView: View {
             } message: {
                 Text(errorMessage ?? "")
             }
-            .sheet(item: $activeSheet, onDismiss: restoreTrainPanelIfNeeded) { sheet in
+            .sheet(item: $activeSheet) { sheet in
                 sheetContent(sheet)
             }
         }
@@ -323,24 +321,6 @@ struct ContentView: View {
     @ViewBuilder
     private func sheetContent(_ sheet: ActiveSheet) -> some View {
         switch sheet {
-        case .trainPanel:
-            TrainBoardingPanel(
-                message: shareMessage,
-                selectedTrain: selectedTrain,
-                destination: destinationStation,
-                trains: trains,
-                isLoading: isLoadingSchedule,
-                canLoadSchedule: canLoadSchedule,
-                onSelect: { selectedTrain = $0 }
-            )
-            .presentationDetents(
-                [trainPanelCollapsedDetent]
-            )
-            .presentationDragIndicator(.hidden)
-            .presentationBackground(OnTrackTheme.panel)
-            .presentationBackgroundInteraction(.enabled(upThrough: trainPanelCollapsedDetent))
-            .interactiveDismissDisabled()
-
         case .timeEditor:
             TimeEditorSheet(
                 selection: $timeSelection,
@@ -372,13 +352,10 @@ struct ContentView: View {
             promptForAutoDetectedOrigin()
         }
 
-        suppressTrainPanelRestore = true
         activeSheet = nil
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + sheetSwapDelay) {
-            withAnimation(stationPickerAnimation) {
-                stationPicker = role
-            }
+        withAnimation(stationPickerAnimation) {
+            stationPicker = role
         }
     }
 
@@ -386,8 +363,6 @@ struct ContentView: View {
         withAnimation(stationPickerAnimation) {
             stationPicker = nil
         }
-        suppressTrainPanelRestore = false
-        restoreTrainPanelIfNeeded()
     }
 
     private func presentTimeEditor() {
@@ -399,23 +374,7 @@ struct ContentView: View {
     }
 
     private func presentModalSheet(_ sheet: ActiveSheet) {
-        suppressTrainPanelRestore = true
-        activeSheet = nil
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + sheetSwapDelay) {
-            activeSheet = sheet
-            suppressTrainPanelRestore = false
-        }
-    }
-
-    private func restoreTrainPanelIfNeeded() {
-        DispatchQueue.main.async {
-            guard !suppressTrainPanelRestore, activeSheet == nil, stationPicker == nil else {
-                return
-            }
-
-            activeSheet = .trainPanel
-        }
+        activeSheet = sheet
     }
 
     private func loadStations() async {
@@ -451,7 +410,7 @@ struct ContentView: View {
         destinationSource = .cached
         languageCode = AppLanguageSetting.zhTW.rawValue
         appearanceRaw = AppAppearanceSetting.light.rawValue
-        activeSheet = .trainPanel
+        activeSheet = nil
 
         var components = Formatters.taipeiCalendar.dateComponents(
             [.year, .month, .day],
@@ -1871,9 +1830,6 @@ private enum TrainPanelLayout {
         panelChromeHeight + cardHeight * CGFloat(max(emptyStateRows, rowCount))
     }
 
-    static func collapsedDetent(rowCount: Int) -> PresentationDetent {
-        .height(panelHeight(rowCount: rowCount))
-    }
 }
 
 private struct TrainBoardingPanel: View {
@@ -1891,8 +1847,8 @@ private struct TrainBoardingPanel: View {
         panelShell
             .frame(height: panelContentHeight, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .top)
-            .clipped()
-        .background(OnTrackTheme.panel)
+            .onTrackBottomSheetSurface()
+            .ignoresSafeArea(edges: .bottom)
     }
 
     private var panelContent: some View {
@@ -1908,15 +1864,18 @@ private struct TrainBoardingPanel: View {
                 .fill(OnTrackTheme.border)
                 .frame(height: 1)
 
-            TrainListView(
-                trains: trains,
-                selectedTrain: selectedTrain,
-                isLoading: isLoading,
-                canLoadSchedule: canLoadSchedule,
-                usePlainEmptyState: true
-            ) { train in
-                onSelect(train)
+            ScrollView {
+                TrainListView(
+                    trains: trains,
+                    selectedTrain: selectedTrain,
+                    isLoading: isLoading,
+                    canLoadSchedule: canLoadSchedule,
+                    usePlainEmptyState: true
+                ) { train in
+                    onSelect(train)
+                }
             }
+            .scrollIndicators(.hidden)
             .frame(maxWidth: .infinity, alignment: .top)
             .clipped()
             .contentShape(Rectangle())
@@ -2000,92 +1959,95 @@ private struct TrainBoardingPanel: View {
 }
 
 private struct SettingsSheet: View {
-    private static let detentHeight: CGFloat = 424
-
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
-
-    @State private var bottomSafeAreaInset: CGFloat = 0
 
     var body: some View {
         GeometryReader { proxy in
             content(bottomSafeAreaInset: proxy.safeAreaInsets.bottom)
                 .frame(width: proxy.size.width, height: proxy.size.height, alignment: .top)
-                .onAppear {
-                    updateBottomSafeArea(proxy.safeAreaInsets.bottom)
-                }
-                .onChange(of: proxy.safeAreaInsets.bottom) { _, inset in
-                    updateBottomSafeArea(inset)
-                }
         }
-        .presentationDetents([.height(Self.detentHeight + bottomSafeAreaInset)])
+        .presentationDetents([.large])
         .presentationDragIndicator(.automatic)
         .presentationBackground(OnTrackTheme.panel)
         .tint(OnTrackTheme.primary)
     }
 
     private func content(bottomSafeAreaInset: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                settingsHeader
+
+                SettingsOptionGroup(title: AppText.language) {
+                    ForEach(AppLanguageSetting.allCases) { setting in
+                        SettingsOptionButton(
+                            title: languageTitle(setting),
+                            isSelected: languageCode == setting.rawValue
+                        ) {
+                            languageCode = setting.rawValue
+                        }
+                    }
+                }
+
+                SettingsDivider()
+
+                SettingsOptionGroup(title: AppText.appearance) {
+                    ForEach(AppAppearanceSetting.allCases) { setting in
+                        SettingsOptionButton(
+                            title: appearanceTitle(setting),
+                            isSelected: appearanceRaw == setting.rawValue
+                        ) {
+                            appearanceRaw = setting.rawValue
+                        }
+                    }
+                }
+
+                SettingsDivider()
+
+                SettingsOptionGroup(title: AppText.defaultMessageFormat) {
+                    ForEach(ShareMessageFormat.allCases) { format in
+                        SettingsOptionButton(
+                            title: format.title,
+                            isSelected: messageFormatRaw == format.rawValue
+                        ) {
+                            messageFormatRaw = format.rawValue
+                        }
+                    }
+                }
+
+                SettingsDivider()
+
+                SettingsOptionGroup(title: AppText.links) {
+                    SettingsLinkRow(
+                        title: AppText.support,
+                        systemName: "questionmark.circle",
+                        url: supportURL
+                    )
+
+                    SettingsLinkRow(
+                        title: AppText.privacyPolicy,
+                        systemName: "hand.raised",
+                        url: privacyURL
+                    )
+                }
+            }
+            .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.top, OnTrackTheme.space6 + OnTrackTheme.space2)
+            .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+        }
+        .scrollIndicators(.hidden)
+        .background(OnTrackTheme.panel)
+    }
+
+    private var settingsHeader: some View {
+        HStack {
             Text(AppText.settings)
                 .font(OnTrackFont.title)
                 .foregroundStyle(OnTrackTheme.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(spacing: 0) {
-                SettingsPickerRow(
-                    title: AppText.language,
-                    selection: $languageCode,
-                    options: AppLanguageSetting.allCases.map {
-                        SettingOption(id: $0.rawValue, title: languageTitle($0))
-                    }
-                )
-
-                SettingsDivider()
-
-                SettingsPickerRow(
-                    title: AppText.appearance,
-                    selection: $appearanceRaw,
-                    options: AppAppearanceSetting.allCases.map {
-                        SettingOption(id: $0.rawValue, title: appearanceTitle($0))
-                    }
-                )
-
-                SettingsDivider()
-
-                SettingsPickerRow(
-                    title: AppText.defaultMessageFormat,
-                    selection: $messageFormatRaw,
-                    options: ShareMessageFormat.allCases.map {
-                        SettingOption(id: $0.rawValue, title: $0.title)
-                    }
-                )
-
-                SettingsDivider()
-
-                SettingsLinkRow(
-                    title: AppText.support,
-                    systemName: "questionmark.circle",
-                    url: supportURL
-                )
-
-                SettingsDivider()
-
-                SettingsLinkRow(
-                    title: AppText.privacyPolicy,
-                    systemName: "hand.raised",
-                    url: privacyURL
-                )
-            }
-            .onTrackPanelSurface()
-
-            Spacer(minLength: 0)
         }
-        .padding(.horizontal, OnTrackTheme.space5)
-        .padding(.top, OnTrackTheme.space5)
-        .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(OnTrackTheme.panel)
+        .padding(.bottom, OnTrackTheme.space4)
     }
 
     private func languageTitle(_ setting: AppLanguageSetting) -> String {
@@ -2110,46 +2072,56 @@ private struct SettingsSheet: View {
         }
     }
 
-    private func updateBottomSafeArea(_ inset: CGFloat) {
-        let safeInset = max(0, inset)
-        guard bottomSafeAreaInset != safeInset else {
-            return
-        }
+}
 
-        bottomSafeAreaInset = safeInset
+private struct SettingsOptionGroup<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
+            Text(title)
+                .font(OnTrackFont.label)
+                .textCase(.uppercase)
+                .foregroundStyle(OnTrackTheme.dimText)
+                .tracking(0.4)
+
+            VStack(spacing: 0) {
+                content
+            }
+        }
+        .padding(.vertical, OnTrackTheme.space4)
     }
 }
 
-private struct SettingOption: Identifiable {
-    let id: String
+private struct SettingsOptionButton: View {
     let title: String
-}
-
-private struct SettingsPickerRow: View {
-    let title: String
-    @Binding var selection: String
-    let options: [SettingOption]
+    let isSelected: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: OnTrackTheme.space3) {
-            Text(title)
-                .font(OnTrackFont.control)
-                .foregroundStyle(OnTrackTheme.text)
-                .lineLimit(1)
-                .minimumScaleFactor(0.82)
+        Button(action: action) {
+            HStack(spacing: OnTrackTheme.space3) {
+                Text(title)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(isSelected ? OnTrackTheme.primary : OnTrackTheme.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
 
-            Spacer()
+                Spacer()
 
-            Picker(title, selection: $selection) {
-                ForEach(options) { option in
-                    Text(option.title).tag(option.id)
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .font(OnTrackFont.symbol)
+                        .foregroundStyle(OnTrackTheme.primary)
                 }
             }
-            .pickerStyle(.menu)
-            .labelsHidden()
+            .padding(.horizontal, OnTrackTheme.space4)
+            .frame(minHeight: OnTrackTheme.controlHeight)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, OnTrackTheme.space4)
-        .frame(minHeight: OnTrackTheme.controlHeight)
+        .buttonStyle(OnTrackPressButtonStyle())
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
     }
 }
 
@@ -2158,7 +2130,6 @@ private struct SettingsDivider: View {
         Rectangle()
             .fill(OnTrackTheme.border)
             .frame(height: 1)
-            .padding(.leading, OnTrackTheme.space4)
     }
 }
 
