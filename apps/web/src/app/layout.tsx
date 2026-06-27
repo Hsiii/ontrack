@@ -187,7 +187,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                     />
                 </div>
                 <div className='app-root'>{children}</div>
-                <Script
+                <script
                     id='software-application-schema'
                     type='application/ld+json'
                     dangerouslySetInnerHTML={{

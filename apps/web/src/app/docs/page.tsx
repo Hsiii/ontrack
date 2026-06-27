@@ -4,7 +4,6 @@ import Link from 'next/link';
 
 import styles from './page.module.css';
 
-const APP_URL = 'https://ontrack.hsichen.dev/';
 const DOCS_URL = 'https://ontrack.hsichen.dev/docs';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 
@@ -62,23 +61,6 @@ const features = [
 ] as const;
 
 export default function DocsPage() {
-    const structuredData = {
-        '@context': 'https://schema.org',
-        '@type': 'SoftwareApplication',
-        'name': 'OnTrack',
-        'applicationCategory': 'TravelApplication',
-        'operatingSystem': 'Web, iOS',
-        'url': APP_URL,
-        'image': APP_IMAGE,
-        'description':
-            'OnTrack is a Taiwan Railway schedule app for fast route lookup, nearest-station detection, delay-aware next trains, and arrival sharing.',
-        'offers': {
-            '@type': 'Offer',
-            'price': '0',
-            'priceCurrency': 'TWD',
-        },
-    };
-
     return (
         <main className={styles.page}>
             <div className={styles.shell}>
@@ -230,13 +212,6 @@ export default function DocsPage() {
                     </nav>
                 </footer>
             </div>
-
-            <script
-                type='application/ld+json'
-                dangerouslySetInnerHTML={{
-                    __html: JSON.stringify(structuredData),
-                }}
-            />
         </main>
     );
 }
