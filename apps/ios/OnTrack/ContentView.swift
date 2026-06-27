@@ -11,6 +11,8 @@ private let manualOriginProtectionInterval: TimeInterval = 10 * 60
 private let sheetSwapDelay: TimeInterval = 0.28
 private let timePickerMinuteInterval = 10
 private let stationPickerAnimation = Animation.snappy(duration: 0.28, extraBounce: 0)
+private let supportURL = URL(string: "https://ontrack.hsichen.dev/docs/support")!
+private let privacyURL = URL(string: "https://ontrack.hsichen.dev/docs/privacy")!
 
 private enum ShareMessageFormat: String, CaseIterable, Identifiable {
     case arrivalOnly
@@ -1998,7 +2000,7 @@ private struct TrainBoardingPanel: View {
 }
 
 private struct SettingsSheet: View {
-    private static let detentHeight: CGFloat = 320
+    private static let detentHeight: CGFloat = 424
 
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
@@ -2057,6 +2059,22 @@ private struct SettingsSheet: View {
                     options: ShareMessageFormat.allCases.map {
                         SettingOption(id: $0.rawValue, title: $0.title)
                     }
+                )
+
+                SettingsDivider()
+
+                SettingsLinkRow(
+                    title: AppText.support,
+                    systemName: "questionmark.circle",
+                    url: supportURL
+                )
+
+                SettingsDivider()
+
+                SettingsLinkRow(
+                    title: AppText.privacyPolicy,
+                    systemName: "hand.raised",
+                    url: privacyURL
                 )
             }
             .onTrackPanelSurface()
@@ -2141,6 +2159,32 @@ private struct SettingsDivider: View {
             .fill(OnTrackTheme.border)
             .frame(height: 1)
             .padding(.leading, OnTrackTheme.space4)
+    }
+}
+
+private struct SettingsLinkRow: View {
+    let title: String
+    let systemName: String
+    let url: URL
+
+    var body: some View {
+        Link(destination: url) {
+            HStack(spacing: OnTrackTheme.space3) {
+                Label(title, systemImage: systemName)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.82)
+
+                Spacer()
+
+                Image(systemName: "arrow.up.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(OnTrackTheme.dimText)
+            }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .frame(minHeight: OnTrackTheme.controlHeight)
+        }
     }
 }
 

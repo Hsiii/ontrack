@@ -373,6 +373,8 @@ enum AppText {
     static var defaultMessageFormat: String { isZh ? "預設訊息格式" : "Default message format" }
     static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
     static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }
+    static var support: String { isZh ? "支援" : "Support" }
+    static var privacyPolicy: String { isZh ? "隱私權" : "Privacy Policy" }
 
     static func arrivalMessage(time: String, station: String) -> String {
         isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"
