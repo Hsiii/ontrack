@@ -9,11 +9,22 @@ SCHEME_PATH="$IOS_ROOT_DIR/apps/ios/OnTrack.xcodeproj/xcshareddata/xcschemes/OnT
 PRODUCT_ID="ontrack.supporter_pack"
 
 OPEN_XCODE=1
-if [[ "${1:-}" == "--no-open" ]]; then
-    OPEN_XCODE=0
-elif [[ $# -gt 0 ]]; then
-    ios_die "Usage: scripts/ios-test-storekit.sh [--no-open]"
-fi
+RESET_INSTALLED_APP=1
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --no-open)
+            OPEN_XCODE=0
+            ;;
+        --keep-installed)
+            RESET_INSTALLED_APP=0
+            ;;
+        *)
+            ios_die "Usage: scripts/ios-test-storekit.sh [--no-open] [--keep-installed]"
+            ;;
+    esac
+    shift
+done
 
 [[ -f "$STOREKIT_TEMPLATE" ]] || ios_die "Missing StoreKit template: $STOREKIT_TEMPLATE"
 [[ -f "$SCHEME_PATH" ]] || ios_die "Missing shared scheme: $SCHEME_PATH"
@@ -35,6 +46,7 @@ with open(output_path, "w", encoding="utf-8") as output_file:
 PY
 
 python3 -m json.tool "$STOREKIT_CONFIG" >/dev/null
+touch "$STOREKIT_CONFIG" "$SCHEME_PATH"
 
 python3 - "$STOREKIT_CONFIG" "$PRODUCT_ID" <<'PY'
 import json
@@ -51,11 +63,30 @@ PY
 grep -q "OnTrack.local.storekit" "$SCHEME_PATH" \
     || ios_die "OnTrack scheme is not linked to OnTrack.local.storekit."
 
+RESET_MESSAGE="skipped"
+if [[ "$RESET_INSTALLED_APP" == "1" ]]; then
+    DEVICE_ID="${IOS_DEVICE_ID:-}"
+    if [[ -z "$DEVICE_ID" ]]; then
+        DEVICE_ID="$(ios_detect_device_id 2>/dev/null || true)"
+    fi
+
+    if [[ -n "$DEVICE_ID" ]]; then
+        if xcrun devicectl device uninstall app --device "$DEVICE_ID" "$IOS_BUNDLE_ID_VALUE" >/dev/null 2>&1; then
+            RESET_MESSAGE="uninstalled $IOS_BUNDLE_ID_VALUE from $DEVICE_ID"
+        else
+            RESET_MESSAGE="attempted uninstall of $IOS_BUNDLE_ID_VALUE on $DEVICE_ID"
+        fi
+    else
+        RESET_MESSAGE="no connected device detected"
+    fi
+fi
+
 echo "StoreKit config is ready:"
 echo "  Product: $PRODUCT_ID"
 echo "  Config:  $STOREKIT_CONFIG"
 echo "  Scheme:  $SCHEME_PATH"
 echo "  Flow:    generated fresh, starts unpurchased, then unlocks after local purchase"
+echo "  App:     $RESET_MESSAGE"
 echo
 echo "To test on iPhone:"
 echo "  1. Use the opened Xcode project"
