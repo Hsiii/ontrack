@@ -2,6 +2,7 @@ import { Clock3, MapPin, Navigation, Share2 } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
+import { AppStoreDialog } from './AppStoreDialog';
 import styles from './page.module.css';
 
 const DOCS_URL = 'https://ontrack.hsichen.dev/docs';
@@ -76,18 +77,10 @@ export default function DocsPage() {
                         <span className={styles.brandText}>OnTrack</span>
                     </Link>
                     <div className={styles.navLinks}>
-                        <Link className={styles.navTextLink} href='#features'>
-                            功能
-                        </Link>
                         <Link className={styles.navTextLink} href='/'>
                             網頁版
                         </Link>
-                        <Link
-                            className={styles.navTextLink}
-                            href='/docs/support#ios-app'
-                        >
-                            iOS 狀態
-                        </Link>
+                        <AppStoreDialog className={styles.navTextLink} />
                     </div>
                 </nav>
 
@@ -103,17 +96,8 @@ export default function DocsPage() {
                             <Link className={styles.primaryCta} href='/'>
                                 網頁版
                             </Link>
-                            <Link
-                                className={styles.secondaryCta}
-                                href='/docs/support#ios-app'
-                            >
-                                iOS 審查中
-                            </Link>
+                            <AppStoreDialog className={styles.secondaryCta} />
                         </div>
-                        <p className={styles.availabilityNote}>
-                            iOS App 目前仍在 App Store
-                            審查中；審查完成前，iPhone 使用者請先使用網頁版。
-                        </p>
                     </div>
                 </section>
 

@@ -125,15 +125,6 @@
     justify-content: center;
 }
 
-.availabilityNote {
-    max-width: var(--content-prose);
-    margin: calc(var(--space-2) * -1) 0 0;
-    color: var(--color-text-dim);
-    font-size: var(--text-sm);
-    line-height: 1.6;
-    text-wrap: balance;
-}
-
 .primaryCta {
     display: inline-flex;
     min-height: var(--space-10);
@@ -152,6 +143,87 @@
 
 .secondaryCta {
     background: var(--color-bg-light);
+}
+
+.appStoreDialog {
+    width: min(
+        calc(100% - var(--space-8)),
+        calc(var(--content-dialog) + var(--space-15))
+    );
+    max-width: none;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-lg);
+    background: transparent;
+    color: var(--color-text);
+}
+
+.appStoreDialog::backdrop {
+    background: var(--color-overlay-strong);
+}
+
+.dialogPanel {
+    position: relative;
+    display: grid;
+    gap: var(--space-5);
+    padding: var(--space-6);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-lg);
+    text-align: left;
+}
+
+.dialogClose {
+    position: absolute;
+    top: var(--space-3);
+    right: var(--space-3);
+    display: grid;
+    width: var(--space-8);
+    height: var(--space-8);
+    place-items: center;
+    border-radius: var(--radius-sm);
+    color: var(--color-text-dim);
+}
+
+.dialogClose:hover {
+    background: var(--color-hover);
+    color: var(--color-text);
+}
+
+.dialogClose svg {
+    width: var(--size-icon);
+    height: var(--size-icon);
+}
+
+.dialogContent {
+    display: grid;
+    gap: var(--space-3);
+    padding-right: var(--space-6);
+}
+
+.dialogContent h2 {
+    margin: 0;
+    font-size: var(--text-lg);
+    line-height: 1.25;
+}
+
+.dialogContent p:last-child {
+    margin: 0;
+    color: var(--color-text-dim);
+    font-size: var(--text-base);
+    line-height: 1.6;
+}
+
+.dialogActions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-3);
+}
+
+.dialogActions .primaryCta,
+.dialogActions .secondaryCta {
+    width: 100%;
 }
 
 .heroMedia {
