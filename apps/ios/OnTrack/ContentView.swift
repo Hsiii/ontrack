@@ -1941,7 +1941,7 @@ private struct TrainBoardingPanel: View {
 
     private func panelSectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(OnTrackFont.label)
+            .font(OnTrackFont.control)
             .foregroundStyle(OnTrackTheme.dimText)
             .padding(.horizontal, OnTrackTheme.space3)
     }
