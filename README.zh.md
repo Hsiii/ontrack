@@ -15,13 +15,11 @@
 - 自動計算延誤以顯示下一班列車
 - 班次與抵達時間快速分享
 
-## 從網頁安裝 App
+## 安裝
 
-### iOS（Safari）
-
-1. 用 Safari 開啟 [ontrack.hsichen.dev](https://ontrack.hsichen.dev/)
-2. 點底部分享按鈕
-3. 選擇「加入主畫面」
+iPhone 請使用 iOS App。網頁版仍可在
+[ontrack.hsichen.dev](https://ontrack.hsichen.dev/) 使用，並支援 Android
+安裝。
 
 ### Android（Chrome）
 

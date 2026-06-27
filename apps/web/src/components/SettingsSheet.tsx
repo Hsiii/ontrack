@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, ExternalLink, X } from 'lucide-react';
 
 import { LANGUAGE_OPTIONS } from '../i18n/translations';
 import type { LanguageCode } from '../i18n/types';
@@ -40,6 +40,9 @@ const MESSAGE_FORMAT_OPTIONS: {
     { value: 'arrivalOnly', labelKey: 'settings.messageFormatArrivalOnly' },
     { value: 'routeArrival', labelKey: 'settings.messageFormatRouteArrival' },
 ];
+
+const SUPPORT_URL = 'https://ontrack.hsichen.dev/docs/support';
+const PRIVACY_URL = 'https://ontrack.hsichen.dev/docs/privacy';
 
 export function SettingsSheet({
     isOpen,
@@ -121,6 +124,19 @@ export function SettingsSheet({
                             />
                         ))}
                     </SettingsOptionGroup>
+
+                    <div className='settings-divider' />
+
+                    <SettingsOptionGroup title={t('settings.links')}>
+                        <SettingsLink
+                            href={SUPPORT_URL}
+                            label={t('settings.support')}
+                        />
+                        <SettingsLink
+                            href={PRIVACY_URL}
+                            label={t('settings.privacy')}
+                        />
+                    </SettingsOptionGroup>
                 </div>
             </section>
         </div>
@@ -161,5 +177,19 @@ function SettingsOptionButton({
             <span>{label}</span>
             {isSelected ? <Check aria-hidden='true' /> : null}
         </button>
+    );
+}
+
+function SettingsLink({ href, label }: { href: string; label: string }) {
+    return (
+        <a
+            className='settings-option-link'
+            href={href}
+            target='_blank'
+            rel='noreferrer'
+        >
+            <span>{label}</span>
+            <ExternalLink aria-hidden='true' />
+        </a>
     );
 }

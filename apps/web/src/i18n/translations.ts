@@ -78,12 +78,6 @@ export const translations = {
         'share.noTrainMessage': '好像沒車搭了',
         'share.message': '分享訊息',
         'share.shareMessage': '分享訊息',
-
-        'iosInstall.title': '加到主畫面',
-        'iosInstall.subtitle': '將 {appName} 加入主畫面以享受最佳使用體驗',
-        'iosInstall.step1': '點擊底部的「分享」按鈕',
-        'iosInstall.step2': '選擇「加入主畫面」',
-        'iosInstall.dismiss': '知道了',
     },
     'en': {
         'app.title': 'OnTrack',
@@ -158,13 +152,6 @@ export const translations = {
         'share.noTrainMessage': 'No more trains available',
         'share.message': 'Share message',
         'share.shareMessage': 'Share message',
-
-        'iosInstall.title': 'Add to Home Screen',
-        'iosInstall.subtitle':
-            'Add {appName} to your Home Screen for the best experience',
-        'iosInstall.step1': 'Tap the Share button at the bottom',
-        'iosInstall.step2': 'Choose Add to Home Screen',
-        'iosInstall.dismiss': 'Got it',
     },
 } as const;
 

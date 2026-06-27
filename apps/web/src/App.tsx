@@ -6,7 +6,6 @@ import { RefreshCw, Settings } from 'lucide-react';
 import './App.css';
 
 import { api, isShowcaseMode } from './api/client';
-import { IOSInstallPrompt } from './components/IOSInstallPrompt';
 import {
     SettingsSheet,
     type AppearanceMode,
@@ -310,7 +309,6 @@ function App() {
 
     return (
         <>
-            <IOSInstallPrompt />
             <SettingsSheet
                 isOpen={isSettingsOpen}
                 onClose={() => setIsSettingsOpen(false)}

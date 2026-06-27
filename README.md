@@ -19,13 +19,9 @@
 
 ## Install
 
-### iOS (Safari)
-
-(App Store release comming soon)
-
-1. Open the app in Safari on [ontrack.hsichen.dev](https://ontrack.hsichen.dev/)
-2. Tap the share button (bottom center)
-3. Select "Add to Home Screen"
+Use the iOS app on iPhone. The web app remains available at
+[ontrack.hsichen.dev](https://ontrack.hsichen.dev/) and can still be installed
+on Android.
 
 ### Android (Chrome)
 
