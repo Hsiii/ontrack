@@ -2381,16 +2381,9 @@ private enum OnTrackTheme {
     static let space6: CGFloat = 24
 
     private static func adaptiveColor(light: UIColor, dark: UIColor) -> Color {
-        switch AppAppearanceSetting.current {
-        case .system:
-            Color(UIColor { traitCollection in
-                traitCollection.userInterfaceStyle == .dark ? dark : light
-            })
-        case .light:
-            Color(light)
-        case .dark:
-            Color(dark)
-        }
+        Color(UIColor { traitCollection in
+            traitCollection.userInterfaceStyle == .dark ? dark : light
+        })
     }
 }
 
