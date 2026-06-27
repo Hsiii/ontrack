@@ -2578,11 +2578,12 @@ private struct SettingsOptionButton: View {
                         .layoutPriority(1)
                 }
 
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .font(OnTrackFont.symbol)
-                        .foregroundStyle(OnTrackTheme.primary)
-                }
+                Image(systemName: "checkmark")
+                    .font(OnTrackFont.symbol)
+                    .foregroundStyle(OnTrackTheme.primary)
+                    .frame(width: OnTrackTheme.space5)
+                    .opacity(isSelected ? 1 : 0)
+                    .accessibilityHidden(!isSelected)
             }
             .padding(.horizontal, OnTrackTheme.space4)
             .frame(maxWidth: .infinity, alignment: .leading)
