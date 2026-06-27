@@ -1373,8 +1373,8 @@ private struct TrainCard: View {
                         adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.arrivalTime, delay: train.delay) : nil
                     )
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .layoutPriority(1)
+
+                Spacer(minLength: OnTrackTheme.space3)
 
                 HStack(spacing: OnTrackTheme.space1) {
                     Text(TrainDisplay.trainIdentifier(
@@ -1443,7 +1443,7 @@ private struct TripSeparator: View {
 
             separatorLine
         }
-        .frame(minWidth: Self.minimumWidth, maxWidth: .infinity)
+        .frame(width: Self.minimumWidth)
     }
 
     private var separatorLine: some View {
