@@ -94,7 +94,7 @@ export default function SupportPage() {
                     <article className={styles.faqItem}>
                         <h3>Train times seem incorrect.</h3>
                         <ul>
-                            <li>Pull to refresh.</li>
+                            <li>Tap the refresh button.</li>
                             <li>
                                 Delay information depends on the official
                                 railway data source and may update periodically.

@@ -230,9 +230,6 @@ struct ContentView: View {
                             .frame(maxWidth: .infinity)
                         }
                         .scrollIndicators(.hidden)
-                        .refreshable {
-                            await loadSchedule(refreshLive: true)
-                        }
 
                         if stationPicker == nil {
                             TrainBoardingPanel(
