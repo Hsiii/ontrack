@@ -12,9 +12,9 @@
 ## Features
 
 - Real-time train schedules from [TDX](https://tdx.transportdata.tw/)
-- Auto-detect nearest start station
-- Prioritize frequent destination stations in search
-- Auto-select the next departing train while taking delays into account
+- Detect your current station automatically
+- Predict routes based on your riding habits
+- Show real-time departures and delay information as soon as you open the app
 - Quick destination and arrival time sharing
 
 ## Install

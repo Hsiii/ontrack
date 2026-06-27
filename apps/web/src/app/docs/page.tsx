@@ -35,20 +35,20 @@ export const metadata: Metadata = {
 const features = [
     {
         icon: MapPin,
-        title: '自動偵測最近車站',
+        title: '自動偵測所在車站',
         body: '開啟定位後，OnTrack 便能依您的當前位置自動判斷起點站。',
         placement: 'topLeft',
     },
     {
         icon: Navigation,
-        title: '智慧預測目的地',
-        body: '使用幾次後，OnTrack會開始以您的搭乘習慣預測目的地並幫您填入。',
+        title: '依習慣預測路線',
+        body: 'OnTrack 會依您的搭乘習慣預測路線，減少每次查詢時的手動輸入。',
         placement: 'topRight',
     },
     {
         icon: Clock3,
-        title: '輕鬆找出下一班列車',
-        body: '整合即時延誤資料、幫您找出下一班能搭上的列車。',
+        title: '掌握即時班次',
+        body: '打開 App 的瞬間，即可掌握即時班次與延誤資訊。',
         placement: 'bottomLeft',
     },
     {
