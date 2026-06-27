@@ -23,6 +23,14 @@ final class SupportPurchaseManager: ObservableObject {
         }
 
         await loadProducts()
+
+#if DEBUG
+        if ProcessInfo.processInfo.environment["ONTRACK_FRESH_STOREKIT_FLOW"] == "1" {
+            isSupporter = false
+            return
+        }
+#endif
+
         await refreshEntitlements()
     }
 

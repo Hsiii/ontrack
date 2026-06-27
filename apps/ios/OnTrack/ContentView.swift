@@ -1361,12 +1361,12 @@ private struct RouteGlyph: View {
             switch kind {
             case .origin:
                 Circle()
-                    .fill(OnTrackTheme.dimText)
+                    .fill(OnTrackTheme.routeGlyph)
                     .frame(width: OnTrackTheme.space2, height: OnTrackTheme.space2)
             case .destination:
                 Image(systemName: "flag.fill")
                     .font(OnTrackFont.routeGlyph)
-                    .foregroundStyle(OnTrackTheme.primary)
+                    .foregroundStyle(OnTrackTheme.routeGlyph)
             }
         }
         .frame(width: OnTrackTheme.routeGlyphColumnWidth, height: 24)
@@ -2888,6 +2888,10 @@ private enum OnTrackTheme {
             light: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.12),
             dark: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.20)
         )
+    }
+
+    static var routeGlyph: Color {
+        primary
     }
 
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)

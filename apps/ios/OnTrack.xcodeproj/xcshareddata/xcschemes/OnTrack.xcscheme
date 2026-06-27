@@ -54,6 +54,13 @@
       <StoreKitConfigurationFileReference
          identifier = "../../OnTrack/OnTrack.storekit">
       </StoreKitConfigurationFileReference>
+      <EnvironmentVariables>
+         <EnvironmentVariable
+            key = "ONTRACK_FRESH_STOREKIT_FLOW"
+            value = "1"
+            isEnabled = "YES">
+         </EnvironmentVariable>
+      </EnvironmentVariables>
    </LaunchAction>
    <ProfileAction
       buildConfiguration = "Release"

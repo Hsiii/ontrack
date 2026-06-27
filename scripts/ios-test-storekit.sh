@@ -29,6 +29,7 @@ echo "StoreKit config is ready:"
 echo "  Product: $PRODUCT_ID"
 echo "  Config:  $STOREKIT_CONFIG"
 echo "  Scheme:  $SCHEME_PATH"
+echo "  Flow:    starts unpurchased, then unlocks after local purchase"
 echo
 echo "To test on iPhone:"
 echo "  1. Use the opened Xcode project"
