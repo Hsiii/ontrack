@@ -328,7 +328,7 @@ private struct DestinationAutofillConfig: Decodable {
     let priorStationNames: [String]
 
     static func load() -> DestinationAutofillConfig {
-        for resourceName in ["config", "destination-autofill-config"] {
+        for resourceName in ["config", "destination-autofill", "destination-autofill-config"] {
             guard let url = Bundle.main.url(forResource: resourceName, withExtension: "json"),
                   let config = decode(url: url)
             else {
@@ -338,7 +338,7 @@ private struct DestinationAutofillConfig: Decodable {
             return config
         }
 
-        fatalError("Missing bundled destination autofill config.json")
+        fatalError("Missing bundled destination autofill JSON config")
     }
 
     func weights(originSamples: Int, globalSamples: Int) -> ScoreWeights {
