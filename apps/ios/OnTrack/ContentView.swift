@@ -2445,7 +2445,7 @@ private struct SettingsSupportGroup: View {
     @ObservedObject var purchaseManager: SupportPurchaseManager
 
     var body: some View {
-        SettingsOptionGroup(title: AppText.supportOnTrack) {
+        SettingsOptionGroup(title: AppText.supportOnTrack, preservesTitleCase: true) {
             VStack(alignment: .leading, spacing: OnTrackTheme.space3) {
                 VStack(spacing: 0) {
                     SettingsActionButton(
@@ -2543,13 +2543,14 @@ private struct SettingsActionButton: View {
 
 private struct SettingsOptionGroup<Content: View>: View {
     let title: String
+    var preservesTitleCase = false
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
             Text(title)
                 .font(OnTrackFont.label)
-                .textCase(.uppercase)
+                .textCase(preservesTitleCase ? nil : .uppercase)
                 .foregroundStyle(OnTrackTheme.dimText)
                 .tracking(0.4)
 
