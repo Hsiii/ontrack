@@ -1,0 +1,38 @@
+{
+  "identifier" : "ONTRACK_LOCAL_STOREKIT",
+  "nonRenewingSubscriptions" : [
+
+  ],
+  "products" : [
+    {
+      "displayPrice" : "60",
+      "familyShareable" : false,
+      "internalID" : "SUPPORTER_PACK",
+      "localizations" : [
+        {
+          "description" : "Leave a one-time tip to support OnTrack development and unlock thank-you icons and themes.",
+          "displayName" : "Support OnTrack",
+          "locale" : "en_US"
+        },
+        {
+          "description" : "一次性小額支持 OnTrack 開發，並解鎖感謝用的圖示與主題。",
+          "displayName" : "支持 OnTrack",
+          "locale" : "zh_TW"
+        }
+      ],
+      "productID" : "ontrack.supporter_pack",
+      "referenceName" : "Supporter Pack",
+      "type" : "NonConsumable"
+    }
+  ],
+  "settings" : {
+
+  },
+  "subscriptionGroups" : [
+
+  ],
+  "version" : {
+    "major" : 2,
+    "minor" : 0
+  }
+}
