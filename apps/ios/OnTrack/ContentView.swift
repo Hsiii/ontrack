@@ -1775,7 +1775,6 @@ private enum TrainPanelLayout {
     static let cardBorderAllowance: CGFloat = 1
     static let maxVisibleRows = 4
     static let loadingRows = 3
-    static let emptyStateRows = 1
 
     static var cardGap: CGFloat {
         OnTrackTheme.space2
@@ -1795,15 +1794,17 @@ private enum TrainPanelLayout {
         }
 
         if !canLoadSchedule || trainCount == 0 {
-            return emptyStateRows
+            return 0
         }
 
         return trainCount
     }
 
     static func visibleTrainStackHeight(rowCount: Int) -> CGFloat {
-        trainStackHeight(rowCount: min(maxVisibleRows, max(emptyStateRows, rowCount)))
-            + cardBorderAllowance * 2
+        let visibleRows = min(maxVisibleRows, rowCount)
+        guard visibleRows > 0 else { return 0 }
+
+        return trainStackHeight(rowCount: visibleRows) + cardBorderAllowance * 2
     }
 
     static func bottomInset(safeAreaInset: CGFloat) -> CGFloat {
@@ -1812,14 +1813,14 @@ private enum TrainPanelLayout {
 
     static func contentReserve(rowCount: Int, bottomInset: CGFloat) -> CGFloat {
         visibleTrainStackHeight(rowCount: rowCount)
-            + stackGap
+            + (rowCount > 0 ? stackGap : 0)
             + cardHeight
             + bottomInset
             + OnTrackTheme.space3
     }
 
     private static func trainStackHeight(rowCount: Int) -> CGFloat {
-        let rows = CGFloat(max(emptyStateRows, rowCount))
+        let rows = CGFloat(max(0, rowCount))
         let gaps = CGFloat(max(0, rowCount - 1))
 
         return cardHeight * rows + cardGap * gaps
@@ -1837,7 +1838,9 @@ private struct TrainBoardingPanel: View {
 
     var body: some View {
         VStack(spacing: TrainPanelLayout.stackGap) {
-            trainCards
+            if trainListRowCount > 0 {
+                trainCards
+            }
             shareCard
         }
         .frame(maxWidth: 480)
