@@ -241,6 +241,11 @@ struct ContentView: View {
         ProcessInfo.processInfo.environment["ONTRACK_SHOWCASE_DATA"] == "1"
             || ProcessInfo.processInfo.arguments.contains("--showcase-data")
     }
+
+    private var opensSupportScreenshot: Bool {
+        ProcessInfo.processInfo.environment["ONTRACK_SCREENSHOT_TARGET"] == "support"
+            || ProcessInfo.processInfo.arguments.contains("--screenshot-support")
+    }
 #endif
 
     var body: some View {
@@ -500,7 +505,7 @@ struct ContentView: View {
         destinationSource = .cached
         languageCode = AppLanguageSetting.zhTW.rawValue
         appearanceRaw = AppAppearanceSetting.light.rawValue
-        activeSheet = nil
+        activeSheet = opensSupportScreenshot ? .settings : nil
 
         var components = Formatters.taipeiCalendar.dateComponents(
             [.year, .month, .day],
@@ -2072,84 +2077,100 @@ private struct SettingsSheet: View {
 
     private func content(topSafeAreaInset: CGFloat, bottomSafeAreaInset: CGFloat) -> some View {
         ZStack(alignment: .top) {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
-                    if purchaseManager.isSupporter {
-                        SettingsAppIconGroup(
-                            selectedRawValue: $selectedAppIconRaw,
-                            onSelect: setAppIcon
-                        )
+            ScrollViewReader { scrollProxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 0) {
+                        if purchaseManager.isSupporter {
+                            SettingsAppIconGroup(
+                                selectedRawValue: $selectedAppIconRaw,
+                                onSelect: setAppIcon
+                            )
+
+                            SettingsDivider()
+                        }
+
+                        SettingsOptionGroup(title: AppText.theme) {
+                            ThemePicker(
+                                settings: visibleAppearanceSettings,
+                                selectedRawValue: appearanceRaw,
+                                title: appearanceTitle
+                            ) { setting in
+                                setAppearance(setting)
+                            }
+                        }
 
                         SettingsDivider()
-                    }
 
-                    SettingsOptionGroup(title: AppText.theme) {
-                        ThemePicker(
-                            settings: visibleAppearanceSettings,
-                            selectedRawValue: appearanceRaw,
-                            title: appearanceTitle
-                        ) { setting in
-                            setAppearance(setting)
-                        }
-                    }
-
-                    SettingsDivider()
-
-                    SettingsOptionGroup(title: AppText.defaultMessageFormat) {
-                        ForEach(ShareMessageFormat.allCases) { format in
-                            SettingsOptionButton(
-                                title: format.title,
-                                detail: messagePreview(for: format),
-                                isSelected: messageFormatRaw == format.rawValue
-                            ) {
-                                messageFormatRaw = format.rawValue
+                        SettingsOptionGroup(title: AppText.defaultMessageFormat) {
+                            ForEach(ShareMessageFormat.allCases) { format in
+                                SettingsOptionButton(
+                                    title: format.title,
+                                    detail: messagePreview(for: format),
+                                    isSelected: messageFormatRaw == format.rawValue
+                                ) {
+                                    messageFormatRaw = format.rawValue
+                                }
                             }
                         }
-                    }
 
-                    SettingsDivider()
+                        SettingsDivider()
 
-                    SettingsOptionGroup(title: AppText.language) {
-                        ForEach(AppLanguageSetting.allCases) { setting in
-                            SettingsOptionButton(
-                                title: languageTitle(setting),
-                                isSelected: languageCode == setting.rawValue
-                            ) {
-                                languageCode = setting.rawValue
+                        SettingsOptionGroup(title: AppText.language) {
+                            ForEach(AppLanguageSetting.allCases) { setting in
+                                SettingsOptionButton(
+                                    title: languageTitle(setting),
+                                    isSelected: languageCode == setting.rawValue
+                                ) {
+                                    languageCode = setting.rawValue
+                                }
                             }
                         }
+
+                        SettingsDivider()
+
+                        SettingsSupportGroup(purchaseManager: purchaseManager)
+                            .id(Self.supportScreenshotSectionID)
+
+                        SettingsDivider()
+
+                        SettingsOptionGroup(title: AppText.links) {
+                            SettingsLinkRow(
+                                title: AppText.support,
+                                systemName: "questionmark.circle",
+                                url: supportURL
+                            )
+
+                            SettingsLinkRow(
+                                title: AppText.privacyPolicy,
+                                systemName: "hand.raised",
+                                url: privacyURL
+                            )
+                        }
+                    }
+                    .padding(.horizontal, OnTrackTheme.space5)
+                    .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
+                    .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+                }
+                .scrollIndicators(.hidden)
+#if DEBUG
+                .onAppear {
+                    guard scrollsToSupportScreenshotSection else {
+                        return
                     }
 
-                    SettingsDivider()
-
-                    SettingsSupportGroup(purchaseManager: purchaseManager)
-
-                    SettingsDivider()
-
-                    SettingsOptionGroup(title: AppText.links) {
-                        SettingsLinkRow(
-                            title: AppText.support,
-                            systemName: "questionmark.circle",
-                            url: supportURL
-                        )
-
-                        SettingsLinkRow(
-                            title: AppText.privacyPolicy,
-                            systemName: "hand.raised",
-                            url: privacyURL
-                        )
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                        scrollProxy.scrollTo(Self.supportScreenshotSectionID, anchor: .center)
                     }
                 }
-                .padding(.horizontal, OnTrackTheme.space5)
-                .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
-                .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+#endif
             }
-            .scrollIndicators(.hidden)
 
             settingsHeader(topSafeAreaInset: topSafeAreaInset)
         }
         .background(OnTrackTheme.panel)
     }
+
+    private static let supportScreenshotSectionID = "support-ontrack-screenshot-section"
 
     private func settingsHeader(topSafeAreaInset: CGFloat) -> some View {
         VStack(spacing: 0) {
@@ -2180,6 +2201,13 @@ private struct SettingsSheet: View {
     private var appearanceSetting: AppAppearanceSetting {
         AppAppearanceSetting(rawValue: appearanceRaw) ?? AppAppearanceSetting.current
     }
+
+#if DEBUG
+    private var scrollsToSupportScreenshotSection: Bool {
+        ProcessInfo.processInfo.environment["ONTRACK_SCREENSHOT_TARGET"] == "support"
+            || ProcessInfo.processInfo.arguments.contains("--screenshot-support")
+    }
+#endif
 
     private var visibleAppearanceSettings: [AppAppearanceSetting] {
         AppAppearanceSetting.allCases.filter { purchaseManager.isSupporter || !$0.requiresSupporter }
@@ -2454,11 +2482,11 @@ private struct SettingsSupportGroup: View {
             return AppText.supported
         }
 
-        guard let product = purchaseManager.supporterProduct else {
+        guard let displayPrice = purchaseManager.supporterDisplayPrice else {
             return AppText.purchaseUnavailable
         }
 
-        return AppText.leaveTip(price: product.displayPrice)
+        return AppText.leaveTip(price: displayPrice)
     }
 }
 

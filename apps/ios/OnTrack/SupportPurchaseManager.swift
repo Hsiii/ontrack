@@ -9,6 +9,9 @@ final class SupportPurchaseManager: ObservableObject {
     @Published private(set) var isSupporter = false
     @Published private(set) var isLoading = false
     @Published private(set) var thankYouDialogID = 0
+#if DEBUG
+    @Published private(set) var supporterDisplayPriceOverride: String?
+#endif
     @Published var statusMessage: String?
 
     private var updatesTask: Task<Void, Never>?
@@ -23,6 +26,7 @@ final class SupportPurchaseManager: ObservableObject {
 #if DEBUG
         usesFreshStoreKitFlow = ProcessInfo.processInfo.environment["ONTRACK_FRESH_STOREKIT_FLOW"] == "1"
             || ProcessInfo.processInfo.arguments.contains("--fresh-storekit-flow")
+        supporterDisplayPriceOverride = ProcessInfo.processInfo.environment["ONTRACK_SUPPORTER_DISPLAY_PRICE"]
 #endif
 
         if updatesTask == nil {
@@ -37,6 +41,18 @@ final class SupportPurchaseManager: ObservableObject {
         }
 
         await refreshEntitlements()
+    }
+
+    var supporterDisplayPrice: String? {
+        if let supporterProduct {
+            return supporterProduct.displayPrice
+        }
+
+#if DEBUG
+        return supporterDisplayPriceOverride
+#else
+        return nil
+#endif
     }
 
     func purchaseSupporterPack() async {
