@@ -27,8 +27,8 @@ XCODEBUILD_ARGS=(
     -archivePath "$ARCHIVE_PATH"
     -exportPath "$EXPORT_PATH"
     -exportOptionsPlist "$EXPORT_OPTIONS_PLIST"
-    "${IOS_PROVISIONING_ARGS[@]}"
-    "${APP_STORE_AUTH_ARGS[@]}"
+    ${IOS_PROVISIONING_ARGS[@]+"${IOS_PROVISIONING_ARGS[@]}"}
+    ${APP_STORE_AUTH_ARGS[@]+"${APP_STORE_AUTH_ARGS[@]}"}
 )
 
 xcodebuild "${XCODEBUILD_ARGS[@]}"

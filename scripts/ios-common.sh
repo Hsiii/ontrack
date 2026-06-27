@@ -8,9 +8,97 @@ IOS_PROJECT_PATH="${IOS_PROJECT:-$IOS_ROOT_DIR/apps/ios/OnTrack.xcodeproj}"
 IOS_SCHEME_NAME="${IOS_SCHEME:-OnTrack}"
 IOS_BUNDLE_ID_VALUE="${IOS_BUNDLE_ID:-dev.hsichen.ontrack}"
 
+ios_load_env() {
+    local env_path="${IOS_ENV_FILE:-$IOS_ROOT_DIR/.env}"
+
+    if [[ ! -f "$env_path" ]]; then
+        return
+    fi
+
+    local line
+    local key
+    local value
+
+    while IFS= read -r line || [[ -n "$line" ]]; do
+        [[ -z "$line" || "$line" == \#* || "$line" != *=* ]] && continue
+
+        key="${line%%=*}"
+        value="${line#*=}"
+
+        [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+        [[ -z "${!key+x}" ]] || continue
+
+        printf -v "$key" '%s' "$value"
+        export "$key"
+    done <"$env_path"
+}
+
+ios_load_env
+
 ios_die() {
     echo "$*" >&2
     exit 1
+}
+
+ios_project_build_setting() {
+    local setting_name="$1"
+    local fallback="$2"
+    local project_file="$IOS_PROJECT_PATH/project.pbxproj"
+
+    if [[ ! -f "$project_file" ]]; then
+        printf '%s\n' "$fallback"
+        return
+    fi
+
+    local setting_value
+    setting_value="$(
+        awk -F= -v key="$setting_name" '
+            $1 ~ key {
+                gsub(/[;[:space:]]/, "", $2)
+                print $2
+                exit
+            }
+        ' "$project_file"
+    )"
+
+    printf '%s\n' "${setting_value:-$fallback}"
+}
+
+ios_next_build_number() {
+    local build_number="$1"
+
+    if [[ "$build_number" =~ ^[0-9]+$ ]]; then
+        printf '%s\n' "$((build_number + 1))"
+        return
+    fi
+
+    printf '%s\n' "$build_number"
+}
+
+ios_resolve_release_versions() {
+    local project_marketing_version
+    local project_build_number
+
+    project_marketing_version="$(ios_project_build_setting MARKETING_VERSION "0.1.0")"
+    project_build_number="$(ios_project_build_setting CURRENT_PROJECT_VERSION "1")"
+
+    IOS_MARKETING_VERSION="${IOS_MARKETING_VERSION:-$project_marketing_version}"
+    IOS_BUILD_NUMBER="${IOS_BUILD_NUMBER:-$project_build_number}"
+
+    if [[ "${IOS_RELEASE_PROMPT:-0}" == "1" && -t 0 ]]; then
+        local prompted_value
+        local suggested_build_number
+        suggested_build_number="$(ios_next_build_number "$project_build_number")"
+
+        read -r -p "Marketing version [$IOS_MARKETING_VERSION]: " prompted_value
+        IOS_MARKETING_VERSION="${prompted_value:-$IOS_MARKETING_VERSION}"
+
+        read -r -p "Build number [$suggested_build_number]: " prompted_value
+        IOS_BUILD_NUMBER="${prompted_value:-$suggested_build_number}"
+    fi
+
+    export IOS_MARKETING_VERSION
+    export IOS_BUILD_NUMBER
 }
 
 ios_set_app_store_auth_args() {
