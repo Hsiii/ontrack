@@ -16,9 +16,6 @@
         "^(react/(.*)$)|^(react$)",
         "<THIRD_PARTY_MODULES>",
         "",
-        "^components",
-        "^hooks",
-        "^api",
         "^[../]",
         "^[./]"
     ],

@@ -18,15 +18,6 @@
                 "name": "next"
             }
         ],
-        "baseUrl": "./src",
-        "paths": {
-            "components/*": ["components/*"],
-            "components": ["components"],
-            "hooks/*": ["hooks/*"],
-            "hooks": ["hooks"],
-            "api/*": ["api/*"],
-            "api": ["api"]
-        },
         "noUnusedLocals": true,
         "noUnusedParameters": true,
         "noFallthroughCasesInSwitch": true,
