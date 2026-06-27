@@ -6,18 +6,18 @@ import styles from './page.module.css';
 
 const DOCS_URL = 'https://ontrack.hsichen.dev/docs';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
+const APP_DESCRIPTION =
+    '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 
 export const metadata: Metadata = {
     title: 'OnTrack | 極速台鐵時刻表',
-    description:
-        'OnTrack 是台鐵時刻表 App，支援最近車站偵測、即時延誤、下一班列車與班次分享，可在 Web 與 iPhone 使用。',
+    description: APP_DESCRIPTION,
     alternates: {
         canonical: DOCS_URL,
     },
     openGraph: {
         title: 'OnTrack 台鐵時刻表 App',
-        description:
-            '自動偵測最近車站、依延誤調整下一班列車，快速查台鐵時刻表與分享抵達時間。',
+        description: APP_DESCRIPTION,
         url: DOCS_URL,
         siteName: 'OnTrack',
         images: [APP_IMAGE],
@@ -27,8 +27,7 @@ export const metadata: Metadata = {
     twitter: {
         card: 'summary_large_image',
         title: 'OnTrack 台鐵時刻表 App',
-        description:
-            '快速查台鐵時刻表、即時延誤與下一班列車，可在 Web 與 iPhone 使用。',
+        description: APP_DESCRIPTION,
         images: [APP_IMAGE],
     },
 };
