@@ -1,54 +1,32 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PROJECT="${IOS_PROJECT:-$ROOT_DIR/apps/ios/OnTrack.xcodeproj}"
-SCHEME="${IOS_SCHEME:-OnTrack}"
+source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ios-common.sh"
+
 CONFIGURATION="${IOS_CONFIGURATION:-Debug}"
-DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$ROOT_DIR/build/DeviceDerivedData}"
-BUNDLE_ID="${IOS_BUNDLE_ID:-dev.hsichen.ontrack}"
+DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$IOS_ROOT_DIR/build/DeviceDerivedData}"
 
-detect_device_id() {
-    local devices_json
-    devices_json="$(mktemp)"
-
-    if ! xcrun devicectl list devices --json-output "$devices_json" >/dev/null; then
-        rm -f "$devices_json"
-        return 1
-    fi
-
-    local device_id
-    device_id="$(
-        plutil -extract result.devices.0.hardwareProperties.udid raw -o - "$devices_json" 2>/dev/null || true
-    )"
-    rm -f "$devices_json"
-
-    [[ -n "$device_id" ]] && printf '%s\n' "$device_id"
-}
-
-DEVICE_ID="${IOS_DEVICE_ID:-$(detect_device_id)}"
+DEVICE_ID="${IOS_DEVICE_ID:-}"
 if [[ -z "$DEVICE_ID" ]]; then
-    echo "No connected iOS device found. Connect one, or set IOS_DEVICE_ID." >&2
-    exit 1
+    DEVICE_ID="$(ios_detect_device_id || true)"
 fi
+
+[[ -n "$DEVICE_ID" ]] || ios_die "No connected iOS device found. Connect one, or set IOS_DEVICE_ID."
 
 DESTINATION="${IOS_DESTINATION:-id=$DEVICE_ID}"
-APP_PATH="${IOS_APP_PATH:-$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION-iphoneos/$SCHEME.app}"
+APP_PATH="${IOS_APP_PATH:-$DERIVED_DATA_PATH/Build/Products/$CONFIGURATION-iphoneos/$IOS_SCHEME_NAME.app}"
 
-PROVISIONING_ARGS=()
-if [[ "${IOS_ALLOW_PROVISIONING_UPDATES:-1}" != "0" ]]; then
-    PROVISIONING_ARGS=(-allowProvisioningUpdates)
-fi
+ios_set_provisioning_args
 
-echo "Building $SCHEME for device $DEVICE_ID..."
+echo "Building $IOS_SCHEME_NAME for device $DEVICE_ID..."
 xcodebuild \
-    -project "$PROJECT" \
-    -scheme "$SCHEME" \
+    -project "$IOS_PROJECT_PATH" \
+    -scheme "$IOS_SCHEME_NAME" \
     -configuration "$CONFIGURATION" \
     -sdk iphoneos \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
-    "${PROVISIONING_ARGS[@]}" \
+    "${IOS_PROVISIONING_ARGS[@]}" \
     build
 
 if [[ ! -d "$APP_PATH" ]]; then
@@ -61,7 +39,7 @@ echo "Installing $APP_PATH..."
 xcrun devicectl device install app --device "$DEVICE_ID" "$APP_PATH"
 
 if [[ "${IOS_SKIP_LAUNCH:-0}" == "1" ]]; then
-    echo "Installed $BUNDLE_ID on $DEVICE_ID."
+    echo "Installed $IOS_BUNDLE_ID_VALUE on $DEVICE_ID."
     exit 0
 fi
 
@@ -75,11 +53,11 @@ if [[ "${IOS_MOCK_DATA:-0}" == "1" ]]; then
     LAUNCH_ENV_ARGS=(--environment-variables '{"ONTRACK_MOCK_DATA":"1"}')
 fi
 
-echo "Launching $BUNDLE_ID..."
+echo "Launching $IOS_BUNDLE_ID_VALUE..."
 xcrun devicectl device process launch \
     --device "$DEVICE_ID" \
     --terminate-existing \
     "${LAUNCH_ENV_ARGS[@]}" \
-    "$BUNDLE_ID"
+    "$IOS_BUNDLE_ID_VALUE"
 
-echo "Updated and launched $BUNDLE_ID on $DEVICE_ID."
+echo "Updated and launched $IOS_BUNDLE_ID_VALUE on $DEVICE_ID."

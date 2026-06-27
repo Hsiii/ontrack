@@ -8,21 +8,17 @@
     ],
     "scripts": {
         "dev": "bun run --filter @ontrack/web dev",
-        "dev:worker": "wrangler dev --config apps/worker/wrangler.jsonc --test-scheduled",
         "build": "bun run --filter @ontrack/web build && tsc -p apps/worker/tsconfig.json",
-        "build:web": "bun run --filter @ontrack/web build",
-        "build:worker": "tsc -p apps/worker/tsconfig.json",
-        "ios:check": "scripts/ios-check.sh",
-        "ios:build": "scripts/ios-build.sh",
-        "ios:archive": "scripts/ios-archive.sh",
-        "ios:export": "scripts/ios-export.sh",
-        "ios:release": "scripts/ios-release.sh",
-        "deploy": "bun run build && wrangler deploy --config apps/worker/wrangler.jsonc",
+        "iphone": "scripts/ios-run-device.sh",
+        "iphone:mock": "scripts/ios-run-mock-device.sh",
+        "iphone:check": "scripts/ios-check.sh",
+        "iphone:simulator": "scripts/ios-build.sh",
+        "iphone:archive": "scripts/ios-archive.sh",
+        "iphone:export": "scripts/ios-export.sh",
+        "iphone:release": "scripts/ios-release.sh",
         "lint": "eslint .",
         "format": "prettier --write .",
-        "preview": "wrangler dev --config apps/worker/wrangler.jsonc",
-        "prepare": "husky",
-        "generate-pwa-assets": "bun run --filter @ontrack/web generate-pwa-assets"
+        "prepare": "husky"
     },
     "lint-staged": {
         "*.{ts,tsx,js,jsx}": [

@@ -6,8 +6,6 @@
     "scripts": {
         "dev": "next dev",
         "build": "next build",
-        "lint": "eslint .",
-        "format": "prettier --write .",
         "generate-pwa-assets": "node scripts/generate-pwa-assets.js"
     },
     "dependencies": {
