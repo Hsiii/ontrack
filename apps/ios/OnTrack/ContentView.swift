@@ -1401,9 +1401,10 @@ private struct TrainCard: View {
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             )
             .contentShape(Rectangle())
-            .onTrackSurfaceRing(
-                ringColor: OnTrackTheme.border
-            )
+            .overlay {
+                RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
+                    .stroke(OnTrackTheme.border, lineWidth: 1)
+            }
         }
         .buttonStyle(.plain)
         .accessibilityElement(children: .ignore)
