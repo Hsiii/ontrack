@@ -175,7 +175,7 @@ struct ContentView: View {
                 OnTrackTheme.background
                     .ignoresSafeArea()
 
-                GeometryReader { _ in
+                GeometryReader { proxy in
                     ZStack(alignment: .bottom) {
                         ScrollView {
                             VStack(alignment: .leading, spacing: OnTrackTheme.space4) {
@@ -200,6 +200,7 @@ struct ContentView: View {
                                     )
                                     .accessibilityLabel(AppText.settings)
                                 }
+                                .padding(.horizontal, OnTrackTheme.space2)
 
                                 RouteSelectorView(
                                     origin: originStation,
@@ -213,25 +214,26 @@ struct ContentView: View {
                             .frame(maxWidth: 480)
                             .padding(.horizontal, OnTrackTheme.space5)
                             .padding(.top, OnTrackTheme.space3)
+                            .padding(.bottom, TrainPanelLayout.contentReserve + proxy.safeAreaInsets.bottom)
                             .frame(maxWidth: .infinity)
                         }
                         .scrollIndicators(.hidden)
                         .refreshable {
                             await loadSchedule(refreshLive: true)
                         }
-                        .safeAreaInset(edge: .bottom, spacing: 0) {
-                            if stationPicker == nil {
-                                TrainBoardingPanel(
-                                    message: shareMessage,
-                                    selectedTrain: selectedTrain,
-                                    destination: destinationStation,
-                                    trains: trains,
-                                    isLoading: isLoadingSchedule,
-                                    canLoadSchedule: canLoadSchedule,
-                                    onSelect: { selectedTrain = $0 }
-                                )
-                                .transition(.move(edge: .bottom))
-                            }
+
+                        if stationPicker == nil {
+                            TrainBoardingPanel(
+                                message: shareMessage,
+                                selectedTrain: selectedTrain,
+                                destination: destinationStation,
+                                trains: trains,
+                                isLoading: isLoadingSchedule,
+                                canLoadSchedule: canLoadSchedule,
+                                onSelect: { selectedTrain = $0 }
+                            )
+                            .padding(.bottom, proxy.safeAreaInsets.bottom)
+                            .transition(.move(edge: .bottom))
                         }
                     }
                 }
@@ -1082,12 +1084,12 @@ private struct RouteSelectorView: View {
 
             HStack(spacing: OnTrackTheme.space3) {
                 Color.clear
-                    .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.routeDividerHeight)
+                    .frame(width: OnTrackTheme.routeGlyphColumnWidth, height: OnTrackTheme.routeDividerHeight)
                 Rectangle()
                     .fill(OnTrackTheme.border)
                     .frame(height: 1)
             }
-            .padding(.leading, 0)
+            .padding(.leading, OnTrackTheme.space4)
             .padding(.trailing, OnTrackTheme.space4)
             .frame(height: OnTrackTheme.routeDividerHeight)
 
@@ -1236,7 +1238,7 @@ private struct StationTrigger: View {
 
                     Spacer()
                 }
-                .padding(.leading, 0)
+                .padding(.leading, OnTrackTheme.space4)
                 .padding(.trailing, OnTrackTheme.space4)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .frame(height: OnTrackTheme.routeRowHeight)
@@ -1249,6 +1251,7 @@ private struct StationTrigger: View {
 
             if let trailingAction {
                 trailingAction
+                    .padding(.trailing, OnTrackTheme.space2)
             }
         }
         .frame(height: OnTrackTheme.routeRowHeight)
@@ -1279,7 +1282,7 @@ private struct RouteGlyph: View {
                     .foregroundStyle(OnTrackTheme.dimText)
             }
         }
-        .frame(width: OnTrackTheme.iconButtonSize, height: 24)
+        .frame(width: OnTrackTheme.routeGlyphColumnWidth, height: 24)
     }
 }
 
@@ -1782,6 +1785,10 @@ private enum TrainPanelLayout {
     static let maxTrainRows = 7
     static let loadingRows = 3
     static let emptyStateRows = 1
+
+    static var contentReserve: CGFloat {
+        panelHeight(rowCount: maxTrainRows)
+    }
 
     static var panelChromeHeight: CGFloat {
         topContentPadding
@@ -2370,6 +2377,7 @@ private enum OnTrackTheme {
     static let radiusPanel: CGFloat = 12
     static let controlHeight: CGFloat = 44
     static let iconButtonSize: CGFloat = 44
+    static let routeGlyphColumnWidth: CGFloat = 24
     static let routeDividerHeight: CGFloat = 1
     static let routeRowHeight: CGFloat = 56
     static let timeModePickerMaxWidth: CGFloat = 260
