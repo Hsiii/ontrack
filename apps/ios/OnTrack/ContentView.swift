@@ -1382,7 +1382,7 @@ private struct TrainCard: View {
     }
 
     private var timeCluster: some View {
-        HStack(spacing: OnTrackTheme.space2) {
+        HStack(spacing: OnTrackTheme.space1) {
             TimeColumn(
                 time: train.departureTime,
                 adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.departureTime, delay: train.delay) : nil
@@ -1435,7 +1435,7 @@ private struct TripSeparator: View {
     let duration: String
 
     var body: some View {
-        HStack(spacing: OnTrackTheme.space2) {
+        HStack(spacing: OnTrackTheme.space1) {
             separatorLine
 
             Text(duration)
