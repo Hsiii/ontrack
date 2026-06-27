@@ -2132,7 +2132,7 @@ private struct SettingsLinkRow: View {
                 Spacer()
 
                 Image(systemName: "arrow.up.right")
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(OnTrackFont.accessory)
                     .foregroundStyle(OnTrackTheme.dimText)
             }
             .padding(.horizontal, OnTrackTheme.space4)
@@ -2261,6 +2261,7 @@ private struct OnTrackPressButtonStyle: ButtonStyle {
 }
 
 private enum OnTrackFont {
+    static let accessory = Font.subheadline.weight(.semibold)
     static let action = Font.body.weight(.semibold)
     static let body = Font.body
     static let caption = Font.caption
