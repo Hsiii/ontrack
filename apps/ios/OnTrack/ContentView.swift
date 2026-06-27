@@ -1784,10 +1784,6 @@ private enum TrainPanelLayout {
         OnTrackTheme.space3
     }
 
-    static var panelBottomPadding: CGFloat {
-        OnTrackTheme.space3
-    }
-
     static func rowCount(isLoading: Bool, canLoadSchedule: Bool, trainCount: Int) -> Int {
         if isLoading && trainCount == 0 {
             return loadingRows
@@ -1808,7 +1804,7 @@ private enum TrainPanelLayout {
     }
 
     static func bottomInset(safeAreaInset: CGFloat) -> CGFloat {
-        max(safeAreaInset, panelBottomPadding)
+        safeAreaInset
     }
 
     static func contentReserve(rowCount: Int, bottomInset: CGFloat) -> CGFloat {

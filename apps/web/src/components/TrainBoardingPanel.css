@@ -1,7 +1,7 @@
 .train-boarding-panel {
     position: fixed;
     z-index: 800;
-    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
+    bottom: env(safe-area-inset-bottom);
     left: 50%;
     display: flex;
     width: calc(100% - var(--space-8));
