@@ -230,6 +230,7 @@ struct ContentView: View {
                                 trains: trains,
                                 isLoading: isLoadingSchedule,
                                 canLoadSchedule: canLoadSchedule,
+                                availableHeight: max(0, proxy.size.height - proxy.safeAreaInsets.bottom),
                                 onSelect: { selectedTrain = $0 }
                             )
                             .padding(.bottom, proxy.safeAreaInsets.bottom)
@@ -1778,16 +1779,20 @@ private struct StationSearchRow: View {
 
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
-    static let maxTrainRows = 7
+    static let collapsedTrainRows: CGFloat = 3.5
+    static let previewRowReserve = 4
     static let loadingRows = 3
     static let emptyStateRows = 1
+    static let grabberWidth: CGFloat = 40
+    static let grabberHeight: CGFloat = 4
 
     static var contentReserve: CGFloat {
-        panelHeight(rowCount: maxTrainRows)
+        collapsedHeight(rowCount: previewRowReserve)
     }
 
     static var panelChromeHeight: CGFloat {
-        topContentPadding
+        grabberTouchHeight
+            + topContentPadding
             + expectedHeaderHeight
             + OnTrackTheme.controlHeight
             + expectedSectionBottomPadding
@@ -1798,12 +1803,22 @@ private enum TrainPanelLayout {
         OnTrackTheme.space4
     }
 
+    static var grabberTouchHeight: CGFloat {
+        OnTrackTheme.space2
+            + grabberHeight
+            + OnTrackTheme.space2
+    }
+
     static var expectedHeaderHeight: CGFloat {
         OnTrackTheme.space5
     }
 
     static var expectedSectionBottomPadding: CGFloat {
         OnTrackTheme.space2
+    }
+
+    static var expandedTopInset: CGFloat {
+        OnTrackTheme.controlHeight + OnTrackTheme.space6
     }
 
     static func rowCount(isLoading: Bool, canLoadSchedule: Bool, trainCount: Int) -> Int {
@@ -1815,13 +1830,34 @@ private enum TrainPanelLayout {
             return emptyStateRows
         }
 
-        return min(maxTrainRows, trainCount)
+        return trainCount
+    }
+
+    static func collapsedHeight(rowCount: Int) -> CGFloat {
+        panelChromeHeight
+            + cardHeight * min(CGFloat(max(emptyStateRows, rowCount)), collapsedTrainRows)
+    }
+
+    static func expandedHeight(availableHeight: CGFloat, rowCount: Int) -> CGFloat {
+        let collapsedHeight = collapsedHeight(rowCount: rowCount)
+        let naturalHeight = panelHeight(rowCount: rowCount)
+        let availableExpandedHeight = max(
+            collapsedHeight,
+            availableHeight - expandedTopInset
+        )
+
+        return min(max(collapsedHeight, naturalHeight), availableExpandedHeight)
     }
 
     static func panelHeight(rowCount: Int) -> CGFloat {
         panelChromeHeight + cardHeight * CGFloat(max(emptyStateRows, rowCount))
     }
 
+}
+
+private enum TrainPanelDetent {
+    case collapsed
+    case expanded
 }
 
 private struct TrainBoardingPanel: View {
@@ -1831,11 +1867,31 @@ private struct TrainBoardingPanel: View {
     let trains: [TrainInfo]
     let isLoading: Bool
     let canLoadSchedule: Bool
+    let availableHeight: CGFloat
     let onSelect: (TrainInfo) -> Void
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @GestureState private var dragTranslation: CGFloat = 0
+    @State private var detent: TrainPanelDetent = .collapsed
+
     var body: some View {
-        panelContent
-            .frame(height: panelContentHeight, alignment: .top)
+        let collapsedHeight = TrainPanelLayout.collapsedHeight(rowCount: trainListRowCount)
+        let expandedHeight = TrainPanelLayout.expandedHeight(
+            availableHeight: availableHeight,
+            rowCount: trainListRowCount
+        )
+
+        panelContent(
+            collapsedHeight: collapsedHeight,
+            expandedHeight: expandedHeight
+        )
+            .frame(
+                height: currentHeight(
+                    collapsedHeight: collapsedHeight,
+                    expandedHeight: expandedHeight
+                ),
+                alignment: .top
+            )
             .frame(maxWidth: .infinity, alignment: .top)
             .background(OnTrackTheme.panel)
             .overlay(alignment: .top) {
@@ -1843,14 +1899,26 @@ private struct TrainBoardingPanel: View {
                     .fill(OnTrackTheme.border)
                     .frame(height: 1)
             }
+            .clipped()
+            .animation(panelSettleAnimation, value: detent)
+            .onChange(of: canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)) { _, isExpandable in
+                guard !isExpandable else { return }
+                detent = .collapsed
+            }
     }
 
-    private var panelContent: some View {
+    private func panelContent(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some View {
         VStack(spacing: 0) {
+            panelGrabber(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)
+
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space5)
                 .padding(.top, TrainPanelLayout.topContentPadding)
                 .padding(.bottom, TrainPanelLayout.expectedSectionBottomPadding)
+                .simultaneousGesture(panelDragGesture(
+                    collapsedHeight: collapsedHeight,
+                    expandedHeight: expandedHeight
+                ))
 
             Rectangle()
                 .fill(OnTrackTheme.border)
@@ -1875,16 +1943,97 @@ private struct TrainBoardingPanel: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var panelContentHeight: CGFloat {
-        TrainPanelLayout.panelHeight(rowCount: trainListRowCount)
-    }
-
     private var trainListRowCount: Int {
         TrainPanelLayout.rowCount(
             isLoading: isLoading,
             canLoadSchedule: canLoadSchedule,
             trainCount: trains.count
         )
+    }
+
+    private var panelSettleAnimation: Animation? {
+        reduceMotion ? nil : .interactiveSpring(response: 0.32, dampingFraction: 0.86)
+    }
+
+    private func panelGrabber(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some View {
+        Button {
+            togglePanel(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight)
+        } label: {
+            Capsule()
+                .fill(OnTrackTheme.dimText.opacity(0.32))
+                .frame(
+                    width: TrainPanelLayout.grabberWidth,
+                    height: TrainPanelLayout.grabberHeight
+                )
+                .frame(maxWidth: .infinity)
+                .padding(.top, OnTrackTheme.space2)
+                .padding(.bottom, OnTrackTheme.space2)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(detent == .expanded ? AppText.collapseTrainPanel : AppText.expandTrainPanel)
+        .gesture(panelDragGesture(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight))
+    }
+
+    private func panelDragGesture(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> some Gesture {
+        DragGesture(minimumDistance: OnTrackTheme.space1)
+            .updating($dragTranslation) { value, state, _ in
+                guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
+                    return
+                }
+
+                state = value.translation.height
+            }
+            .onEnded { value in
+                settlePanel(
+                    after: value,
+                    collapsedHeight: collapsedHeight,
+                    expandedHeight: expandedHeight
+                )
+            }
+    }
+
+    private func currentHeight(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> CGFloat {
+        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
+            return collapsedHeight
+        }
+
+        let baseHeight = detent == .expanded ? expandedHeight : collapsedHeight
+        let proposedHeight = baseHeight - dragTranslation
+        return min(max(proposedHeight, collapsedHeight), expandedHeight)
+    }
+
+    private func settlePanel(
+        after value: DragGesture.Value,
+        collapsedHeight: CGFloat,
+        expandedHeight: CGFloat
+    ) {
+        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
+            detent = .collapsed
+            return
+        }
+
+        let baseHeight = detent == .expanded ? expandedHeight : collapsedHeight
+        let projectedHeight = baseHeight - value.predictedEndTranslation.height
+        let snapThreshold = collapsedHeight + (expandedHeight - collapsedHeight) * 0.45
+
+        withAnimation(panelSettleAnimation) {
+            detent = projectedHeight >= snapThreshold ? .expanded : .collapsed
+        }
+    }
+
+    private func togglePanel(collapsedHeight: CGFloat, expandedHeight: CGFloat) {
+        guard canExpand(collapsedHeight: collapsedHeight, expandedHeight: expandedHeight) else {
+            return
+        }
+
+        withAnimation(panelSettleAnimation) {
+            detent = detent == .expanded ? .collapsed : .expanded
+        }
+    }
+
+    private func canExpand(collapsedHeight: CGFloat, expandedHeight: CGFloat) -> Bool {
+        expandedHeight - collapsedHeight > OnTrackTheme.space4
     }
 
     private var expectedBoardingSection: some View {
