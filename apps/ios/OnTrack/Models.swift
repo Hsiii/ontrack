@@ -402,7 +402,7 @@ enum AppText {
             : "You unlocked App Icon options plus the Sage, Amethyst, and Ember themes."
     }
     static var supported: String { isZh ? "已支持" : "Supported" }
-    static var restorePurchases: String { isZh ? "回復購買" : "Restore Purchases" }
+    static var restorePurchases: String { isZh ? "恢復購買" : "Restore Purchases" }
     static var purchasePending: String { isZh ? "購買正在等待確認。" : "Purchase is pending confirmation." }
     static var purchaseUnavailable: String { isZh ? "目前無法購買" : "Purchase Unavailable" }
     static var noPurchasesRestored: String { isZh ? "沒有可回復的購買。" : "No purchases to restore." }
