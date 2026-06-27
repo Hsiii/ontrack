@@ -213,29 +213,28 @@ struct ContentView: View {
                             .frame(maxWidth: 480)
                             .padding(.horizontal, OnTrackTheme.space5)
                             .padding(.top, OnTrackTheme.space3)
-                            .padding(.bottom, TrainBoardingPanel.collapsedContentReserve)
                             .frame(maxWidth: .infinity)
                         }
                         .scrollIndicators(.hidden)
                         .refreshable {
                             await loadSchedule(refreshLive: true)
                         }
-
-                        if stationPicker == nil {
-                            TrainBoardingPanel(
-                                message: shareMessage,
-                                selectedTrain: selectedTrain,
-                                destination: destinationStation,
-                                trains: trains,
-                                isLoading: isLoadingSchedule,
-                                canLoadSchedule: canLoadSchedule,
-                                onSelect: { selectedTrain = $0 }
-                            )
-                            .transition(.move(edge: .bottom))
+                        .safeAreaInset(edge: .bottom, spacing: 0) {
+                            if stationPicker == nil {
+                                TrainBoardingPanel(
+                                    message: shareMessage,
+                                    selectedTrain: selectedTrain,
+                                    destination: destinationStation,
+                                    trains: trains,
+                                    isLoading: isLoadingSchedule,
+                                    canLoadSchedule: canLoadSchedule,
+                                    onSelect: { selectedTrain = $0 }
+                                )
+                                .transition(.move(edge: .bottom))
+                            }
                         }
                     }
                 }
-                .ignoresSafeArea(edges: .bottom)
 
                 if let stationPicker {
                     StationSearchView(
@@ -1784,25 +1783,16 @@ private enum TrainPanelLayout {
     static let loadingRows = 3
     static let emptyStateRows = 1
 
-    static var collapsedContentReserve: CGFloat {
-        panelHeight(rowCount: maxTrainRows)
-    }
-
     static var panelChromeHeight: CGFloat {
-        handleAreaHeight
-            + topContentPadding
+        topContentPadding
             + expectedHeaderHeight
             + OnTrackTheme.controlHeight
             + expectedSectionBottomPadding
             + 1
     }
 
-    static var handleAreaHeight: CGFloat {
-        OnTrackTheme.space6
-    }
-
     static var topContentPadding: CGFloat {
-        OnTrackTheme.space1
+        OnTrackTheme.space4
     }
 
     static var expectedHeaderHeight: CGFloat {
@@ -1832,8 +1822,6 @@ private enum TrainPanelLayout {
 }
 
 private struct TrainBoardingPanel: View {
-    static let collapsedContentReserve = TrainPanelLayout.collapsedContentReserve
-
     let message: String?
     let selectedTrain: TrainInfo?
     let destination: Station?
@@ -1843,17 +1831,19 @@ private struct TrainBoardingPanel: View {
     let onSelect: (TrainInfo) -> Void
 
     var body: some View {
-        panelShell
+        panelContent
             .frame(height: panelContentHeight, alignment: .top)
             .frame(maxWidth: .infinity, alignment: .top)
-            .onTrackBottomSheetSurface()
-            .ignoresSafeArea(edges: .bottom)
+            .background(OnTrackTheme.panel)
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(OnTrackTheme.border)
+                    .frame(height: 1)
+            }
     }
 
     private var panelContent: some View {
         VStack(spacing: 0) {
-            panelHandle
-
             expectedBoardingSection
                 .padding(.horizontal, OnTrackTheme.space5)
                 .padding(.top, TrainPanelLayout.topContentPadding)
@@ -1882,15 +1872,6 @@ private struct TrainBoardingPanel: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var panelShell: some View {
-        ZStack(alignment: .top) {
-            OnTrackTheme.panel
-            panelContent
-                .frame(height: panelContentHeight, alignment: .top)
-        }
-        .clipped()
-    }
-
     private var panelContentHeight: CGFloat {
         TrainPanelLayout.panelHeight(rowCount: trainListRowCount)
     }
@@ -1901,14 +1882,6 @@ private struct TrainBoardingPanel: View {
             canLoadSchedule: canLoadSchedule,
             trainCount: trains.count
         )
-    }
-
-    private var panelHandle: some View {
-        Capsule()
-            .fill(OnTrackTheme.border)
-            .frame(width: 40, height: OnTrackTheme.space1)
-            .frame(maxWidth: .infinity)
-            .frame(height: TrainPanelLayout.handleAreaHeight)
     }
 
     private var expectedBoardingSection: some View {
@@ -2331,33 +2304,6 @@ private extension View {
             .shadow(color: OnTrackTheme.surfaceShadow, radius: 8, x: 0, y: 4)
     }
 
-    func onTrackBottomSheetSurface() -> some View {
-        background {
-            UnevenRoundedRectangle(
-                cornerRadii: RectangleCornerRadii(
-                    topLeading: OnTrackTheme.radiusSheet,
-                    bottomLeading: 0,
-                    bottomTrailing: 0,
-                    topTrailing: OnTrackTheme.radiusSheet
-                ),
-                style: .continuous
-            )
-            .fill(OnTrackTheme.panel)
-        }
-        .overlay {
-            UnevenRoundedRectangle(
-                cornerRadii: RectangleCornerRadii(
-                    topLeading: OnTrackTheme.radiusSheet,
-                    bottomLeading: 0,
-                    bottomTrailing: 0,
-                    topTrailing: OnTrackTheme.radiusSheet
-                ),
-                style: .continuous
-            )
-            .stroke(OnTrackTheme.border, lineWidth: 1)
-        }
-        .shadow(color: OnTrackTheme.surfaceShadow, radius: 16, x: 0, y: -4)
-    }
 }
 
 private extension AppAppearanceSetting {
@@ -2422,7 +2368,6 @@ private enum OnTrackTheme {
 
     static let radiusControl: CGFloat = 8
     static let radiusPanel: CGFloat = 12
-    static let radiusSheet: CGFloat = 24
     static let controlHeight: CGFloat = 44
     static let iconButtonSize: CGFloat = 44
     static let routeDividerHeight: CGFloat = 1
