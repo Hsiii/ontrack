@@ -54,6 +54,79 @@ private enum ActiveSheet: String, Identifiable {
     var id: String { rawValue }
 }
 
+private enum AppIconSetting: String, CaseIterable, Identifiable {
+    case primary
+    case dark
+    case sage
+    case amethyst
+    case ember
+
+    var id: String { rawValue }
+
+    var alternateIconName: String? {
+        switch self {
+        case .primary:
+            nil
+        case .dark:
+            "Dark"
+        case .sage:
+            "Sage"
+        case .amethyst:
+            "Amethyst"
+        case .ember:
+            "Ember"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .primary:
+            AppText.defaultIcon
+        case .dark:
+            AppText.darkAppearance
+        case .sage:
+            AppText.sageTheme
+        case .amethyst:
+            AppText.amethystTheme
+        case .ember:
+            AppText.emberTheme
+        }
+    }
+
+    var backgroundColor: Color {
+        switch self {
+        case .primary, .sage:
+            .white
+        case .dark:
+            Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
+        case .amethyst:
+            Color(red: 30 / 255, green: 41 / 255, blue: 59 / 255)
+        case .ember:
+            Color(red: 35 / 255, green: 31 / 255, blue: 31 / 255)
+        }
+    }
+
+    var markColor: Color {
+        switch self {
+        case .primary:
+            Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+        case .dark:
+            Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)
+        case .sage:
+            Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255)
+        case .amethyst:
+            Color(red: 173 / 255, green: 150 / 255, blue: 218 / 255)
+        case .ember:
+            Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255)
+        }
+    }
+
+    static var current: AppIconSetting {
+        let alternateIconName = UIApplication.shared.alternateIconName
+        return allCases.first { $0.alternateIconName == alternateIconName } ?? .primary
+    }
+}
+
 struct ContentView: View {
     @Environment(\.scenePhase) private var scenePhase
 
@@ -1967,6 +2040,8 @@ private struct SettingsSheet: View {
     @Binding var messageFormatRaw: String
     @ObservedObject var purchaseManager: SupportPurchaseManager
 
+    @State private var selectedAppIconRaw = AppIconSetting.current.rawValue
+
     var body: some View {
         GeometryReader { proxy in
             content(
@@ -1999,14 +2074,22 @@ private struct SettingsSheet: View {
 
                     SettingsDivider()
 
+                    if purchaseManager.isSupporter {
+                        SettingsAppIconGroup(
+                            selectedRawValue: $selectedAppIconRaw,
+                            onSelect: setAppIcon
+                        )
+
+                        SettingsDivider()
+                    }
+
                     SettingsOptionGroup(title: AppText.theme) {
-                        ForEach(AppAppearanceSetting.allCases.filter { !$0.requiresSupporter }) { setting in
-                            SettingsOptionButton(
-                                title: appearanceTitle(setting),
-                                isSelected: appearanceRaw == setting.rawValue
-                            ) {
-                                appearanceRaw = setting.rawValue
-                            }
+                        ThemePicker(
+                            settings: visibleAppearanceSettings,
+                            selectedRawValue: appearanceRaw,
+                            title: appearanceTitle
+                        ) { setting in
+                            appearanceRaw = setting.rawValue
                         }
                     }
 
@@ -2084,6 +2167,10 @@ private struct SettingsSheet: View {
         AppAppearanceSetting(rawValue: appearanceRaw) ?? AppAppearanceSetting.current
     }
 
+    private var visibleAppearanceSettings: [AppAppearanceSetting] {
+        AppAppearanceSetting.allCases.filter { purchaseManager.isSupporter || !$0.requiresSupporter }
+    }
+
     private func languageTitle(_ setting: AppLanguageSetting) -> String {
         switch setting {
         case .system:
@@ -2112,6 +2199,166 @@ private struct SettingsSheet: View {
         }
     }
 
+    private func setAppIcon(_ setting: AppIconSetting) {
+        guard UIApplication.shared.supportsAlternateIcons,
+              selectedAppIconRaw != setting.rawValue else {
+            return
+        }
+
+        UIApplication.shared.setAlternateIconName(setting.alternateIconName) { error in
+            guard error == nil else {
+                return
+            }
+
+            DispatchQueue.main.async {
+                selectedAppIconRaw = setting.rawValue
+            }
+        }
+    }
+
+}
+
+private struct SettingsAppIconGroup: View {
+    @Binding var selectedRawValue: String
+    let onSelect: (AppIconSetting) -> Void
+
+    private let columns = [
+        GridItem(.adaptive(minimum: 56), spacing: OnTrackTheme.space3)
+    ]
+
+    var body: some View {
+        SettingsOptionGroup(title: AppText.appIcon) {
+            LazyVGrid(columns: columns, alignment: .leading, spacing: OnTrackTheme.space4) {
+                ForEach(AppIconSetting.allCases) { setting in
+                    Button {
+                        onSelect(setting)
+                    } label: {
+                        VStack(spacing: OnTrackTheme.space2) {
+                            AppIconPreview(setting: setting, isSelected: selectedRawValue == setting.rawValue)
+
+                            Text(setting.title)
+                                .font(OnTrackFont.caption)
+                                .foregroundStyle(OnTrackTheme.dimText)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.76)
+                        }
+                    }
+                    .buttonStyle(OnTrackPressButtonStyle())
+                    .accessibilityLabel(setting.title)
+                    .accessibilityAddTraits(selectedRawValue == setting.rawValue ? [.isSelected] : [])
+                }
+            }
+            .padding(.vertical, OnTrackTheme.space2)
+        }
+    }
+}
+
+private struct AppIconPreview: View {
+    let setting: AppIconSetting
+    let isSelected: Bool
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 14)
+                .fill(setting.backgroundColor)
+                .shadow(color: OnTrackTheme.surfaceShadow, radius: 6, x: 0, y: 3)
+
+            IconMark(color: setting.markColor)
+                .padding(OnTrackTheme.space2)
+        }
+        .frame(width: 56, height: 56)
+        .overlay {
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(isSelected ? OnTrackTheme.primary : OnTrackTheme.border, lineWidth: isSelected ? 2 : 1)
+        }
+    }
+}
+
+private struct IconMark: View {
+    let color: Color
+
+    var body: some View {
+        GeometryReader { proxy in
+            let width = proxy.size.width
+            let height = proxy.size.height
+
+            ZStack(alignment: .topLeading) {
+                Rectangle()
+                    .fill(color)
+                    .frame(width: width, height: height * 0.22)
+                    .offset(y: height * 0.14)
+
+                Circle()
+                    .fill(color)
+                    .frame(width: width * 0.45, height: width * 0.45)
+                    .offset(x: width * 0.14, y: height * 0.42)
+
+                Rectangle()
+                    .fill(color)
+                    .frame(width: width * 0.26, height: height * 0.66)
+                    .offset(x: width * 0.64, y: height * 0.25)
+            }
+        }
+        .aspectRatio(1, contentMode: .fit)
+    }
+}
+
+private struct ThemePicker: View {
+    let settings: [AppAppearanceSetting]
+    let selectedRawValue: String
+    let title: (AppAppearanceSetting) -> String
+    let onSelect: (AppAppearanceSetting) -> Void
+
+    private let columns = [
+        GridItem(.adaptive(minimum: 64), spacing: OnTrackTheme.space3)
+    ]
+
+    var body: some View {
+        LazyVGrid(columns: columns, alignment: .leading, spacing: OnTrackTheme.space4) {
+            ForEach(settings) { setting in
+                Button {
+                    onSelect(setting)
+                } label: {
+                    VStack(spacing: OnTrackTheme.space2) {
+                        ThemeSwatch(setting: setting, isSelected: selectedRawValue == setting.rawValue)
+
+                        Text(title(setting))
+                            .font(OnTrackFont.caption)
+                            .foregroundStyle(OnTrackTheme.dimText)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.76)
+                    }
+                }
+                .buttonStyle(OnTrackPressButtonStyle())
+                .accessibilityLabel(title(setting))
+                .accessibilityAddTraits(selectedRawValue == setting.rawValue ? [.isSelected] : [])
+            }
+        }
+        .padding(.vertical, OnTrackTheme.space2)
+    }
+}
+
+private struct ThemeSwatch: View {
+    let setting: AppAppearanceSetting
+    let isSelected: Bool
+
+    var body: some View {
+        Circle()
+            .fill(setting.previewColor)
+            .frame(width: OnTrackTheme.controlHeight, height: OnTrackTheme.controlHeight)
+            .overlay {
+                if setting == .system {
+                    Circle()
+                        .trim(from: 0.5, to: 1)
+                        .fill(Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255))
+                        .rotationEffect(.degrees(90))
+                }
+            }
+            .overlay {
+                Circle()
+                    .strokeBorder(isSelected ? OnTrackTheme.primary : OnTrackTheme.border, lineWidth: isSelected ? 2 : 1)
+            }
+    }
 }
 
 private struct SettingsSupportGroup: View {
@@ -2458,6 +2705,23 @@ private extension AppAppearanceSetting {
             .light
         case .dark, .amethyst, .ember:
             .dark
+        }
+    }
+
+    var previewColor: Color {
+        switch self {
+        case .system:
+            Color(red: 248 / 255, green: 250 / 255, blue: 252 / 255)
+        case .light:
+            .white
+        case .dark:
+            Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
+        case .sage:
+            Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255)
+        case .amethyst:
+            Color(red: 173 / 255, green: 150 / 255, blue: 218 / 255)
+        case .ember:
+            Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255)
         }
     }
 }

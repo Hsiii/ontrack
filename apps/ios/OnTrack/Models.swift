@@ -378,6 +378,8 @@ enum AppText {
     static var traditionalChinese: String { "繁體中文" }
     static var english: String { "English" }
     static var theme: String { isZh ? "主題" : "Theme" }
+    static var appIcon: String { isZh ? "App 圖示" : "App Icon" }
+    static var defaultIcon: String { isZh ? "預設" : "Default" }
     static var systemAppearance: String { isZh ? "系統" : "System" }
     static var lightAppearance: String { isZh ? "亮色" : "Light" }
     static var darkAppearance: String { isZh ? "暗色" : "Dark" }
