@@ -387,9 +387,25 @@ enum AppText {
     static var defaultMessageFormat: String { isZh ? "預設訊息格式" : "Default message format" }
     static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
     static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }
+    static var supportOnTrack: String { isZh ? "支持 OnTrack" : "Support OnTrack" }
+    static var supportOnTrackBody: String {
+        isZh
+            ? "OnTrack 會保持快速、安靜且免費。如果它幫你省下通勤時間，一次性小額支持能幫助持續開發。"
+            : "OnTrack stays fast, calm, and free. If it saves you time, a one-time tip helps keep development going."
+    }
+    static var supportThanks: String { isZh ? "謝謝你支持 OnTrack。" : "Thanks for supporting OnTrack." }
+    static var supported: String { isZh ? "已支持" : "Supported" }
+    static var restorePurchases: String { isZh ? "回復購買" : "Restore Purchases" }
+    static var purchasePending: String { isZh ? "購買正在等待確認。" : "Purchase is pending confirmation." }
+    static var purchaseUnavailable: String { isZh ? "目前無法購買" : "Purchase Unavailable" }
+    static var noPurchasesRestored: String { isZh ? "沒有可回復的購買。" : "No purchases to restore." }
     static var links: String { isZh ? "連結" : "Links" }
     static var support: String { isZh ? "支援" : "Support" }
     static var privacyPolicy: String { isZh ? "隱私權" : "Privacy Policy" }
+
+    static func leaveTip(price: String) -> String {
+        isZh ? "留下 \(price) 小費" : "Leave a \(price) Tip"
+    }
 
     static func arrivalMessage(time: String, station: String) -> String {
         isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"

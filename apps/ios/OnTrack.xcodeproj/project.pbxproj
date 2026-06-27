@@ -14,6 +14,7 @@
         A10000000000000000000024 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000015 /* Assets.xcassets */; };
         A10000000000000000000025 /* DestinationAutofill.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* DestinationAutofill.swift */; };
         A10000000000000000000026 /* config.json in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* config.json */; };
+        A10000000000000000000027 /* SupportPurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* SupportPurchaseManager.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +27,7 @@
         A10000000000000000000015 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
         A10000000000000000000016 /* DestinationAutofill.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DestinationAutofill.swift; sourceTree = "<group>"; };
         A10000000000000000000017 /* config.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; name = config.json; path = "../../shared/destination-autofill.json"; sourceTree = "<group>"; };
+        A10000000000000000000018 /* SupportPurchaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportPurchaseManager.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +57,7 @@
                 A10000000000000000000016 /* DestinationAutofill.swift */,
                 A10000000000000000000012 /* Models.swift */,
                 A10000000000000000000013 /* APIClient.swift */,
+                A10000000000000000000018 /* SupportPurchaseManager.swift */,
                 A10000000000000000000014 /* Info.plist */,
                 A10000000000000000000015 /* Assets.xcassets */,
                 A10000000000000000000017 /* config.json */,
@@ -145,6 +148,7 @@
                 A10000000000000000000022 /* Models.swift in Sources */,
                 A10000000000000000000023 /* APIClient.swift in Sources */,
                 A10000000000000000000025 /* DestinationAutofill.swift in Sources */,
+                A10000000000000000000027 /* SupportPurchaseManager.swift in Sources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };

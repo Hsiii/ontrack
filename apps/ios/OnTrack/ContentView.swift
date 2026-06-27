@@ -68,6 +68,7 @@ struct ContentView: View {
     @AppStorage(AppPreferenceKey.messageFormat) private var messageFormatRaw = ShareMessageFormat.arrivalOnly.rawValue
 
     @StateObject private var locationService = LocationService()
+    @StateObject private var supportPurchaseManager = SupportPurchaseManager()
     @State private var stations: [Station] = []
     @State private var timeSelection = TimeSelection.current()
     @State private var trains: [TrainInfo] = []
@@ -269,6 +270,9 @@ struct ContentView: View {
             .task {
                 await loadStations()
             }
+            .task {
+                await supportPurchaseManager.start()
+            }
             .onAppear {
 #if DEBUG
                 guard !isShowcaseMode else {
@@ -341,7 +345,8 @@ struct ContentView: View {
             SettingsSheet(
                 languageCode: $languageCode,
                 appearanceRaw: $appearanceRaw,
-                messageFormatRaw: $messageFormatRaw
+                messageFormatRaw: $messageFormatRaw,
+                purchaseManager: supportPurchaseManager
             )
         }
     }
@@ -1960,6 +1965,7 @@ private struct SettingsSheet: View {
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
+    @ObservedObject var purchaseManager: SupportPurchaseManager
 
     var body: some View {
         GeometryReader { proxy in
@@ -2016,6 +2022,10 @@ private struct SettingsSheet: View {
                             }
                         }
                     }
+
+                    SettingsDivider()
+
+                    SettingsSupportGroup(purchaseManager: purchaseManager)
 
                     SettingsDivider()
 
@@ -2102,6 +2112,77 @@ private struct SettingsSheet: View {
         }
     }
 
+}
+
+private struct SettingsSupportGroup: View {
+    @ObservedObject var purchaseManager: SupportPurchaseManager
+
+    var body: some View {
+        SettingsOptionGroup(title: AppText.supportOnTrack) {
+            VStack(alignment: .leading, spacing: OnTrackTheme.space3) {
+                Text(purchaseManager.isSupporter ? AppText.supportThanks : AppText.supportOnTrackBody)
+                    .font(OnTrackFont.body)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                HStack(spacing: OnTrackTheme.space3) {
+                    Button {
+                        Task {
+                            await purchaseManager.purchaseSupporterPack()
+                        }
+                    } label: {
+                        HStack(spacing: OnTrackTheme.space2) {
+                            if purchaseManager.isLoading {
+                                ProgressView()
+                                    .controlSize(.small)
+                                    .tint(OnTrackTheme.panel)
+                            }
+
+                            Text(purchaseTitle)
+                                .font(OnTrackFont.control)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.82)
+                        }
+                        .foregroundStyle(OnTrackTheme.panel)
+                        .padding(.horizontal, OnTrackTheme.space4)
+                        .frame(height: OnTrackTheme.controlHeight)
+                        .background(OnTrackTheme.primary, in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl))
+                    }
+                    .buttonStyle(OnTrackPressButtonStyle())
+                    .disabled(purchaseManager.isSupporter || purchaseManager.isLoading)
+
+                    Button(AppText.restorePurchases) {
+                        Task {
+                            await purchaseManager.restorePurchases()
+                        }
+                    }
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .disabled(purchaseManager.isLoading)
+                }
+
+                if let statusMessage = purchaseManager.statusMessage {
+                    Text(statusMessage)
+                        .font(OnTrackFont.caption)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                }
+            }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .padding(.vertical, OnTrackTheme.space3)
+        }
+    }
+
+    private var purchaseTitle: String {
+        if purchaseManager.isSupporter {
+            return AppText.supported
+        }
+
+        guard let product = purchaseManager.supporterProduct else {
+            return AppText.purchaseUnavailable
+        }
+
+        return AppText.leaveTip(price: product.displayPrice)
+    }
 }
 
 private struct SettingsOptionGroup<Content: View>: View {
