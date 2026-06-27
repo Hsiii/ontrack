@@ -1780,8 +1780,12 @@ private enum TrainPanelLayout {
         OnTrackTheme.space2
     }
 
+    static var headerGap: CGFloat {
+        OnTrackTheme.space2
+    }
+
     static var stackGap: CGFloat {
-        OnTrackTheme.space3
+        OnTrackTheme.space4
     }
 
     static func rowCount(isLoading: Bool, canLoadSchedule: Bool, trainCount: Int) -> Int {
@@ -1835,9 +1839,9 @@ private struct TrainBoardingPanel: View {
     var body: some View {
         VStack(spacing: TrainPanelLayout.stackGap) {
             if trainListRowCount > 0 {
-                trainCards
+                trainListSection
             }
-            shareCard
+            boardingSection
         }
         .frame(maxWidth: 480)
         .padding(.horizontal, OnTrackTheme.space5)
@@ -1850,6 +1854,13 @@ private struct TrainBoardingPanel: View {
             canLoadSchedule: canLoadSchedule,
             trainCount: trains.count
         )
+    }
+
+    private var trainListSection: some View {
+        VStack(alignment: .leading, spacing: TrainPanelLayout.headerGap) {
+            panelSectionHeader(AppText.selectTrain)
+            trainCards
+        }
     }
 
     private var trainCards: some View {
@@ -1876,13 +1887,16 @@ private struct TrainBoardingPanel: View {
         .clipped()
     }
 
+    private var boardingSection: some View {
+        VStack(alignment: .leading, spacing: TrainPanelLayout.headerGap) {
+            panelSectionHeader(AppText.expectedBoarding)
+            shareCard
+        }
+    }
+
     private var shareCard: some View {
         HStack(spacing: OnTrackTheme.space3) {
-            VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
-                Text(AppText.expectedBoarding)
-                    .font(OnTrackFont.label)
-                    .foregroundStyle(OnTrackTheme.dimText)
-
+            VStack(alignment: .leading, spacing: 0) {
                 Text(boardingSummary)
                     .font(OnTrackFont.control)
                     .foregroundStyle(selectedTrain == nil ? OnTrackTheme.dimText : OnTrackTheme.text)
@@ -1923,6 +1937,13 @@ private struct TrainBoardingPanel: View {
             time: TrainDisplay.adjustedTime(selectedTrain.arrivalTime, delay: selectedTrain.delay),
             station: destination.displayName
         )
+    }
+
+    private func panelSectionHeader(_ title: String) -> some View {
+        Text(title)
+            .font(OnTrackFont.label)
+            .foregroundStyle(OnTrackTheme.dimText)
+            .padding(.horizontal, OnTrackTheme.space3)
     }
 
 }
