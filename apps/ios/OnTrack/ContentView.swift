@@ -1279,7 +1279,7 @@ private struct RouteGlyph: View {
             case .destination:
                 Image(systemName: "flag.fill")
                     .font(OnTrackFont.routeGlyph)
-                    .foregroundStyle(OnTrackTheme.dimText)
+                    .foregroundStyle(OnTrackTheme.primary)
             }
         }
         .frame(width: OnTrackTheme.routeGlyphColumnWidth, height: 24)
@@ -1348,7 +1348,7 @@ private struct TrainCard: View {
         case .delayed:
             OnTrackTheme.danger
         case .onTime:
-            OnTrackTheme.success
+            OnTrackTheme.primary
         case .cancelled, .unknown:
             OnTrackTheme.dimText
         }
@@ -1908,7 +1908,10 @@ private struct TrainBoardingPanel: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
 
                 ShareLink(item: message ?? "") {
-                    PanelActionIcon(systemName: "square.and.arrow.up")
+                    PanelActionIcon(
+                        systemName: "square.and.arrow.up",
+                        color: message == nil ? OnTrackTheme.dimText : OnTrackTheme.primary
+                    )
                 }
                 .disabled(message == nil)
                 .accessibilityLabel(AppText.shareVia)
@@ -2198,11 +2201,12 @@ private struct IconSquare: View {
 
 private struct PanelActionIcon: View {
     let systemName: String
+    let color: Color
 
     var body: some View {
         Image(systemName: systemName)
             .font(OnTrackFont.icon)
-            .foregroundStyle(OnTrackTheme.dimText)
+            .foregroundStyle(color)
             .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
             .contentShape(Rectangle())
     }
