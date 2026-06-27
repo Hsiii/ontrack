@@ -1918,7 +1918,7 @@ private struct TrainBoardingPanel: View {
             .buttonStyle(OnTrackPressButtonStyle())
             .accessibilityLabel(AppText.shareVia)
         }
-        .padding(.leading, OnTrackTheme.space4)
+        .padding(.leading, OnTrackTheme.space5)
         .padding(.trailing, OnTrackTheme.space2)
         .padding(.vertical, OnTrackTheme.space2)
         .frame(maxWidth: .infinity)
