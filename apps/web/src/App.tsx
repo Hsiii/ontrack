@@ -5,7 +5,7 @@ import { RefreshCw, Settings } from 'lucide-react';
 
 import './App.css';
 
-import { api, isShowcaseMode } from './api/client';
+import { api, getUserSafeErrorMessage, isShowcaseMode } from './api/client';
 import {
     SettingsSheet,
     type AppearanceMode,
@@ -140,7 +140,13 @@ function App() {
             .catch((error) => {
                 console.error(error);
                 setStations([]);
-                setStationsError(t('error.failedToLoadStations'));
+                setStationsError(
+                    getUserSafeErrorMessage(
+                        error,
+                        t,
+                        'error.failedToLoadStations'
+                    )
+                );
             })
             .finally(() => setStationsLoading(false));
     }, [t]);

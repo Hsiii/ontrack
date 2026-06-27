@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { api } from '../api/client';
+import { api, getUserSafeErrorMessage } from '../api/client';
 import { useI18n } from '../i18n/useI18n';
 import type { TrainInfo } from '../types';
 import type { TimeMode } from './TimeSelector';
@@ -208,7 +208,13 @@ export function TrainList({
                     }
 
                     console.error(err);
-                    setError(t('error.failedToLoadSchedule'));
+                    setError(
+                        getUserSafeErrorMessage(
+                            err,
+                            t,
+                            'error.failedToLoadSchedule'
+                        )
+                    );
                     setLoading(false);
                 })
                 .finally(() => {

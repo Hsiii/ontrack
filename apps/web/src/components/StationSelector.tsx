@@ -23,8 +23,20 @@ interface StationSelectorProps {
 }
 
 const CACHED_ORIGIN_KEY = 'ontrack_cached_origin';
+const MANUAL_ORIGIN_SELECTED_AT_KEY = 'ontrack_manual_origin_selected_at';
+const MANUAL_ORIGIN_PROTECTION_MS = 10 * 60 * 1000;
 type OriginSelectionSource = 'manual' | 'cached' | 'geo' | null;
 type DestinationSelectionSource = 'manual' | 'cached' | 'auto' | null;
+
+function isManualOriginProtected() {
+    const selectedAt = Number(
+        localStorage.getItem(MANUAL_ORIGIN_SELECTED_AT_KEY) || '0'
+    );
+
+    return (
+        selectedAt > 0 && Date.now() - selectedAt < MANUAL_ORIGIN_PROTECTION_MS
+    );
+}
 
 export function StationSelector({
     stations,
@@ -55,6 +67,15 @@ export function StationSelector({
             setOriginId(id);
             setOriginSource(id ? source : null);
             localStorage.setItem(CACHED_ORIGIN_KEY, id);
+
+            if (source === 'manual' && id) {
+                localStorage.setItem(
+                    MANUAL_ORIGIN_SELECTED_AT_KEY,
+                    String(Date.now())
+                );
+            } else if (source !== 'manual') {
+                localStorage.removeItem(MANUAL_ORIGIN_SELECTED_AT_KEY);
+            }
         },
         [setOriginId]
     );
@@ -119,6 +140,10 @@ export function StationSelector({
             return;
         }
 
+        if (isManualOriginProtected()) {
+            return;
+        }
+
         // Auto-detect is enabled - request geolocation
         if (hasAutoSelected.current || isGeolocationPending.current) return;
 
@@ -151,6 +176,11 @@ export function StationSelector({
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     isGeolocationPending.current = false;
+                    if (isManualOriginProtected()) {
+                        hasAutoSelected.current = true;
+                        return;
+                    }
+
                     const { latitude, longitude } = position.coords;
                     let nearestStation = stations[0];
                     let minDistance = Number.MAX_VALUE;

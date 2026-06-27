@@ -70,6 +70,15 @@ export const translations = {
 
         'error.failedToLoadSchedule': '無法取得時刻表',
         'error.failedToLoadStations': '無法載入車站資料',
+        'error.apiInvalidRequest': '查詢條件有誤，請重新選擇車站或時間',
+        'error.apiInvalidResponse': '收到無法辨識的資料，請稍後再試',
+        'error.apiInvalidData': '時刻表資料格式異常，請稍後再試',
+        'error.apiNetworkUnavailable': '網路連線不穩，請確認連線後再試',
+        'error.apiServiceUnavailable': '查詢人數較多，請稍後再試',
+        'error.apiUpstreamUnavailable': '鐵路資料暫時無法取得，請稍後再試',
+        'error.apiSystemDown': '系統暫時無法服務，請稍後再試',
+        'error.apiRequestFailed': '查詢失敗（{statusCode}），請稍後再試',
+        'error.supportCode': '支援代碼：{requestId}',
         'common.close': '關閉',
         'common.clear': '清除',
         'common.cancel': '取消',
@@ -147,6 +156,23 @@ export const translations = {
 
         'error.failedToLoadSchedule': 'Failed to load schedule',
         'error.failedToLoadStations': 'Failed to load stations',
+        'error.apiInvalidRequest':
+            'The route or time looks invalid. Please choose again.',
+        'error.apiInvalidResponse':
+            'OnTrack received an unexpected response. Please try again later.',
+        'error.apiInvalidData':
+            'The schedule data looked unusual. Please try again later.',
+        'error.apiNetworkUnavailable':
+            'The network connection looks unstable. Please check your connection and try again.',
+        'error.apiServiceUnavailable':
+            'OnTrack is handling a lot of requests. Please try again later.',
+        'error.apiUpstreamUnavailable':
+            'Railway data is temporarily unavailable. Please try again later.',
+        'error.apiSystemDown':
+            'OnTrack is temporarily unavailable. Please try again later.',
+        'error.apiRequestFailed':
+            'The request failed ({statusCode}). Please try again later.',
+        'error.supportCode': 'Support code: {requestId}',
         'common.close': 'Close',
         'common.clear': 'Clear',
         'common.cancel': 'Cancel',
