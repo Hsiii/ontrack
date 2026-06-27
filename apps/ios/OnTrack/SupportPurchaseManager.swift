@@ -35,7 +35,14 @@ final class SupportPurchaseManager: ObservableObject {
         defer { isLoading = false }
 
         do {
-            let product = try await supporterProduct ?? loadSupporterProduct()
+            let product: Product
+            if let supporterProduct {
+                product = supporterProduct
+            } else {
+                product = try await loadSupporterProduct()
+                supporterProduct = product
+            }
+
             let result = try await product.purchase()
 
             switch result {

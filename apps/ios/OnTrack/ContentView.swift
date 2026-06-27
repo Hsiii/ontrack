@@ -121,7 +121,7 @@ private enum AppIconSetting: String, CaseIterable, Identifiable {
         }
     }
 
-    static var current: AppIconSetting {
+    @MainActor static var current: AppIconSetting {
         let alternateIconName = UIApplication.shared.alternateIconName
         return allCases.first { $0.alternateIconName == alternateIconName } ?? .primary
     }
@@ -2735,7 +2735,7 @@ private enum OnTrackTheme {
             break
         }
 
-        adaptiveColor(
+        return adaptiveColor(
             light: UIColor(red: 248 / 255, green: 250 / 255, blue: 252 / 255, alpha: 1),
             dark: UIColor(red: 15 / 255, green: 23 / 255, blue: 42 / 255, alpha: 1)
         )
@@ -2749,7 +2749,7 @@ private enum OnTrackTheme {
             break
         }
 
-        adaptiveColor(
+        return adaptiveColor(
             light: .white,
             dark: UIColor(red: 30 / 255, green: 41 / 255, blue: 59 / 255, alpha: 1)
         )
@@ -2800,7 +2800,7 @@ private enum OnTrackTheme {
             break
         }
 
-        adaptiveColor(
+        return adaptiveColor(
             light: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.12),
             dark: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.20)
         )
