@@ -1948,7 +1948,6 @@ private struct TrainBoardingPanel: View {
         Text(title)
             .font(OnTrackFont.control)
             .foregroundStyle(OnTrackTheme.dimText)
-            .padding(.horizontal, OnTrackTheme.space3)
     }
 
 }
