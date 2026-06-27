@@ -419,6 +419,8 @@ struct ContentView: View {
                 languageCode: $languageCode,
                 appearanceRaw: $appearanceRaw,
                 messageFormatRaw: $messageFormatRaw,
+                originName: originStation?.displayName,
+                destinationName: destinationStation?.displayName,
                 purchaseManager: supportPurchaseManager
             )
         }
@@ -2038,6 +2040,8 @@ private struct SettingsSheet: View {
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
+    let originName: String?
+    let destinationName: String?
     @ObservedObject var purchaseManager: SupportPurchaseManager
 
     @State private var selectedAppIconRaw = AppIconSetting.current.rawValue
@@ -2070,19 +2074,6 @@ private struct SettingsSheet: View {
         ZStack(alignment: .top) {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
-                    SettingsOptionGroup(title: AppText.language) {
-                        ForEach(AppLanguageSetting.allCases) { setting in
-                            SettingsOptionButton(
-                                title: languageTitle(setting),
-                                isSelected: languageCode == setting.rawValue
-                            ) {
-                                languageCode = setting.rawValue
-                            }
-                        }
-                    }
-
-                    SettingsDivider()
-
                     if purchaseManager.isSupporter {
                         SettingsAppIconGroup(
                             selectedRawValue: $selectedAppIconRaw,
@@ -2108,9 +2099,23 @@ private struct SettingsSheet: View {
                         ForEach(ShareMessageFormat.allCases) { format in
                             SettingsOptionButton(
                                 title: format.title,
+                                detail: messagePreview(for: format),
                                 isSelected: messageFormatRaw == format.rawValue
                             ) {
                                 messageFormatRaw = format.rawValue
+                            }
+                        }
+                    }
+
+                    SettingsDivider()
+
+                    SettingsOptionGroup(title: AppText.language) {
+                        ForEach(AppLanguageSetting.allCases) { setting in
+                            SettingsOptionButton(
+                                title: languageTitle(setting),
+                                isSelected: languageCode == setting.rawValue
+                            ) {
+                                languageCode = setting.rawValue
                             }
                         }
                     }
@@ -2180,6 +2185,14 @@ private struct SettingsSheet: View {
         AppAppearanceSetting.allCases.filter { purchaseManager.isSupporter || !$0.requiresSupporter }
     }
 
+    private var previewOriginName: String {
+        originName ?? AppText.exampleOriginStation
+    }
+
+    private var previewDestinationName: String {
+        destinationName ?? AppText.exampleDestinationStation
+    }
+
     private func languageTitle(_ setting: AppLanguageSetting) -> String {
         switch setting {
         case .system:
@@ -2211,6 +2224,21 @@ private struct SettingsSheet: View {
     private func setAppearance(_ setting: AppAppearanceSetting) {
         UserDefaults.standard.set(setting.rawValue, forKey: AppPreferenceKey.appearance)
         appearanceRaw = setting.rawValue
+    }
+
+    private func messagePreview(for format: ShareMessageFormat) -> String {
+        let time = "09:41"
+
+        switch format {
+        case .arrivalOnly:
+            return AppText.arrivalMessage(time: time, station: previewDestinationName)
+        case .routeArrival:
+            return AppText.routeArrivalMessage(
+                origin: previewOriginName,
+                destination: previewDestinationName,
+                time: time
+            )
+        }
     }
 
     private func setAppIcon(_ setting: AppIconSetting) {
@@ -2497,6 +2525,7 @@ private struct SettingsOptionGroup<Content: View>: View {
 
 private struct SettingsOptionButton: View {
     let title: String
+    var detail: String?
     let isSelected: Bool
     let action: () -> Void
 
@@ -2510,6 +2539,16 @@ private struct SettingsOptionButton: View {
                     .minimumScaleFactor(0.82)
 
                 Spacer()
+
+                if let detail {
+                    Text(detail)
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.72)
+                        .multilineTextAlignment(.trailing)
+                        .layoutPriority(1)
+                }
 
                 if isSelected {
                     Image(systemName: "checkmark")
