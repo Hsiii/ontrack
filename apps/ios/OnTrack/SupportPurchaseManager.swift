@@ -87,10 +87,11 @@ final class SupportPurchaseManager: ObservableObject {
             case .userCancelled:
                 break
             @unknown default:
-                statusMessage = AppText.purchaseUnavailable
+                statusMessage = AppText.purchaseSystemUnavailable
             }
         } catch {
-            statusMessage = AppText.purchaseUnavailable
+            logSupportPurchaseError("purchase", error)
+            statusMessage = supportPurchaseMessage(for: error)
         }
     }
 
@@ -109,7 +110,8 @@ final class SupportPurchaseManager: ObservableObject {
             await refreshEntitlements()
             statusMessage = isSupporter ? AppText.supportThanks : AppText.noPurchasesRestored
         } catch {
-            statusMessage = AppText.purchaseUnavailable
+            logSupportPurchaseError("restore", error)
+            statusMessage = AppText.restoreUnavailable
         }
     }
 
@@ -124,7 +126,7 @@ final class SupportPurchaseManager: ObservableObject {
     private func loadSupporterProduct() async throws -> Product {
         let products = try await Product.products(for: [Self.supporterProductID])
         guard let product = products.first else {
-            throw StoreKitError.notAvailableInStorefront
+            throw SupportPurchaseError.productUnavailable
         }
 
         return product
@@ -172,9 +174,46 @@ final class SupportPurchaseManager: ObservableObject {
     private func checkVerified<T>(_ result: VerificationResult<T>) throws -> T {
         switch result {
         case .unverified:
-            throw StoreKitError.unknown
+            throw SupportPurchaseError.unverifiedTransaction
         case .verified(let value):
             return value
         }
     }
+
+    private func supportPurchaseMessage(for error: Error) -> String {
+        if let supportError = error as? SupportPurchaseError {
+            switch supportError {
+            case .productUnavailable:
+                return AppText.purchaseProductUnavailable
+            case .unverifiedTransaction:
+                return AppText.purchaseVerificationFailed
+            }
+        }
+
+        if let storeKitError = error as? StoreKitError {
+            switch storeKitError {
+            case .networkError:
+                return AppText.purchaseNetworkUnavailable
+            case .notAvailableInStorefront:
+                return AppText.purchaseProductUnavailable
+            default:
+                return AppText.purchaseSystemUnavailable
+            }
+        }
+
+        if error is URLError {
+            return AppText.purchaseNetworkUnavailable
+        }
+
+        return AppText.purchaseSystemUnavailable
+    }
+
+    private func logSupportPurchaseError(_ operation: String, _ error: Error) {
+        print("Support purchase \(operation) failed: \(type(of: error)) \(error.localizedDescription)")
+    }
+}
+
+private enum SupportPurchaseError: Error {
+    case productUnavailable
+    case unverifiedTransaction
 }

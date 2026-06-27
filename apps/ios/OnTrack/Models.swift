@@ -407,6 +407,31 @@ enum AppText {
     static var restorePurchases: String { isZh ? "恢復購買" : "Restore Purchases" }
     static var purchasePending: String { isZh ? "購買正在等待確認。" : "Purchase is pending confirmation." }
     static var purchaseUnavailable: String { isZh ? "目前無法購買" : "Purchase Unavailable" }
+    static var purchaseProductUnavailable: String {
+        isZh
+            ? "目前 App Store 無法提供支持項目，請稍後再試。"
+            : "Support purchases are not available from the App Store right now. Please try again later."
+    }
+    static var purchaseVerificationFailed: String {
+        isZh
+            ? "App Store 無法驗證這筆購買。若購買稍後出現，請使用恢復購買。"
+            : "The App Store could not verify this purchase. If it appears later, use Restore Purchases."
+    }
+    static var purchaseNetworkUnavailable: String {
+        isZh
+            ? "無法連線到 App Store。請檢查網路後再試一次。"
+            : "The App Store could not be reached. Check your connection and try again."
+    }
+    static var purchaseSystemUnavailable: String {
+        isZh
+            ? "App Store 購買服務暫時無法使用，請稍後再試。"
+            : "The App Store purchase service is unavailable right now. Please try again later."
+    }
+    static var restoreUnavailable: String {
+        isZh
+            ? "目前無法檢查你的 App Store 購買紀錄，請稍後再試。"
+            : "Could not check your App Store purchases right now. Please try again later."
+    }
     static var noPurchasesRestored: String { isZh ? "沒有可恢復的購買。" : "No purchases to restore." }
     static var links: String { isZh ? "連結" : "Links" }
     static var support: String { isZh ? "支援" : "Support" }
