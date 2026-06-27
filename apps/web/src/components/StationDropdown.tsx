@@ -284,12 +284,15 @@ export function StationDropdown({
             >
                 <TriggerIcon className='station-trigger-leading-icon' />
                 <span className='station-trigger-copy'>
-                    <span className='station-trigger-label'>{placeholder}</span>
-                    <span className='station-trigger-value'>
-                        {selectedStation
-                            ? getDisplayStationName(selectedStation)
-                            : ''}
-                    </span>
+                    {selectedStation ? (
+                        <span className='station-trigger-value'>
+                            {getDisplayStationName(selectedStation)}
+                        </span>
+                    ) : (
+                        <span className='station-trigger-label'>
+                            {placeholder}
+                        </span>
+                    )}
                 </span>
             </button>
 

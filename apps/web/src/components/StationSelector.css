@@ -21,6 +21,14 @@
     border-top: 1px solid var(--color-border);
 }
 
+.station-row-origin .station-trigger-leading-icon {
+    color: var(--color-text-dim);
+}
+
+.station-row-destination .station-trigger-leading-icon {
+    color: var(--color-primary);
+}
+
 .station-field {
     position: relative;
     flex: 1;

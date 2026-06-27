@@ -86,21 +86,15 @@
     min-height: var(--size-touch);
     align-items: center;
     justify-content: center;
-    gap: var(--space-2);
-    padding: 0 var(--space-4);
-    border-radius: var(--radius-md);
-    background: var(--color-primary);
-    color: var(--color-primary-contrast);
-    font-size: var(--text-sm);
-    font-weight: var(--font-semibold);
+    padding: 0;
+    color: var(--color-primary);
     transition:
-        background-color var(--motion-base) ease,
-        box-shadow var(--motion-base) ease,
+        color var(--motion-base) ease,
         transform var(--motion-fast) ease;
 }
 
 .train-boarding-share-button:hover:not(:disabled) {
-    box-shadow: 0 0 0 var(--size-hairline) var(--color-primary-ring);
+    color: var(--color-primary);
 }
 
 .train-boarding-share-button:active:not(:disabled) {
@@ -108,8 +102,7 @@
 }
 
 .train-boarding-share-button:disabled {
-    background: var(--color-border);
-    color: var(--color-text-dim);
+    color: var(--color-primary);
     opacity: 0.56;
 }
 

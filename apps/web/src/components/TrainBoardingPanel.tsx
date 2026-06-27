@@ -122,7 +122,6 @@ export function TrainBoardingPanel({
                         title={t('share.shareMessage')}
                     >
                         <Share aria-hidden='true' />
-                        <span>{t('share.shareMessage')}</span>
                     </button>
                 </div>
             </div>

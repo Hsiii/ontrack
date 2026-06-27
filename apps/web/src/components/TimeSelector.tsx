@@ -308,31 +308,20 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
             day: '2-digit',
             timeZone: 'Asia/Taipei',
         });
-        const weekdayFormatter = new Intl.DateTimeFormat(language, {
-            weekday: 'short',
-            timeZone: 'Asia/Taipei',
-        });
 
         return Array.from(
             { length: FUTURE_DATE_RANGE_DAYS + 1 },
             (_, dayOffset) => {
                 const date = getDateAtOffset(dayOffset);
-                const dayLabel =
-                    dayOffset === 0
-                        ? t('time.today')
-                        : dayOffset === 1
-                          ? t('time.tomorrow')
-                          : weekdayFormatter.format(date);
 
                 return {
                     dayOffset,
                     dateDigits: getDateDigitsAtOffset(dayOffset),
-                    dayLabel,
                     dateLabel: dateFormatter.format(date),
                 };
             }
         );
-    }, [language, t]);
+    }, [language]);
 
     useEffect(() => {
         const syncNowSelection = () => {
@@ -696,8 +685,7 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                                                 )
                                             }
                                         >
-                                            <span>{option.dayLabel}</span>
-                                            <small>{option.dateLabel}</small>
+                                            <span>{option.dateLabel}</span>
                                         </button>
                                     ))}
                                 </div>
