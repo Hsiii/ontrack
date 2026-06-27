@@ -1,6 +1,7 @@
 .page {
     --docs-phone-mobile-width: 20rem;
     --docs-showcase-width: calc(var(--space-15) * 6 + var(--space-8));
+    --docs-showcase-gap: var(--space-6);
     --docs-connector-length: var(--space-6);
     --docs-image-outline: rgba(0, 0, 0, 0.1);
 
@@ -41,10 +42,10 @@
 }
 
 .brandIcon {
+    display: block;
     width: var(--space-8);
     height: var(--space-8);
-    border-radius: var(--radius-sm);
-    box-shadow: var(--shadow-surface);
+    object-fit: contain;
 }
 
 .brandText {
@@ -276,7 +277,7 @@
             var(--docs-showcase-width)
         )
         minmax(0, 1fr);
-    gap: var(--space-6);
+    gap: var(--docs-showcase-gap);
     align-items: stretch;
 }
 
@@ -323,7 +324,7 @@
 }
 
 .featureCard[data-placement='bottomRight'] {
-    top: calc(var(--space-15) * 6);
+    top: calc(var(--space-15) * 11 + var(--space-10));
 }
 
 .featureCard::before,
@@ -350,19 +351,19 @@
 }
 
 .featureStack[data-side='left'] .featureCard::before {
-    right: calc(var(--docs-connector-length) * -1 - var(--space-1));
+    right: calc(var(--docs-showcase-gap) * -1 - var(--space-1));
 }
 
 .featureStack[data-side='left'] .featureCard::after {
-    right: calc(var(--docs-connector-length) * -1);
+    right: calc(var(--docs-showcase-gap) * -1);
 }
 
 .featureStack[data-side='right'] .featureCard::before {
-    left: calc(var(--docs-connector-length) * -1 - var(--space-1));
+    left: calc(var(--docs-showcase-gap) * -1 - var(--space-1));
 }
 
 .featureStack[data-side='right'] .featureCard::after {
-    left: calc(var(--docs-connector-length) * -1);
+    left: calc(var(--docs-showcase-gap) * -1);
 }
 
 .featureIcon {
