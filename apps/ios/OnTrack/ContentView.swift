@@ -1927,6 +1927,8 @@ private struct TrainBoardingPanel: View {
 }
 
 private struct SettingsSheet: View {
+    @Environment(\.dismiss) private var dismiss
+
     @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
@@ -2014,6 +2016,16 @@ private struct SettingsSheet: View {
                 .font(OnTrackFont.title)
                 .foregroundStyle(OnTrackTheme.text)
                 .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(action: dismiss.callAsFunction) {
+                Image(systemName: "xmark")
+                    .font(OnTrackFont.symbol)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(OnTrackPressButtonStyle())
+            .accessibilityLabel(AppText.cancel)
         }
         .padding(.bottom, OnTrackTheme.space4)
     }
