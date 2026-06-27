@@ -5,7 +5,7 @@
     --docs-image-outline: rgba(0, 0, 0, 0.1);
 
     min-height: 100vh;
-    padding: var(--space-6) var(--space-5) var(--space-8);
+    padding: 0 var(--space-5);
     background:
         linear-gradient(180deg, var(--color-surface-tint), var(--color-bg) 36%),
         var(--color-bg);
@@ -29,6 +29,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
+    padding: var(--space-4) 0;
 }
 
 .brand {
@@ -88,7 +89,7 @@
 .hero {
     display: grid;
     justify-items: center;
-    padding: calc(var(--space-15) + var(--space-8)) 0 var(--space-8);
+    padding: calc(var(--space-15) + var(--space-8) + var(--space-1)) 0;
     text-align: center;
 }
 
@@ -237,7 +238,7 @@
 }
 
 .featureCard[data-placement='bottomLeft'] {
-    top: calc(var(--space-15) * 7);
+    top: calc(var(--space-15) * 7 + var(--space-10) + var(--space-3));
 }
 
 .featureCard[data-placement='bottomRight'] {
@@ -326,6 +327,7 @@
     align-items: center;
     justify-content: space-between;
     gap: var(--space-4);
+    padding-bottom: var(--space-4);
     padding-top: var(--space-4);
     border-top: 1px solid var(--color-border);
     color: var(--color-text-dim);
@@ -377,7 +379,7 @@
 
 @media (max-width: 760px) {
     .page {
-        padding: var(--space-5) var(--space-4) var(--space-6);
+        padding: 0 var(--space-4);
     }
 
     .shell {

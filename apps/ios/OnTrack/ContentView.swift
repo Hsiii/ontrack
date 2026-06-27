@@ -175,6 +175,13 @@ struct ContentView: View {
         return today...maxDate.addingTimeInterval(-1)
     }
 
+#if DEBUG
+    private var isShowcaseMode: Bool {
+        ProcessInfo.processInfo.environment["ONTRACK_SHOWCASE_DATA"] == "1"
+            || ProcessInfo.processInfo.arguments.contains("--showcase-data")
+    }
+#endif
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -253,6 +260,11 @@ struct ContentView: View {
                 await loadStations()
             }
             .onAppear {
+#if DEBUG
+                guard !isShowcaseMode else {
+                    return
+                }
+#endif
                 refreshAutoDetectedOrigin()
             }
             .task(id: scheduleTaskID) {
@@ -416,12 +428,42 @@ struct ContentView: View {
             let loadedStations = try await APIClient.shared.stations()
             stations = loadedStations
 
+#if DEBUG
+            if isShowcaseMode {
+                applyShowcaseState()
+                return
+            }
+#endif
+
             resolveInitialStations(loadedStations)
             refreshAutoDetectedOrigin()
         } catch {
             errorMessage = error.localizedDescription
         }
     }
+
+#if DEBUG
+    private func applyShowcaseState() {
+        setOrigin("1000", source: .geo)
+        destinationId = "1210"
+        destinationSource = .cached
+        languageCode = AppLanguageSetting.zhTW.rawValue
+        appearanceRaw = AppAppearanceSetting.light.rawValue
+        activeSheet = .trainPanel
+
+        var components = Formatters.taipeiCalendar.dateComponents(
+            [.year, .month, .day],
+            from: Date()
+        )
+        components.hour = 9
+        components.minute = 41
+        components.second = 0
+
+        if let showcaseDate = Formatters.taipeiCalendar.date(from: components) {
+            timeSelection = TimeSelection(mode: .departure, date: showcaseDate)
+        }
+    }
+#endif
 
     private func loadSchedule(refreshLive: Bool = false) async {
         guard canLoadSchedule, let originStation, let destinationStation else {

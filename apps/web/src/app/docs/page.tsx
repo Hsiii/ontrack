@@ -112,12 +112,11 @@ export default function DocsPage() {
 
                 <section className={styles.hero}>
                     <div className={styles.heroCopy}>
-                        <h1 className={styles.title}>
-                            專為台鐵旅客打造的時刻表 App。
-                        </h1>
+                        <h1 className={styles.title}>省時，也準時。</h1>
                         <p className={styles.lede}>
-                            自動規劃路線、顯示即時班次與延誤資訊，讓您打開 App
-                            的瞬間就能知道這趟怎麼搭。
+                            專為台鐵旅客打造。OnTrack
+                            能自動偵測您的所在車站，並依搭乘習慣預測路線。打開
+                            App 的瞬間，即可掌握即時班次與延誤資訊。
                         </p>
                         <div className={styles.heroActions}>
                             <Link className={styles.primaryCta} href='/'>

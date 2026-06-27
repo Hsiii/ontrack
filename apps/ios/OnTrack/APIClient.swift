@@ -72,6 +72,12 @@ actor APIClient {
     private var usesMockData: Bool {
         ProcessInfo.processInfo.environment["ONTRACK_MOCK_DATA"] == "1"
             || ProcessInfo.processInfo.arguments.contains("--mock-data")
+            || usesShowcaseData
+    }
+
+    private var usesShowcaseData: Bool {
+        ProcessInfo.processInfo.environment["ONTRACK_SHOWCASE_DATA"] == "1"
+            || ProcessInfo.processInfo.arguments.contains("--showcase-data")
     }
 #endif
 }
@@ -110,7 +116,12 @@ private enum MockAPI {
     }
 
     private static func mockTrains(origin: Station, destination: Station) -> [TrainInfo] {
-        (0..<54).map { index in
+        if ProcessInfo.processInfo.environment["ONTRACK_SHOWCASE_DATA"] == "1"
+            || ProcessInfo.processInfo.arguments.contains("--showcase-data") {
+            return showcaseTrains(origin: origin, destination: destination)
+        }
+
+        return (0..<54).map { index in
             let departureMinutes = 5 * 60 + index * 20
             let durationMinutes = index.isMultiple(of: 3) ? 66 : 78
             let delay = index % 7 == 2 ? 4 : nil
@@ -127,6 +138,99 @@ private enum MockAPI {
                 status: delay == nil ? .onTime : .delayed
             )
         }
+    }
+
+    private static func showcaseTrains(origin: Station, destination: Station) -> [TrainInfo] {
+        [
+            TrainInfo(
+                trainNo: "124",
+                trainType: "區間快",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "09:20",
+                arrivalTime: "10:38",
+                delay: nil,
+                status: .onTime
+            ),
+            TrainInfo(
+                trainNo: "125",
+                trainType: "區間",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "09:38",
+                arrivalTime: "10:54",
+                delay: 4,
+                status: .delayed
+            ),
+            TrainInfo(
+                trainNo: "126",
+                trainType: "自強",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "09:54",
+                arrivalTime: "11:10",
+                delay: nil,
+                status: .onTime
+            ),
+            TrainInfo(
+                trainNo: "127",
+                trainType: "區間",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "10:08",
+                arrivalTime: "11:26",
+                delay: nil,
+                status: .onTime
+            ),
+            TrainInfo(
+                trainNo: "128",
+                trainType: "自強",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "10:22",
+                arrivalTime: "11:38",
+                delay: nil,
+                status: .onTime
+            ),
+            TrainInfo(
+                trainNo: "129",
+                trainType: "區間",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "10:38",
+                arrivalTime: "11:56",
+                delay: nil,
+                status: .onTime
+            ),
+            TrainInfo(
+                trainNo: "130",
+                trainType: "自強",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "10:52",
+                arrivalTime: "12:08",
+                delay: nil,
+                status: .onTime
+            ),
+            TrainInfo(
+                trainNo: "131",
+                trainType: "區間快",
+                direction: 0,
+                originStation: origin.id,
+                destinationStation: destination.id,
+                departureTime: "11:08",
+                arrivalTime: "12:26",
+                delay: nil,
+                status: .onTime
+            ),
+        ]
     }
 
     private static func trainType(for index: Int) -> String {
