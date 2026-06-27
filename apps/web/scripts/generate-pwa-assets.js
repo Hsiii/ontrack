@@ -13,16 +13,19 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(__dirname, '..', 'public');
 const splashDir = path.join(publicDir, 'splash');
 const repoRoot = path.resolve(__dirname, '..', '..', '..');
-const sourceIconPath = path.join(
+const sourceLogoPath = path.join(publicDir, 'ontrack-logo.png');
+const iosLaunchLogoDir = path.join(
     repoRoot,
     'apps',
     'ios',
     'OnTrack',
     'Assets.xcassets',
-    'AppIcon.appiconset',
-    'icon-1024.png'
+    'LaunchLogo.imageset'
 );
-const splashBackground = '#f8fafc';
+const splashBackgrounds = {
+    light: '#f8fafc',
+    dark: '#0f172a',
+};
 
 // Create splash directory if it doesn't exist
 if (!fs.existsSync(splashDir)) {
@@ -148,46 +151,51 @@ async function generateAssets() {
         return;
     }
 
-    if (!fs.existsSync(sourceIconPath)) {
-        throw new Error(`Missing app icon source: ${sourceIconPath}`);
+    if (!fs.existsSync(sourceLogoPath)) {
+        throw new Error(`Missing logo source: ${sourceLogoPath}`);
     }
 
-    console.log('Generating PWA assets from the iOS app icon...\n');
+    console.log('Generating PWA assets from the transparent logo...\n');
 
     // Generate splash screens
     for (const { name, width, height, dpr, safeAreaTop } of splashSizes) {
         const iconSize = Math.round(ICON_SIZE_CSS * dpr);
         const halfIcon = iconSize / 2;
         const yOffset = safeAreaTop / 2;
-        const icon = await sharp(sourceIconPath)
+        const icon = await sharp(sourceLogoPath)
             .resize(iconSize, iconSize, { fit: 'contain' })
             .png()
             .toBuffer();
 
-        await sharp({
-            create: {
-                width,
-                height,
-                channels: 4,
-                background: splashBackground,
-            },
-        })
-            .composite([
-                {
-                    input: icon,
-                    left: Math.round(width / 2 - halfIcon),
-                    top: Math.round(height / 2 - halfIcon + yOffset),
+        for (const [theme, background] of Object.entries(splashBackgrounds)) {
+            const themedName =
+                theme === 'light' ? name : name.replace('.png', '-dark.png');
+
+            await sharp({
+                create: {
+                    width,
+                    height,
+                    channels: 4,
+                    background,
                 },
-            ])
-            .png()
-            .toFile(path.join(splashDir, name));
-        console.log(`Generated: splash/${name}`);
+            })
+                .composite([
+                    {
+                        input: icon,
+                        left: Math.round(width / 2 - halfIcon),
+                        top: Math.round(height / 2 - halfIcon + yOffset),
+                    },
+                ])
+                .png()
+                .toFile(path.join(splashDir, themedName));
+            console.log(`Generated: splash/${themedName}`);
+        }
     }
 
     // Generate icons
     for (const { name, size } of iconSizes) {
         if (name === 'favicon.ico') {
-            await sharp(sourceIconPath)
+            await sharp(sourceLogoPath)
                 .resize(32, 32)
                 .png()
                 .toFile(path.join(publicDir, 'favicon.png'));
@@ -195,12 +203,25 @@ async function generateAssets() {
                 `Generated: favicon.png (convert to .ico manually if needed)`
             );
         } else {
-            await sharp(sourceIconPath)
+            await sharp(sourceLogoPath)
                 .resize(size, size)
                 .png()
                 .toFile(path.join(publicDir, name));
             console.log(`Generated: ${name}`);
         }
+    }
+
+    // Generate iOS launch screen logo renditions.
+    for (const scale of [1, 2, 3]) {
+        const size = 160 * scale;
+        const filename =
+            scale === 1 ? 'launch-logo.png' : `launch-logo@${scale}x.png`;
+
+        await sharp(sourceLogoPath)
+            .resize(size, size, { fit: 'contain' })
+            .png()
+            .toFile(path.join(iosLaunchLogoDir, filename));
+        console.log(`Generated: iOS LaunchLogo/${filename}`);
     }
 
     console.log('\nAll PWA assets generated successfully!');

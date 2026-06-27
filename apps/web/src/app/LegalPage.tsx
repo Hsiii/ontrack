@@ -28,7 +28,7 @@ export function LegalPage({
                     <Link className={styles.brand} href='/'>
                         <img
                             className={styles.brandIcon}
-                            src='/apple-touch-icon.png'
+                            src='/ontrack-logo.png'
                             alt=''
                             width='32'
                             height='32'

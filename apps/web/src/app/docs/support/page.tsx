@@ -4,6 +4,7 @@ import { LegalPage, legalPageStyles as styles } from '../../LegalPage';
 
 const SUPPORT_EMAIL = 'its.hsichen@gmail.com';
 const SUPPORT_URL = 'https://ontrack.hsichen.dev/docs/support';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
 const APP_DESCRIPTION =
     '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
         description: APP_DESCRIPTION,
         url: SUPPORT_URL,
         siteName: 'OnTrack',
+        images: [APP_IMAGE],
         locale: 'zh_TW',
         type: 'website',
     },
@@ -25,6 +27,7 @@ export const metadata: Metadata = {
         card: 'summary',
         title: 'OnTrack Support',
         description: APP_DESCRIPTION,
+        images: [APP_IMAGE],
     },
 };
 
