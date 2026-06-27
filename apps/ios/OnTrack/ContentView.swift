@@ -1379,18 +1379,14 @@ private struct TrainCard: View {
                 .layoutPriority(1)
 
                 HStack(spacing: OnTrackTheme.space1) {
-                    Text(TrainDisplay.trainType(train.trainType))
+                    Text(TrainDisplay.trainIdentifier(
+                        trainType: train.trainType,
+                        number: train.trainNo
+                    ))
                         .font(OnTrackFont.metadata)
                         .foregroundStyle(OnTrackTheme.dimText)
-                        .frame(width: 56, alignment: .trailing)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-
-                    Text(train.trainNo)
-                        .font(OnTrackFont.caption)
-                        .foregroundStyle(OnTrackTheme.dimText)
                         .monospacedDigit()
-                        .frame(width: 36)
+                        .frame(width: 96, alignment: .trailing)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
 

@@ -213,6 +213,11 @@ enum TrainDisplay {
         return trainTypeEN[base] ?? base
     }
 
+    static func trainIdentifier(trainType: String, number: String) -> String {
+        let separator = AppLanguage.isZh ? "" : " "
+        return "\(Self.trainType(trainType))\(separator)\(number)"
+    }
+
     static func adjustedTime(_ time: String, delay: Int?) -> String {
         addMinutes(delay ?? 0, to: time)
     }
