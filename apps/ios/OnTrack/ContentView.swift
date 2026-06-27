@@ -1401,10 +1401,10 @@ private struct TrainCard: View {
                 isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             )
-            .contentShape(Rectangle())
+            .contentShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel))
             .overlay {
                 RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
-                    .stroke(OnTrackTheme.border, lineWidth: 1)
+                    .strokeBorder(OnTrackTheme.border, lineWidth: 1)
             }
         }
         .buttonStyle(.plain)
