@@ -100,23 +100,31 @@ export function TrainBoardingPanel({
             className='train-boarding-panel'
             aria-labelledby='train-boarding-title'
         >
-            <div className='train-boarding-summary'>
-                <div className='train-boarding-copy'>
-                    <h2 id='train-boarding-title'>{t('train.plannedRide')}</h2>
-                    <p aria-live='polite'>{plannedRideMessage}</p>
-                </div>
-
-                <button
-                    type='button'
-                    className='train-boarding-share-button'
-                    onClick={handleShare}
-                    disabled={!shareMessage}
-                    aria-label={t('share.shareMessage')}
-                    title={t('share.shareMessage')}
+            <div className='train-boarding-section'>
+                <h2
+                    id='train-boarding-title'
+                    className='train-boarding-heading'
                 >
-                    <Share aria-hidden='true' />
-                    <span>{t('share.shareMessage')}</span>
-                </button>
+                    {t('train.plannedRide')}
+                </h2>
+
+                <div className='train-boarding-summary'>
+                    <div className='train-boarding-copy'>
+                        <p aria-live='polite'>{plannedRideMessage}</p>
+                    </div>
+
+                    <button
+                        type='button'
+                        className='train-boarding-share-button'
+                        onClick={handleShare}
+                        disabled={!shareMessage}
+                        aria-label={t('share.shareMessage')}
+                        title={t('share.shareMessage')}
+                    >
+                        <Share aria-hidden='true' />
+                        <span>{t('share.shareMessage')}</span>
+                    </button>
+                </div>
             </div>
 
             <div className='train-boarding-list'>
@@ -132,7 +140,7 @@ export function TrainBoardingPanel({
                         selectedTrainNo={activeTrain?.trainNo || null}
                         refreshLiveNonce={refreshLiveNonce}
                         onRefreshingLiveChange={onRefreshingLiveChange}
-                        showHeading={false}
+                        showHeading
                     />
                 ) : (
                     <div className='train-boarding-empty' aria-hidden='true' />

@@ -9,7 +9,7 @@ export const translations = {
     'zh-TW': {
         'app.title': 'OnTrack',
         'app.selectRoute': '選擇路線',
-        'app.selectTrain': '選擇班次',
+        'app.selectTrain': '選擇列車',
         'app.searchStation': '搜尋車站',
         'app.switchToEnglish': '切換成英文',
         'app.switchToChinese': '切換成中文',
