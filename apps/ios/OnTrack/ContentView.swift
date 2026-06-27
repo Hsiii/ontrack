@@ -1355,17 +1355,6 @@ private struct TrainCard: View {
         (train.delay ?? 0) > 0
     }
 
-    private var statusColor: Color {
-        switch train.status {
-        case .delayed:
-            OnTrackTheme.danger
-        case .onTime:
-            OnTrackTheme.primary
-        case .cancelled, .unknown:
-            OnTrackTheme.dimText
-        }
-    }
-
     var body: some View {
         Button(action: onSelect) {
             HStack(spacing: OnTrackTheme.space3) {
@@ -1401,10 +1390,6 @@ private struct TrainCard: View {
                         .frame(width: 96, alignment: .trailing)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
-
-                    Circle()
-                        .fill(statusColor)
-                        .frame(width: 6, height: 6)
                 }
                 .fixedSize(horizontal: true, vertical: false)
             }

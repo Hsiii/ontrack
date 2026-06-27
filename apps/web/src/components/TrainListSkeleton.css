@@ -41,9 +41,3 @@
     height: var(--space-3);
     border-radius: var(--radius-pill);
 }
-
-.skeleton-dot {
-    width: var(--space-2);
-    height: var(--space-2);
-    border-radius: 50%;
-}

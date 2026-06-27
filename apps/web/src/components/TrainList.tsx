@@ -57,12 +57,6 @@ function getEffectiveDepartureMinutes(train: TrainInfo): number {
     return timeToMinutes(train.departureTime) + (train.delay ?? 0);
 }
 
-function getStatusClass(train: TrainInfo) {
-    if (train.status === 'delayed') return 'delayed';
-    if (train.status === 'on-time') return 'on-time';
-    return 'unknown';
-}
-
 /** Calculate trip duration in minutes between two HH:mm strings */
 function getTripMinutes(departure: string, arrival: string): number {
     const [dh, dm] = departure.split(':').map(Number);
@@ -300,7 +294,6 @@ export function TrainList({
                         const isSelected =
                             trainData.trainNo === selectedTrainNo;
                         const isDelayed = (trainData.delay ?? 0) > 0;
-                        const statusClass = getStatusClass(trainData);
                         const tripMin = getTripMinutes(
                             trainData.departureTime,
                             trainData.arrivalTime
@@ -398,9 +391,6 @@ export function TrainList({
                                     <span className='train-card-number'>
                                         {trainData.trainNo}
                                     </span>
-                                    <span
-                                        className={`train-card-dot ${statusClass}`}
-                                    />
                                 </div>
                             </button>
                         );
