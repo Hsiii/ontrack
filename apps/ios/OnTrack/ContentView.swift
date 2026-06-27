@@ -1775,6 +1775,7 @@ private struct StationSearchRow: View {
 
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
+    static let cardBorderAllowance: CGFloat = 1
     static let maxVisibleRows = 4
     static let loadingRows = 3
     static let emptyStateRows = 1
@@ -1805,6 +1806,7 @@ private enum TrainPanelLayout {
 
     static func visibleTrainStackHeight(rowCount: Int) -> CGFloat {
         trainStackHeight(rowCount: min(maxVisibleRows, max(emptyStateRows, rowCount)))
+            + cardBorderAllowance * 2
     }
 
     static func bottomInset(safeAreaInset: CGFloat) -> CGFloat {
@@ -1866,6 +1868,7 @@ private struct TrainBoardingPanel: View {
                 onSelect(train)
             }
             .frame(maxWidth: .infinity)
+            .padding(.vertical, TrainPanelLayout.cardBorderAllowance)
         }
         .scrollDisabled(trainListRowCount <= TrainPanelLayout.maxVisibleRows)
         .scrollIndicators(.hidden)
