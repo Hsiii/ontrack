@@ -10,6 +10,24 @@ PRODUCT_ID="ontrack.supporter_pack"
 
 OPEN_XCODE=1
 RESET_INSTALLED_APP=1
+DEVICECTL_TIMEOUT_SECONDS=8
+
+detect_device_id_for_storekit_reset() {
+    if [[ -n "${IOS_DEVICE_ID:-}" ]]; then
+        echo "$IOS_DEVICE_ID"
+        return 0
+    fi
+
+    local devices_json
+    devices_json="$(mktemp)"
+    if ! xcrun devicectl list devices --timeout "$DEVICECTL_TIMEOUT_SECONDS" --json-output "$devices_json" >/dev/null 2>&1; then
+        rm -f "$devices_json"
+        return 1
+    fi
+
+    plutil -extract result.devices.0.hardwareProperties.udid raw -o - "$devices_json" 2>/dev/null || true
+    rm -f "$devices_json"
+}
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
@@ -65,19 +83,16 @@ grep -q "OnTrack.local.storekit" "$SCHEME_PATH" \
 
 RESET_MESSAGE="skipped"
 if [[ "$RESET_INSTALLED_APP" == "1" ]]; then
-    DEVICE_ID="${IOS_DEVICE_ID:-}"
-    if [[ -z "$DEVICE_ID" ]]; then
-        DEVICE_ID="$(ios_detect_device_id 2>/dev/null || true)"
-    fi
+    DEVICE_ID="$(detect_device_id_for_storekit_reset || true)"
 
     if [[ -n "$DEVICE_ID" ]]; then
-        if xcrun devicectl device uninstall app --device "$DEVICE_ID" "$IOS_BUNDLE_ID_VALUE" >/dev/null 2>&1; then
+        if xcrun devicectl device uninstall app --timeout "$DEVICECTL_TIMEOUT_SECONDS" --device "$DEVICE_ID" "$IOS_BUNDLE_ID_VALUE" >/dev/null 2>&1; then
             RESET_MESSAGE="uninstalled $IOS_BUNDLE_ID_VALUE from $DEVICE_ID"
         else
-            RESET_MESSAGE="attempted uninstall of $IOS_BUNDLE_ID_VALUE on $DEVICE_ID"
+            RESET_MESSAGE="attempted uninstall of $IOS_BUNDLE_ID_VALUE on $DEVICE_ID, then continued"
         fi
     else
-        RESET_MESSAGE="no connected device detected"
+        RESET_MESSAGE="no connected device detected within ${DEVICECTL_TIMEOUT_SECONDS}s"
     fi
 fi
 
