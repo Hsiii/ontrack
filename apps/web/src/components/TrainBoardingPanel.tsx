@@ -100,7 +100,6 @@ export function TrainBoardingPanel({
             className='train-boarding-panel'
             aria-labelledby='train-boarding-title'
         >
-            <div className='train-boarding-handle' />
             <div className='train-boarding-summary'>
                 <div className='train-boarding-copy'>
                     <h2 id='train-boarding-title'>{t('train.plannedRide')}</h2>
@@ -116,10 +115,9 @@ export function TrainBoardingPanel({
                     title={t('share.shareMessage')}
                 >
                     <Share aria-hidden='true' />
+                    <span>{t('share.shareMessage')}</span>
                 </button>
             </div>
-
-            <div className='train-boarding-divider' />
 
             <div className='train-boarding-list'>
                 {canLoadSchedule ? (

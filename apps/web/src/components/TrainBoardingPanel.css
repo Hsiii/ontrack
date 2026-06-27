@@ -1,43 +1,59 @@
 .train-boarding-panel {
     position: fixed;
     z-index: 800;
-    bottom: 0;
+    bottom: calc(var(--space-3) + env(safe-area-inset-bottom));
     left: 50%;
-    width: min(100%, var(--content-app));
+    display: flex;
+    width: calc(100% - var(--space-8));
+    max-width: calc(var(--content-app) - var(--space-8));
     max-height: calc(100svh - env(safe-area-inset-top) - var(--space-8));
-    padding: var(--space-2) var(--space-4)
-        calc(var(--space-4) + env(safe-area-inset-bottom));
-    overflow: hidden;
-    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
-    background: var(--color-bg-light);
-    box-shadow: var(--shadow-lg);
+    flex-direction: column-reverse;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    pointer-events: none;
     transform: translateX(-50%);
 }
 
-.train-boarding-handle {
-    width: var(--space-10);
-    height: var(--space-1);
-    margin: 0 auto var(--space-3);
-    border-radius: var(--radius-pill);
-    background: var(--color-border);
+.train-boarding-panel > * {
+    pointer-events: auto;
 }
 
 .train-boarding-summary {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) var(--size-touch);
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
     gap: var(--space-3);
+    flex-shrink: 0;
+    padding: var(--space-2);
+    border-radius: var(--radius-xl);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-lg);
+}
+
+.train-boarding-list {
+    display: flex;
+    min-height: 0;
+    max-height: calc(100svh - env(safe-area-inset-top) - var(--space-8));
+    flex: 1 1 auto;
+    flex-direction: column;
+    justify-content: flex-end;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
 }
 
 .train-boarding-copy {
     min-width: 0;
+    padding-inline-start: var(--space-3);
 }
 
 .train-boarding-copy h2 {
     margin: 0 0 var(--space-1);
-    color: var(--color-text);
+    color: var(--color-text-dim);
     font-size: var(--text-sm);
-    font-weight: var(--font-semibold);
+    font-weight: var(--font-medium);
+    line-height: 1.2;
 }
 
 .train-boarding-copy p {
@@ -51,22 +67,26 @@
 }
 
 .train-boarding-share-button {
-    display: flex;
-    width: var(--size-touch);
-    height: var(--size-touch);
+    display: inline-flex;
+    min-width: var(--size-touch);
+    min-height: var(--size-touch);
     align-items: center;
     justify-content: center;
+    gap: var(--space-2);
+    padding: 0 var(--space-4);
     border-radius: var(--radius-md);
-    color: var(--color-text-dim);
+    background: var(--color-primary);
+    color: var(--color-primary-contrast);
+    font-size: var(--text-sm);
+    font-weight: var(--font-semibold);
     transition:
         background-color var(--motion-base) ease,
-        color var(--motion-base) ease,
+        box-shadow var(--motion-base) ease,
         transform var(--motion-fast) ease;
 }
 
 .train-boarding-share-button:hover:not(:disabled) {
-    background: var(--color-hover);
-    color: var(--color-text);
+    box-shadow: 0 0 0 var(--size-hairline) var(--color-primary-ring);
 }
 
 .train-boarding-share-button:active:not(:disabled) {
@@ -74,27 +94,14 @@
 }
 
 .train-boarding-share-button:disabled {
-    color: var(--color-border);
+    background: var(--color-border);
+    color: var(--color-text-dim);
     opacity: 0.56;
 }
 
 .train-boarding-share-button svg {
     width: var(--size-icon);
     height: var(--size-icon);
-}
-
-.train-boarding-divider {
-    height: var(--size-hairline);
-    margin: var(--space-3) 0;
-    background: var(--color-border);
-}
-
-.train-boarding-list {
-    max-height: calc(var(--size-control) * 4);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    -webkit-overflow-scrolling: touch;
-    scrollbar-width: none;
 }
 
 .train-boarding-list::-webkit-scrollbar {
@@ -105,7 +112,7 @@
 
 .train-boarding-list .train-list-container {
     max-height: none;
-    border-radius: 0;
+    width: 100%;
     background: transparent;
     box-shadow: none;
 }

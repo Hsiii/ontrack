@@ -6,16 +6,16 @@
 
     display: flex;
     flex-direction: column;
-    gap: 0;
+    gap: var(--space-2);
     max-height: min(
         var(--train-list-max-height),
         calc(100svh - var(--train-list-viewport-offset))
     );
     overflow-y: auto;
     overscroll-behavior: contain;
-    border-radius: var(--radius-lg);
-    background: var(--color-bg-light);
-    box-shadow: var(--shadow-surface);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
 }
@@ -65,8 +65,8 @@
     justify-content: space-between;
     align-items: center;
     background: var(--color-bg-light);
-    border-radius: 0;
-    box-shadow: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-surface);
     text-align: left;
     transition:
         background-color var(--motion-base) ease,
@@ -76,17 +76,17 @@
 }
 
 .train-card:not(:last-child) {
-    border-bottom: var(--size-hairline) solid var(--color-border);
+    border-bottom: 0;
 }
 
 .train-card:hover {
     background: var(--color-hover);
-    box-shadow: none;
+    box-shadow: var(--shadow-surface-hover);
 }
 
 .train-card.selected {
     background: var(--color-primary-selected);
-    box-shadow: inset var(--space-1) 0 0 var(--color-primary);
+    box-shadow: var(--shadow-surface-selected);
 }
 
 .train-card:active {
