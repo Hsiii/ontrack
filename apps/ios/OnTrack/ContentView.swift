@@ -1395,7 +1395,8 @@ private struct TrainCard: View {
             }
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.vertical, OnTrackTheme.space3)
-            .frame(maxWidth: .infinity, height: TrainPanelLayout.cardHeight)
+            .frame(maxWidth: .infinity)
+            .frame(height: TrainPanelLayout.cardHeight)
             .background(
                 isSelected ? OnTrackTheme.primary.opacity(0.06) : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
@@ -1907,7 +1908,8 @@ private struct TrainBoardingPanel: View {
         .padding(.leading, OnTrackTheme.space4)
         .padding(.trailing, OnTrackTheme.space2)
         .padding(.vertical, OnTrackTheme.space2)
-        .frame(maxWidth: .infinity, height: TrainPanelLayout.cardHeight)
+        .frame(maxWidth: .infinity)
+        .frame(height: TrainPanelLayout.cardHeight)
         .onTrackPanelSurface(cornerRadius: OnTrackTheme.radiusPanel)
     }
 
