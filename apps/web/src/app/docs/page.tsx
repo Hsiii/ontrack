@@ -8,7 +8,7 @@ const DOCS_URL = 'https://ontrack.hsichen.dev/docs';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 
 export const metadata: Metadata = {
-    title: 'OnTrack 台鐵時刻表 App | Web 與 iPhone 查車工具',
+    title: 'OnTrack | 極速台鐵時刻表',
     description:
         'OnTrack 是台鐵時刻表 App，支援最近車站偵測、即時延誤、下一班列車與班次分享，可在 Web 與 iPhone 使用。',
     alternates: {
