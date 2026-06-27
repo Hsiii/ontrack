@@ -60,11 +60,12 @@ ios_detect_device_id() {
 ios_write_export_options_plist() {
     local output_path="$1"
     local team_id_block=""
+    local team_id="${IOS_EXPORT_TEAM_ID_VALUE:-${APPLE_TEAM_ID:-}}"
 
-    if [[ -n "${APPLE_TEAM_ID:-}" ]]; then
+    if [[ -n "$team_id" ]]; then
         team_id_block="
     <key>teamID</key>
-    <string>${APPLE_TEAM_ID}</string>"
+    <string>${team_id}</string>"
     fi
 
     cat >"$output_path" <<PLIST

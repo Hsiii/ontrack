@@ -14,6 +14,8 @@ IOS_UPLOAD_SYMBOLS_VALUE="${IOS_UPLOAD_SYMBOLS:-true}"
 [[ -d "$ARCHIVE_PATH" ]] || ios_die "Archive not found at $ARCHIVE_PATH. Run bun run ios:archive first."
 [[ -n "${APPLE_TEAM_ID:-}" ]] || ios_die "APPLE_TEAM_ID is required for uploading an iOS archive."
 
+IOS_EXPORT_TEAM_ID_VALUE="$APPLE_TEAM_ID"
+
 ios_set_app_store_auth_args
 ios_set_provisioning_args
 
