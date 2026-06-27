@@ -39,8 +39,20 @@ enum AppAppearanceSetting: String, CaseIterable, Identifiable {
     case system
     case light
     case dark
+    case sage
+    case amethyst
+    case ember
 
     var id: String { rawValue }
+
+    var requiresSupporter: Bool {
+        switch self {
+        case .system, .light, .dark:
+            false
+        case .sage, .amethyst, .ember:
+            true
+        }
+    }
 
     static var current: AppAppearanceSetting {
         if let rawValue = UserDefaults.standard.string(forKey: AppPreferenceKey.appearance),
@@ -365,10 +377,13 @@ enum AppText {
     static var systemLanguage: String { isZh ? "系統" : "System" }
     static var traditionalChinese: String { "繁體中文" }
     static var english: String { "English" }
-    static var appearance: String { isZh ? "外觀" : "Appearance" }
+    static var theme: String { isZh ? "主題" : "Theme" }
     static var systemAppearance: String { isZh ? "系統" : "System" }
     static var lightAppearance: String { isZh ? "亮色" : "Light" }
     static var darkAppearance: String { isZh ? "暗色" : "Dark" }
+    static var sageTheme: String { isZh ? "鼠尾草" : "Sage" }
+    static var amethystTheme: String { isZh ? "紫水晶" : "Amethyst" }
+    static var emberTheme: String { isZh ? "餘燼" : "Ember" }
     static var defaultMessageFormat: String { isZh ? "預設訊息格式" : "Default message format" }
     static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
     static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }

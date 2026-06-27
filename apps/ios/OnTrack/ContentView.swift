@@ -1993,8 +1993,8 @@ private struct SettingsSheet: View {
 
                     SettingsDivider()
 
-                    SettingsOptionGroup(title: AppText.appearance) {
-                        ForEach(AppAppearanceSetting.allCases) { setting in
+                    SettingsOptionGroup(title: AppText.theme) {
+                        ForEach(AppAppearanceSetting.allCases.filter { !$0.requiresSupporter }) { setting in
                             SettingsOptionButton(
                                 title: appearanceTitle(setting),
                                 isSelected: appearanceRaw == setting.rawValue
@@ -2093,6 +2093,12 @@ private struct SettingsSheet: View {
             AppText.lightAppearance
         case .dark:
             AppText.darkAppearance
+        case .sage:
+            AppText.sageTheme
+        case .amethyst:
+            AppText.amethystTheme
+        case .ember:
+            AppText.emberTheme
         }
     }
 
@@ -2367,9 +2373,9 @@ private extension AppAppearanceSetting {
         switch self {
         case .system:
             nil
-        case .light:
+        case .light, .sage:
             .light
-        case .dark:
+        case .dark, .amethyst, .ember:
             .dark
         }
     }
@@ -2377,6 +2383,13 @@ private extension AppAppearanceSetting {
 
 private enum OnTrackTheme {
     static var background: Color {
+        switch AppAppearanceSetting.current {
+        case .ember:
+            return Color(red: 35 / 255, green: 31 / 255, blue: 31 / 255)
+        case .system, .light, .dark, .sage, .amethyst:
+            break
+        }
+
         adaptiveColor(
             light: UIColor(red: 248 / 255, green: 250 / 255, blue: 252 / 255, alpha: 1),
             dark: UIColor(red: 15 / 255, green: 23 / 255, blue: 42 / 255, alpha: 1)
@@ -2384,6 +2397,13 @@ private enum OnTrackTheme {
     }
 
     static var panel: Color {
+        switch AppAppearanceSetting.current {
+        case .ember:
+            return Color(red: 48 / 255, green: 42 / 255, blue: 42 / 255)
+        case .system, .light, .dark, .sage, .amethyst:
+            break
+        }
+
         adaptiveColor(
             light: .white,
             dark: UIColor(red: 30 / 255, green: 41 / 255, blue: 59 / 255, alpha: 1)
@@ -2411,8 +2431,30 @@ private enum OnTrackTheme {
         )
     }
 
-    static let primary = Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+    static var primary: Color {
+        switch AppAppearanceSetting.current {
+        case .sage:
+            Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255)
+        case .amethyst:
+            Color(red: 173 / 255, green: 150 / 255, blue: 218 / 255)
+        case .ember:
+            Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255)
+        case .system, .light, .dark:
+            Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+        }
+    }
     static var primarySubtle: Color {
+        switch AppAppearanceSetting.current {
+        case .sage:
+            return Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255).opacity(0.14)
+        case .amethyst:
+            return Color(red: 173 / 255, green: 150 / 255, blue: 218 / 255).opacity(0.22)
+        case .ember:
+            return Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255).opacity(0.22)
+        case .system, .light, .dark:
+            break
+        }
+
         adaptiveColor(
             light: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.12),
             dark: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 0.20)
