@@ -9,7 +9,9 @@ const APP_DESCRIPTION =
     '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 const APP_URL = 'https://ontrack.hsichen.dev/';
 const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
-const ENABLE_ANALYTICS = process.env.NODE_ENV === 'production';
+const CF_WEB_ANALYTICS_TOKEN = process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN;
+const ENABLE_ANALYTICS =
+    process.env.NODE_ENV === 'production' && Boolean(CF_WEB_ANALYTICS_TOKEN);
 const APPLE_STARTUP_IMAGES = [
     {
         url: '/splash/apple-splash-750x1334.png',
@@ -212,7 +214,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                         id='cloudflare-web-analytics'
                         src='https://static.cloudflareinsights.com/beacon.min.js'
                         strategy='afterInteractive'
-                        data-cf-beacon='{"token":"675861a849a8490d85d36c5b9a0908d8"}'
+                        data-cf-beacon={JSON.stringify({
+                            token: CF_WEB_ANALYTICS_TOKEN,
+                        })}
                     />
                 ) : null}
             </body>

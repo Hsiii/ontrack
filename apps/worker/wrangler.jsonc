@@ -1,13 +1,13 @@
 {
     "$schema": "../../node_modules/wrangler/config-schema.json",
-    "name": "ontrack",
+    "name": "ontrack-dev",
     "main": "src/index.ts",
     "compatibility_date": "2026-06-07",
     "d1_databases": [
         {
             "binding": "DB",
-            "database_name": "ontrack",
-            "database_id": "4f20034f-9bf4-40f6-9122-31b0a151f574",
+            "database_name": "ontrack-dev",
+            "database_id": "00000000-0000-0000-0000-000000000000",
             "migrations_dir": "d1/migrations",
         },
     ],
@@ -15,12 +15,6 @@
         "directory": "../../apps/web/out",
         "not_found_handling": "single-page-application",
     },
-    "routes": [
-        {
-            "pattern": "ontrack.hsichen.dev",
-            "custom_domain": true,
-        },
-    ],
     "triggers": {
         "crons": [
             "*/10 6-8,16-19 * * *",
