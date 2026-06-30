@@ -21,15 +21,7 @@ detect_device_id_for_storekit_reset() {
         return 0
     fi
 
-    local devices_json
-    devices_json="$(mktemp)"
-    if ! xcrun devicectl list devices --timeout "$DEVICECTL_TIMEOUT_SECONDS" --json-output "$devices_json" >/dev/null 2>&1; then
-        rm -f "$devices_json"
-        return 1
-    fi
-
-    plutil -extract result.devices.0.hardwareProperties.udid raw -o - "$devices_json" 2>/dev/null || true
-    rm -f "$devices_json"
+    IOS_DEVICECTL_TIMEOUT_SECONDS="$DEVICECTL_TIMEOUT_SECONDS" ios_detect_device_id 2>/dev/null
 }
 
 while [[ $# -gt 0 ]]; do

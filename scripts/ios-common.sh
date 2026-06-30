@@ -130,8 +130,13 @@ ios_set_provisioning_args() {
 ios_detect_device_id() {
     local devices_json
     devices_json="$(mktemp)"
+    local devicectl_args=(list devices --json-output "$devices_json")
 
-    if ! xcrun devicectl list devices --json-output "$devices_json" >/dev/null; then
+    if [[ -n "${IOS_DEVICECTL_TIMEOUT_SECONDS:-}" ]]; then
+        devicectl_args+=(--timeout "$IOS_DEVICECTL_TIMEOUT_SECONDS")
+    fi
+
+    if ! xcrun devicectl "${devicectl_args[@]}" >/dev/null; then
         rm -f "$devices_json"
         return 1
     fi
