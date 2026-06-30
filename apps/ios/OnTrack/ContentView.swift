@@ -93,31 +93,18 @@ private enum AppIconSetting: String, CaseIterable, Identifiable {
         }
     }
 
-    var backgroundColor: Color {
-        switch self {
-        case .primary, .sage:
-            .white
-        case .dark:
-            Color(red: 15 / 255, green: 23 / 255, blue: 42 / 255)
-        case .amethyst:
-            Color(red: 30 / 255, green: 41 / 255, blue: 59 / 255)
-        case .ember:
-            Color(red: 35 / 255, green: 31 / 255, blue: 31 / 255)
-        }
-    }
-
-    var markColor: Color {
+    var previewImageName: String {
         switch self {
         case .primary:
-            Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+            "AppIconPreview"
         case .dark:
-            Color(red: 96 / 255, green: 165 / 255, blue: 250 / 255)
+            "AppIconDarkPreview"
         case .sage:
-            Color(red: 101 / 255, green: 145 / 255, blue: 87 / 255)
+            "AppIconSagePreview"
         case .amethyst:
-            Color(red: 173 / 255, green: 150 / 255, blue: 218 / 255)
+            "AppIconAmethystPreview"
         case .ember:
-            Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255)
+            "AppIconEmberPreview"
         }
     }
 
@@ -2338,48 +2325,16 @@ private struct AppIconPreview: View {
     let isSelected: Bool
 
     var body: some View {
-        ZStack {
-            RoundedRectangle(cornerRadius: 14)
-                .fill(setting.backgroundColor)
-                .shadow(color: OnTrackTheme.surfaceShadow, radius: 6, x: 0, y: 3)
-
-            IconMark(color: setting.markColor)
-                .padding(OnTrackTheme.space2)
-        }
+        Image(setting.previewImageName)
+            .resizable()
+            .scaledToFill()
         .frame(width: 56, height: 56)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: OnTrackTheme.surfaceShadow, radius: 6, x: 0, y: 3)
         .overlay {
             RoundedRectangle(cornerRadius: 14)
                 .strokeBorder(isSelected ? OnTrackTheme.primary : OnTrackTheme.border, lineWidth: isSelected ? 2 : 1)
         }
-    }
-}
-
-private struct IconMark: View {
-    let color: Color
-
-    var body: some View {
-        GeometryReader { proxy in
-            let width = proxy.size.width
-            let height = proxy.size.height
-
-            ZStack(alignment: .topLeading) {
-                Rectangle()
-                    .fill(color)
-                    .frame(width: width, height: height * 0.22)
-                    .offset(y: height * 0.14)
-
-                Circle()
-                    .fill(color)
-                    .frame(width: width * 0.45, height: width * 0.45)
-                    .offset(x: width * 0.14, y: height * 0.42)
-
-                Rectangle()
-                    .fill(color)
-                    .frame(width: width * 0.26, height: height * 0.66)
-                    .offset(x: width * 0.64, y: height * 0.25)
-            }
-        }
-        .aspectRatio(1, contentMode: .fit)
     }
 }
 
