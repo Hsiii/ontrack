@@ -136,10 +136,35 @@ ios_detect_device_id() {
         return 1
     fi
 
-    local device_id
-    device_id="$(
-        plutil -extract result.devices.0.hardwareProperties.udid raw -o - "$devices_json" 2>/dev/null || true
-    )"
+    local device_count
+    device_count="$(plutil -extract result.devices raw -o - "$devices_json" 2>/dev/null || true)"
+
+    local device_id=""
+    local fallback_device_id=""
+    local index=0
+    local pairing_state
+    local tunnel_state
+    local udid
+
+    while [[ "$device_count" =~ ^[0-9]+$ && "$index" -lt "$device_count" ]]; do
+        udid="$(plutil -extract "result.devices.$index.hardwareProperties.udid" raw -o - "$devices_json" 2>/dev/null || true)"
+
+        if [[ -n "$udid" && -z "$fallback_device_id" ]]; then
+            fallback_device_id="$udid"
+        fi
+
+        pairing_state="$(plutil -extract "result.devices.$index.connectionProperties.pairingState" raw -o - "$devices_json" 2>/dev/null || true)"
+        tunnel_state="$(plutil -extract "result.devices.$index.connectionProperties.tunnelState" raw -o - "$devices_json" 2>/dev/null || true)"
+
+        if [[ -n "$udid" && "$pairing_state" == "paired" && "$tunnel_state" != "unavailable" ]]; then
+            device_id="$udid"
+            break
+        fi
+
+        index="$((index + 1))"
+    done
+
+    device_id="${device_id:-$fallback_device_id}"
     rm -f "$devices_json"
 
     [[ -n "$device_id" ]] && printf '%s\n' "$device_id"
