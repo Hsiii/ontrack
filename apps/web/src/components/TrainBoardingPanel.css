@@ -1,12 +1,15 @@
 .train-boarding-panel {
     position: fixed;
     z-index: 800;
-    bottom: env(safe-area-inset-bottom);
+    bottom: calc(env(safe-area-inset-bottom) + var(--space-4));
     left: 50%;
     display: flex;
     width: calc(100% - var(--space-8));
     max-width: calc(var(--content-app) - var(--space-8));
-    max-height: calc(100svh - env(safe-area-inset-top) - var(--space-8));
+    max-height: calc(
+        100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) -
+            var(--space-8)
+    );
     flex-direction: column-reverse;
     justify-content: flex-start;
     gap: var(--space-4);
