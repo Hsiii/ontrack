@@ -50,7 +50,6 @@
     height: var(--size-icon);
     flex: 0 0 var(--size-icon);
     color: var(--color-text-dim);
-    fill: currentcolor;
 }
 
 .station-trigger-copy {

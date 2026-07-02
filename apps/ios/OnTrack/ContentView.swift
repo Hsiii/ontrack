@@ -1365,10 +1365,10 @@ private struct RouteGlyph: View {
             switch kind {
             case .origin:
                 Circle()
-                    .fill(color)
+                    .strokeBorder(color, lineWidth: 1)
                     .frame(width: OnTrackTheme.space2, height: OnTrackTheme.space2)
             case .destination:
-                Image(systemName: "flag.fill")
+                Image(systemName: "flag")
                     .font(OnTrackFont.routeGlyph)
                     .foregroundStyle(color)
             }
