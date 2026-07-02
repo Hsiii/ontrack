@@ -44,10 +44,11 @@
     align-items: center;
     gap: var(--space-3);
     flex-shrink: 0;
+    min-height: var(--size-control);
     padding: var(--space-2);
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
     background: var(--color-bg-light);
-    box-shadow: var(--shadow-lg);
+    box-shadow: var(--shadow-surface);
 }
 
 .train-boarding-list {
@@ -70,14 +71,14 @@
 
 .train-boarding-copy {
     min-width: 0;
-    padding-inline-start: var(--space-3);
+    padding-inline-start: var(--space-2);
 }
 
 .train-boarding-copy p {
     overflow: hidden;
     margin: 0;
     color: var(--color-text);
-    font-size: var(--text-sm);
+    font-size: var(--text-base);
     font-weight: var(--font-medium);
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -85,18 +86,22 @@
 
 .train-boarding-share-button {
     display: inline-flex;
-    min-width: var(--size-touch);
-    min-height: var(--size-touch);
+    width: var(--size-touch);
+    height: var(--size-touch);
+    flex: 0 0 var(--size-touch);
     align-items: center;
     justify-content: center;
+    border-radius: var(--radius-md);
     padding: 0;
     color: var(--color-primary);
     transition:
+        background-color var(--motion-base) ease,
         color var(--motion-base) ease,
         transform var(--motion-fast) ease;
 }
 
 .train-boarding-share-button:hover:not(:disabled) {
+    background: var(--color-primary-subtle);
     color: var(--color-primary);
 }
 
@@ -105,7 +110,7 @@
 }
 
 .train-boarding-share-button:disabled {
-    color: var(--color-primary);
+    color: var(--color-text-dim);
     opacity: 0.56;
 }
 
