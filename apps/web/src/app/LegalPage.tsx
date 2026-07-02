@@ -37,6 +37,9 @@ export function LegalPage({
                         <span className={styles.brandText}>OnTrack</span>
                     </Link>
                     <div className={styles.navLinks}>
+                        <Link className={styles.navLink} href='/docs'>
+                            Docs
+                        </Link>
                         <Link className={styles.navLink} href='/docs/support'>
                             Support
                         </Link>
