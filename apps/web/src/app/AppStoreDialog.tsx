@@ -61,7 +61,7 @@ export function AppStoreDialog({ className }: AppStoreDialogProps) {
                         >
                             關閉
                         </button>
-                        <a className={styles.primaryCta} href='/'>
+                        <a className={styles.primaryCta} href='/app'>
                             開啟網頁版
                         </a>
                     </div>
