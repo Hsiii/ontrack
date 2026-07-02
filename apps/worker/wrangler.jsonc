@@ -6,8 +6,8 @@
     "d1_databases": [
         {
             "binding": "DB",
-            "database_name": "ontrack-dev",
-            "database_id": "00000000-0000-0000-0000-000000000000",
+            "database_name": "ontrack",
+            "database_id": "4f20034f-9bf4-40f6-9122-31b0a151f574",
             "migrations_dir": "d1/migrations",
         },
     ],
@@ -17,10 +17,7 @@
     },
     "triggers": {
         "crons": [
-            "*/10 6-8,16-19 * * *",
-            "*/30 9-15,20-22 * * *",
-            "0 0-5,23 * * *",
-            "50 19 * * *",
+            "*/10 * * * *",
         ],
     },
     "observability": {

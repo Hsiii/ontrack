@@ -29,12 +29,7 @@ const SECURITY_HEADERS = {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
 };
-const LIVE_BOARD_REFRESH_CRONS = new Set([
-    '*/10 6-8,16-19 * * *',
-    '*/30 9-15,20-22 * * *',
-    '0 0-5,23 * * *',
-]);
-const DAILY_REFRESH_CRON = '50 19 * * *';
+const ACTIVE_SCHEDULE_CRON = '*/10 * * * *';
 type ApiErrorCode =
     | 'bad_request'
     | 'not_found'
@@ -83,6 +78,25 @@ function getRequestId(request: Request) {
         request.headers.get('x-request-id') ??
         crypto.randomUUID()
     );
+}
+
+function shouldRefreshLiveBoardForCron(date: Date) {
+    const hour = date.getUTCHours();
+    const minute = date.getUTCMinutes();
+
+    if ((hour >= 6 && hour <= 8) || (hour >= 16 && hour <= 19)) {
+        return minute % 10 === 0;
+    }
+
+    if ((hour >= 9 && hour <= 15) || (hour >= 20 && hour <= 22)) {
+        return minute % 30 === 0;
+    }
+
+    return (hour <= 5 || hour === 23) && minute === 0;
+}
+
+function shouldRefreshDailySnapshotsForCron(date: Date) {
+    return date.getUTCHours() === 19 && date.getUTCMinutes() === 50;
 }
 
 function waitUntilLogged(
@@ -436,12 +450,21 @@ export default {
     },
 
     async scheduled(controller, env, ctx) {
-        const refresh = LIVE_BOARD_REFRESH_CRONS.has(controller.cron)
-            ? refreshLiveBoardForCron(env)
-            : controller.cron === DAILY_REFRESH_CRON
-              ? refreshDailySnapshots(env)
-              : Promise.resolve();
+        if (controller.cron !== ACTIVE_SCHEDULE_CRON) {
+            return;
+        }
 
-        ctx.waitUntil(refresh);
+        const scheduledAt = new Date(controller.scheduledTime);
+        const refreshes: Promise<unknown>[] = [];
+
+        if (shouldRefreshLiveBoardForCron(scheduledAt)) {
+            refreshes.push(refreshLiveBoardForCron(env));
+        }
+
+        if (shouldRefreshDailySnapshotsForCron(scheduledAt)) {
+            refreshes.push(refreshDailySnapshots(env));
+        }
+
+        ctx.waitUntil(Promise.all(refreshes));
     },
 } satisfies ExportedHandler<Env>;
