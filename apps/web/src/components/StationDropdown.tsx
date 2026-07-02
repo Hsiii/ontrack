@@ -282,7 +282,9 @@ export function StationDropdown({
                 aria-haspopup='dialog'
                 aria-expanded={isOpen}
             >
-                <TriggerIcon className='station-trigger-leading-icon' />
+                <span className='station-trigger-leading-icon-frame'>
+                    <TriggerIcon className='station-trigger-leading-icon' />
+                </span>
                 <span className='station-trigger-copy'>
                     {selectedStation ? (
                         <span className='station-trigger-value'>

@@ -21,12 +21,22 @@
     border-top: 1px solid var(--color-border);
 }
 
-.station-row-origin .station-trigger-leading-icon {
+.station-row-origin .station-trigger-leading-icon-frame {
     color: var(--color-text-dim);
 }
 
-.station-row-destination .station-trigger-leading-icon {
+.station-row-origin .station-trigger-leading-icon {
+    width: var(--space-2);
+    height: var(--space-2);
+}
+
+.station-row-destination .station-trigger-leading-icon-frame {
     color: var(--color-primary);
+}
+
+.station-row-destination .station-trigger-leading-icon {
+    width: var(--space-4);
+    height: var(--space-4);
 }
 
 .station-field {

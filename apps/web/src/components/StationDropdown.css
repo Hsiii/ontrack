@@ -45,11 +45,21 @@
     justify-content: center;
 }
 
+.station-trigger-leading-icon-frame {
+    width: var(--space-6);
+    height: var(--space-6);
+    flex: 0 0 var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--color-text-dim);
+}
+
 .station-trigger-leading-icon {
     width: var(--size-icon);
     height: var(--size-icon);
-    flex: 0 0 var(--size-icon);
-    color: var(--color-text-dim);
+    flex: 0 0 auto;
+    color: currentcolor;
 }
 
 .station-trigger-copy {
