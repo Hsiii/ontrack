@@ -117,9 +117,6 @@ export const metadata: Metadata = {
         'PWA',
     ],
     robots: 'index,follow',
-    alternates: {
-        canonical: APP_URL,
-    },
     verification: {
         google: 'U0MZAhyxx3hG4euT-pHfkimkVmT8oOu0dAlgD0OFoaQ',
     },

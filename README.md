@@ -20,11 +20,11 @@
 ## Install
 
 The native iOS app is currently under App Store review. Until it is available,
-use the web app at [ontrack.hsichen.dev](https://ontrack.hsichen.dev/) on
+use the web app at [ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app) on
 iPhone. The web app can also be installed on Android.
 
 ### Android (Chrome)
 
-1. Open the app in Chrome on [ontrack.hsichen.dev](https://ontrack.hsichen.dev/)
+1. Open the app in Chrome on [ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app)
 2. Tap the ⋮ menu (top right)
 3. Select "Add to Home screen" or "Install app"

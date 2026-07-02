@@ -30,6 +30,15 @@ const SECURITY_HEADERS = {
     'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
 };
 const ACTIVE_SCHEDULE_CRON = '*/10 * * * *';
+const PUBLIC_DOCUMENT_PATHS = new Set([
+    '/',
+    '/app',
+    '/docs',
+    '/docs/features',
+    '/docs/settings',
+    '/docs/support',
+    '/docs/privacy',
+]);
 type ApiErrorCode =
     | 'bad_request'
     | 'not_found'
@@ -70,6 +79,32 @@ function jsonError(
             status,
         }
     );
+}
+
+function assetNotFound(request: Request) {
+    const acceptsHtml = request.headers.get('accept')?.includes('text/html');
+
+    return new Response(acceptsHtml ? 'Not found' : null, {
+        status: 404,
+        headers: {
+            ...(acceptsHtml
+                ? { 'Content-Type': 'text/plain; charset=utf-8' }
+                : {}),
+            ...SECURITY_HEADERS,
+        },
+    });
+}
+
+function getNormalizedPathname(url: URL) {
+    return url.pathname !== '/' && url.pathname.endsWith('/')
+        ? url.pathname.slice(0, -1)
+        : url.pathname;
+}
+
+function isUnknownDocumentPath(url: URL) {
+    const pathname = getNormalizedPathname(url);
+
+    return !pathname.includes('.') && !PUBLIC_DOCUMENT_PATHS.has(pathname);
 }
 
 function getRequestId(request: Request) {
@@ -436,7 +471,15 @@ export default {
             return handleApi(request, env, ctx);
         }
 
-        const response = await env.ASSETS.fetch(request);
+        if (isUnknownDocumentPath(url)) {
+            return assetNotFound(request);
+        }
+
+        const response = await env.ASSETS.fetch(request).catch(() => null);
+        if (!response) {
+            return assetNotFound(request);
+        }
+
         const headers = new Headers(response.headers);
         Object.entries(SECURITY_HEADERS).forEach(([key, value]) => {
             headers.set(key, value);

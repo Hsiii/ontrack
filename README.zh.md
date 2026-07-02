@@ -18,11 +18,11 @@
 ## 安裝
 
 iOS App 目前仍在 App Store 審查中。正式上架前，iPhone 請先使用
-[ontrack.hsichen.dev](https://ontrack.hsichen.dev/) 網頁版；網頁版也支援
+[ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app) 網頁版；網頁版也支援
 Android 安裝。
 
 ### Android（Chrome）
 
-1. 用 Chrome 開啟 [ontrack.hsichen.dev](https://ontrack.hsichen.dev/)
+1. 用 Chrome 開啟 [ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app)
 2. 點右上角 ⋮ 選單
 3. 選擇「加到主畫面」或「安裝應用程式」
