@@ -4,8 +4,8 @@
     bottom: calc(env(safe-area-inset-bottom) + var(--space-4));
     left: 50%;
     display: flex;
-    width: calc(100% - var(--space-8));
-    max-width: calc(var(--content-app) - var(--space-8));
+    width: calc(100% - var(--space-10));
+    max-width: var(--content-mobile);
     max-height: calc(
         100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) -
             var(--space-8)
@@ -45,7 +45,7 @@
     gap: var(--space-3);
     flex-shrink: 0;
     min-height: var(--size-control);
-    padding: var(--space-2);
+    padding: var(--space-2) var(--space-2) var(--space-2) var(--space-5);
     border-radius: var(--radius-lg);
     background: var(--color-bg-light);
     box-shadow: var(--shadow-surface);
@@ -71,7 +71,6 @@
 
 .train-boarding-copy {
     min-width: 0;
-    padding-inline-start: var(--space-2);
 }
 
 .train-boarding-copy p {

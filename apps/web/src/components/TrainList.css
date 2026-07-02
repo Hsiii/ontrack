@@ -61,10 +61,11 @@
 
 .train-card {
     width: 100%;
-    padding: var(--space-3) var(--space-4);
+    padding: var(--space-3) var(--space-5);
     min-height: var(--size-control);
-    display: flex;
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 6rem;
+    column-gap: var(--space-2);
     align-items: center;
     background: var(--color-bg-light);
     border-radius: var(--radius-lg);
@@ -87,7 +88,7 @@
 }
 
 .train-card.selected {
-    background: var(--color-primary-selected);
+    background: var(--color-primary-subtle);
     box-shadow: var(--shadow-surface-selected);
 }
 
@@ -103,8 +104,7 @@
 .train-card-times {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    flex: 2;
+    gap: var(--space-1);
     min-width: 0;
 }
 
@@ -120,7 +120,8 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    min-width: 5ch;
+    width: 3.5rem;
+    min-width: 0;
     min-height: var(--space-6);
     flex-shrink: 0;
 }
@@ -148,8 +149,8 @@
 .train-card-separator {
     display: flex;
     align-items: center;
-    gap: var(--space-2);
-    flex: 1;
+    gap: var(--space-1);
+    flex: 0 0 calc(var(--space-15) + var(--space-2));
     min-width: 0;
 }
 
@@ -168,30 +169,20 @@
 
 .train-card-info {
     display: flex;
-    flex-direction: row;
     align-items: center;
-    gap: var(--space-1);
-    flex: 1;
     justify-content: flex-end;
-    margin-left: var(--space-3);
+    min-width: 0;
 }
 
-.train-card-type {
-    flex: 0 0 6.25ch;
+.train-card-identifier {
+    width: 100%;
     font-size: var(--text-sm);
     color: var(--color-text-dim);
     white-space: nowrap;
     overflow: hidden;
-    text-align: right;
-}
-
-.train-card-number {
-    flex: 0 0 4ch;
-    display: inline-block;
-    font-size: var(--text-xs);
-    color: var(--color-text-dim);
     font-variant-numeric: tabular-nums;
-    text-align: center;
+    text-align: right;
+    text-overflow: ellipsis;
 }
 
 .skeleton-time {

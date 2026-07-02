@@ -4,7 +4,7 @@
 
 .time-selector-trigger {
     min-height: var(--size-touch);
-    border: 1px solid var(--color-border);
+    border: 0;
     background: var(--color-bg-light);
     color: var(--color-text);
     box-shadow: var(--shadow-surface);
@@ -76,7 +76,7 @@
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding: var(--space-4) var(--space-4) 0;
+    padding: var(--space-4) 0 0;
     background: var(--color-overlay);
 }
 

@@ -391,11 +391,8 @@ export function TrainList({
                                     </span>
                                 </div>
                                 <div className='train-card-info'>
-                                    <span className='train-card-type'>
-                                        {trainType}
-                                    </span>
-                                    <span className='train-card-number'>
-                                        {trainData.trainNo}
+                                    <span className='train-card-identifier'>
+                                        {trainType} {trainData.trainNo}
                                     </span>
                                 </div>
                             </button>

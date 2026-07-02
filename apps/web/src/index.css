@@ -41,17 +41,9 @@
     --shadow-lg:
         0 10px 15px -3px var(--color-shadow),
         0 4px 6px -2px var(--color-shadow-sm);
-    --shadow-surface:
-        0 0 0 1px var(--color-border), 0 1px 2px -1px var(--color-shadow-sm),
-        0 8px 24px -18px var(--color-shadow-elevated);
-    --shadow-surface-hover:
-        0 0 0 1px var(--color-border-strong),
-        0 2px 4px -2px var(--color-shadow),
-        0 12px 28px -18px var(--color-shadow-elevated);
-    --shadow-surface-selected:
-        inset 0 0 0 1px var(--color-primary-ring),
-        0 0 0 1px var(--color-primary),
-        0 8px 24px -18px var(--color-primary-ring);
+    --shadow-surface: 0 0 0 1px var(--color-border);
+    --shadow-surface-hover: 0 0 0 1px var(--color-border-strong);
+    --shadow-surface-selected: 0 0 0 1px var(--color-primary-ring);
 
     --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 
@@ -70,8 +62,8 @@
     --font-semibold: 600;
     --font-bold: 700;
 
-    --radius-lg: 16px;
-    --radius-md: 12px;
+    --radius-lg: 12px;
+    --radius-md: 8px;
     --radius-sm: 8px;
     --radius-xl: 24px;
     --radius-pill: 4000px;
@@ -96,6 +88,7 @@
     --size-preview-min: 17.5rem; /* 280px */
     --size-touch: 2.75rem; /* 44px */
     --size-control: 4rem; /* 64px */
+    --size-route-row: 3.5rem; /* 56px */
     --size-icon: 1.25rem; /* 20px */
     --size-hairline: 1px;
 
