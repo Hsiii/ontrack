@@ -1,11 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-    ArrowRightFromLine,
-    ArrowRightToLine,
-    ChevronDown,
-    Moon,
-    TimerReset,
-} from 'lucide-react';
+import { ChevronDown, Moon, TimerReset } from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 
@@ -285,19 +279,16 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                     value: 'departure' as const,
                     label: t('time.departureTime'),
                     shortLabel: t('time.departure'),
-                    Icon: ArrowRightFromLine,
                 },
                 {
                     value: 'arrival' as const,
                     label: t('time.arrivalTime'),
                     shortLabel: t('time.arrival'),
-                    Icon: ArrowRightToLine,
                 },
             ] satisfies {
                 value: TimeMode;
                 label: string;
                 shortLabel: string;
-                Icon: typeof ArrowRightFromLine;
             }[],
         [t]
     );
@@ -637,7 +628,6 @@ export function TimeSelector({ value, onChange }: TimeSelectorProps) {
                                                 handleSetMode(option.value)
                                             }
                                         >
-                                            <option.Icon aria-hidden='true' />
                                             <span>{option.shortLabel}</span>
                                         </button>
                                     );

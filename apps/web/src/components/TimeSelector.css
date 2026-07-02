@@ -185,7 +185,7 @@
 
 .time-editor-wheels {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.9fr) minmax(0, 0.9fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     align-items: center;
     gap: var(--space-2);
     padding: var(--space-3) var(--space-5) var(--space-5);

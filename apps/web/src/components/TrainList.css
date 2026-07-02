@@ -13,6 +13,7 @@
     );
     overflow-y: auto;
     overscroll-behavior: contain;
+    padding: var(--size-hairline);
     border-radius: 0;
     background: transparent;
     box-shadow: none;
