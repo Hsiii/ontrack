@@ -24,7 +24,6 @@ apps/ios/OnTrack/OnTrack.local.storekit
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
-!.vscode/settings.json
 .idea
 **/.DS_Store
 *.suo
