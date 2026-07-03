@@ -3,6 +3,9 @@
     "name": "ontrack",
     "main": "src/index.ts",
     "compatibility_date": "2026-06-07",
+    "vars": {
+        "CORS_ALLOWED_ORIGINS": "https://example.com",
+    },
     "routes": [
         {
             "pattern": "example.com",

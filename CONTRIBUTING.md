@@ -42,7 +42,8 @@ local development or fork setup. Before deploying a fork:
 2. Copy `apps/worker/wrangler.production.example.jsonc` to
    `apps/worker/wrangler.production.jsonc`.
 3. Fill in your production route and D1 `database_id`.
-4. Set Worker secrets for production:
+4. Set `CORS_ALLOWED_ORIGINS` in the production config to your web origin.
+5. Set Worker secrets for production:
 
 ```sh
 wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc

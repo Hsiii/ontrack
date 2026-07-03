@@ -15,5 +15,6 @@ xcodebuild \
     -sdk "$SDK" \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
+    ONTRACK_API_ORIGIN="$IOS_API_ORIGIN_VALUE" \
     CODE_SIGNING_ALLOWED=NO \
     build

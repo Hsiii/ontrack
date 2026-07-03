@@ -57,6 +57,13 @@ Run the web app:
 bun run dev
 ```
 
+To point the development web app at another backend, set
+`ONTRACK_API_ORIGIN`:
+
+```sh
+ONTRACK_API_ORIGIN=https://example.com bun run dev
+```
+
 Build the web app and Worker:
 
 ```sh
@@ -82,6 +89,12 @@ Run the iOS app on a connected device:
 bun run ios
 ```
 
+To point iOS scripts at another backend, set `IOS_API_ORIGIN`:
+
+```sh
+IOS_API_ORIGIN=https://example.com bun run ios
+```
+
 ## Self-Hosting
 
 OnTrack reads public railway data from TDX through a Cloudflare Worker. The
@@ -98,7 +111,8 @@ cp apps/worker/wrangler.production.example.jsonc apps/worker/wrangler.production
 
 3. Fill in your production route and D1 `database_id` in the ignored
    `apps/worker/wrangler.production.jsonc`.
-4. Set Worker secrets as needed:
+4. Set `CORS_ALLOWED_ORIGINS` in the production config to your web origin.
+5. Set Worker secrets as needed:
 
 ```sh
 wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
@@ -106,7 +120,7 @@ wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.j
 wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
 ```
 
-5. Deploy:
+6. Deploy:
 
 ```sh
 bun run deploy

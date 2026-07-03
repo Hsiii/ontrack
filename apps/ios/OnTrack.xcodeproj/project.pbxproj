@@ -290,6 +290,7 @@
                     "@executable_path/Frameworks",
                 );
                 MARKETING_VERSION = 0.1.0;
+                ONTRACK_API_ORIGIN = "https://ontrack.hsichen.dev";
                 PRODUCT_BUNDLE_IDENTIFIER = dev.hsichen.ontrack;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 SUPPORTED_PLATFORMS = (
@@ -320,6 +321,7 @@
                     "@executable_path/Frameworks",
                 );
                 MARKETING_VERSION = 0.1.0;
+                ONTRACK_API_ORIGIN = "https://ontrack.hsichen.dev";
                 PRODUCT_BUNDLE_IDENTIFIER = dev.hsichen.ontrack;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 SUPPORTED_PLATFORMS = (

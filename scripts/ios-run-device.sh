@@ -27,6 +27,7 @@ xcodebuild \
     -destination "$DESTINATION" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
     "${IOS_PROVISIONING_ARGS[@]}" \
+    ONTRACK_API_ORIGIN="$IOS_API_ORIGIN_VALUE" \
     build
 
 if [[ ! -d "$APP_PATH" ]]; then

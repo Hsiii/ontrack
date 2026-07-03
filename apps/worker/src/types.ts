@@ -11,6 +11,7 @@ export interface Env {
     TDX_CLIENT_ID?: string;
     TDX_CLIENT_SECRET?: string;
     REFRESH_SECRET?: string;
+    CORS_ALLOWED_ORIGINS?: string;
 }
 
 export interface Station {

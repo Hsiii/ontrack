@@ -29,6 +29,10 @@ const SECURITY_HEADERS = {
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'geolocation=(self), microphone=(), camera=()',
 };
+const DEFAULT_CORS_ALLOWED_ORIGINS = ['https://ontrack.hsichen.dev'];
+const CORS_ALLOWED_METHODS = new Set(['GET']);
+const CORS_ALLOWED_HEADERS = 'Authorization, Content-Type';
+const CORS_MAX_AGE_SECONDS = '86400';
 const ACTIVE_SCHEDULE_CRON = '*/10 * * * *';
 const PUBLIC_DOCUMENT_PATHS = new Set([
     '/',
@@ -41,6 +45,7 @@ const PUBLIC_DOCUMENT_PATHS = new Set([
 ]);
 type ApiErrorCode =
     | 'bad_request'
+    | 'forbidden'
     | 'not_found'
     | 'unauthorized'
     | 'service_capacity'
@@ -57,6 +62,115 @@ function json(data: unknown, init: ResponseInit = {}) {
             ...init.headers,
         },
     });
+}
+
+function normalizeOrigin(origin: string) {
+    try {
+        return new URL(origin).origin;
+    } catch {
+        return null;
+    }
+}
+
+function getCorsAllowedOrigins(env: Env) {
+    return new Set(
+        [
+            ...DEFAULT_CORS_ALLOWED_ORIGINS,
+            ...(env.CORS_ALLOWED_ORIGINS ?? '').split(','),
+        ]
+            .map((origin) => normalizeOrigin(origin.trim()))
+            .filter((origin): origin is string => Boolean(origin))
+    );
+}
+
+function getAllowedCorsOrigin(request: Request, env: Env) {
+    const origin = request.headers.get('Origin');
+    if (!origin) {
+        return null;
+    }
+
+    const normalizedOrigin = normalizeOrigin(origin);
+    if (!normalizedOrigin) {
+        return null;
+    }
+
+    return getCorsAllowedOrigins(env).has(normalizedOrigin)
+        ? normalizedOrigin
+        : null;
+}
+
+function appendVary(headers: Headers, value: string) {
+    const vary = headers.get('Vary');
+    if (!vary) {
+        headers.set('Vary', value);
+        return;
+    }
+
+    const values = vary.split(',').map((item) => item.trim().toLowerCase());
+    if (!values.includes(value.toLowerCase())) {
+        headers.set('Vary', `${vary}, ${value}`);
+    }
+}
+
+function withCorsHeaders(response: Response, request: Request, env: Env) {
+    const allowedOrigin = getAllowedCorsOrigin(request, env);
+    if (!allowedOrigin) {
+        return response;
+    }
+
+    const headers = new Headers(response.headers);
+    headers.set('Access-Control-Allow-Origin', allowedOrigin);
+    headers.set(
+        'Access-Control-Allow-Methods',
+        [...CORS_ALLOWED_METHODS, 'OPTIONS'].join(', ')
+    );
+    headers.set(
+        'Access-Control-Allow-Headers',
+        request.headers.get('Access-Control-Request-Headers') ??
+            CORS_ALLOWED_HEADERS
+    );
+    headers.set('Access-Control-Max-Age', CORS_MAX_AGE_SECONDS);
+    appendVary(headers, 'Origin');
+
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+    });
+}
+
+function isAllowedCorsRequest(request: Request, env: Env) {
+    return (
+        !request.headers.has('Origin') ||
+        (Boolean(getAllowedCorsOrigin(request, env)) &&
+            CORS_ALLOWED_METHODS.has(request.method.toUpperCase()))
+    );
+}
+
+function handleCorsPreflight(request: Request, env: Env) {
+    const requestedMethod = request.headers.get(
+        'Access-Control-Request-Method'
+    );
+
+    if (
+        !getAllowedCorsOrigin(request, env) ||
+        !requestedMethod ||
+        !CORS_ALLOWED_METHODS.has(requestedMethod.toUpperCase())
+    ) {
+        return new Response(null, {
+            status: 403,
+            headers: SECURITY_HEADERS,
+        });
+    }
+
+    return withCorsHeaders(
+        new Response(null, {
+            status: 204,
+            headers: SECURITY_HEADERS,
+        }),
+        request,
+        env
+    );
 }
 
 function jsonError(
@@ -468,7 +582,24 @@ export default {
         const url = new URL(request.url);
 
         if (url.pathname.startsWith('/api/')) {
-            return handleApi(request, env, ctx);
+            if (request.method === 'OPTIONS') {
+                return handleCorsPreflight(request, env);
+            }
+
+            if (!isAllowedCorsRequest(request, env)) {
+                return jsonError(
+                    'forbidden',
+                    'This OnTrack origin is not allowed.',
+                    403,
+                    getRequestId(request)
+                );
+            }
+
+            return withCorsHeaders(
+                await handleApi(request, env, ctx),
+                request,
+                env
+            );
         }
 
         if (isUnknownDocumentPath(url)) {

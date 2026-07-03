@@ -3,7 +3,9 @@ import Foundation
 actor APIClient {
     static let shared = APIClient()
 
-    private let baseURL = URL(string: "https://ontrack.hsichen.dev")!
+    private static let defaultBaseURL = URL(string: "https://ontrack.hsichen.dev")!
+
+    private let baseURL = APIClient.resolveBaseURL()
     private let decoder = JSONDecoder()
     private let errorDecoder = JSONDecoder()
 
@@ -82,6 +84,38 @@ actor APIClient {
         } catch {
             throw APIError.invalidData
         }
+    }
+
+    private static func resolveBaseURL() -> URL {
+#if DEBUG
+        if let environmentURL = validBaseURL(
+            ProcessInfo.processInfo.environment["ONTRACK_API_ORIGIN"]
+        ) {
+            return environmentURL
+        }
+#endif
+
+        if let bundleURL = validBaseURL(
+            Bundle.main.object(forInfoDictionaryKey: "OnTrackAPIOrigin") as? String
+        ) {
+            return bundleURL
+        }
+
+        return defaultBaseURL
+    }
+
+    private static func validBaseURL(_ value: String?) -> URL? {
+        guard let trimmedValue = value?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !trimmedValue.isEmpty,
+              let url = URL(string: trimmedValue),
+              let scheme = url.scheme?.lowercased(),
+              ["http", "https"].contains(scheme),
+              url.host != nil
+        else {
+            return nil
+        }
+
+        return url
     }
 
 #if DEBUG

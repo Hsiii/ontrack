@@ -94,6 +94,7 @@ xcodebuild \
     -sdk iphonesimulator \
     -destination "id=$DEVICE_ID" \
     -derivedDataPath "$DERIVED_DATA_PATH" \
+    ONTRACK_API_ORIGIN="$IOS_API_ORIGIN_VALUE" \
     CODE_SIGNING_ALLOWED=NO \
     build >/dev/null
 

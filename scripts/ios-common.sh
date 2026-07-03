@@ -7,6 +7,7 @@ IOS_ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 IOS_PROJECT_PATH="${IOS_PROJECT:-$IOS_ROOT_DIR/apps/ios/OnTrack.xcodeproj}"
 IOS_SCHEME_NAME="${IOS_SCHEME:-OnTrack}"
 IOS_BUNDLE_ID_VALUE="${IOS_BUNDLE_ID:-dev.hsichen.ontrack}"
+IOS_API_ORIGIN_VALUE="${IOS_API_ORIGIN:-https://ontrack.hsichen.dev}"
 
 ios_load_env() {
     local env_path="${IOS_ENV_FILE:-$IOS_ROOT_DIR/.env}"

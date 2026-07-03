@@ -54,6 +54,12 @@ bun install
 bun run dev
 ```
 
+若要讓開發用網頁版指向其他後端，設定 `ONTRACK_API_ORIGIN`：
+
+```sh
+ONTRACK_API_ORIGIN=https://example.com bun run dev
+```
+
 建置網頁版與 Worker：
 
 ```sh
@@ -78,6 +84,12 @@ bun run lint
 bun run ios
 ```
 
+若要讓 iOS 腳本指向其他後端，設定 `IOS_API_ORIGIN`：
+
+```sh
+IOS_API_ORIGIN=https://example.com bun run ios
+```
+
 ## 自行部署
 
 OnTrack 透過 Cloudflare Worker 讀取 TDX 公開鐵路資料。已追蹤的
@@ -93,7 +105,8 @@ cp apps/worker/wrangler.production.example.jsonc apps/worker/wrangler.production
 
 3. 在被 git 忽略的 `apps/worker/wrangler.production.jsonc` 裡填入你的
    production route 與 D1 `database_id`。
-4. 視需要設定 Worker secrets：
+4. 在 production 設定中把 `CORS_ALLOWED_ORIGINS` 設為你的網頁版 origin。
+5. 視需要設定 Worker secrets：
 
 ```sh
 wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
@@ -101,7 +114,7 @@ wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.j
 wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
 ```
 
-5. 部署：
+6. 部署：
 
 ```sh
 bun run deploy
