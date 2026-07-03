@@ -23,6 +23,7 @@
         "ios:upload": "scripts/ios-upload.sh",
         "ios:release": "scripts/ios-release.sh",
         "lint": "eslint .",
+        "security:scan": "gitleaks detect --source . --redact --no-banner",
         "format": "prettier --write .",
         "prepare": "husky"
     },
