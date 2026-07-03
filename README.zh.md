@@ -22,6 +22,12 @@
 - `apps/worker`：Cloudflare Worker 部署包裝
 - `assets/app-store/screenshots`：由 `bun run ios:screenshots` 產生的 App Store 截圖
 
+## 官方版本
+
+官方 OnTrack App 與網站由 Hsi 發佈於
+[ontrack.hsichen.dev](https://ontrack.hsichen.dev)。Fork 版本請使用自己的 App
+名稱、bundle identifier、圖示、截圖、支援連結、隱私權政策與部署端點。
+
 ## 安裝
 
 iOS App 目前仍在 App Store 審查中。正式上架前，iPhone 請先使用
@@ -33,3 +39,64 @@ Android 安裝。
 1. 用 Chrome 開啟 [ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app)
 2. 點右上角 ⋮ 選單
 3. 選擇「加到主畫面」或「安裝應用程式」
+
+## 開發
+
+安裝依賴：
+
+```sh
+bun install
+```
+
+啟動網頁版：
+
+```sh
+bun run dev
+```
+
+建置網頁版與 Worker：
+
+```sh
+bun run build
+```
+
+執行 lint：
+
+```sh
+bun run lint
+```
+
+在連接的 iPhone 上執行 iOS App：
+
+```sh
+bun run ios
+```
+
+## 自行部署
+
+OnTrack 透過 Cloudflare Worker 讀取 TDX 公開鐵路資料。若要部署 fork，請使用自己的基礎設施與憑證。
+
+1. 建立自己的 Cloudflare D1 資料庫。
+2. 替換 `apps/worker/wrangler.jsonc` 中的 `database_id` 佔位值。
+3. 如果要部署網站，加入自己的 Worker route 或自訂網域。
+4. 視需要設定 Worker secrets：
+
+```sh
+wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.jsonc
+wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.jsonc
+wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.jsonc
+```
+
+TDX 憑證在開發時不是必要的；未設定時 Worker 會 fallback 到 Visitor Mode。
+
+iOS 發佈請使用自己的 Apple Developer 帳號、bundle identifier、App Store listing、支援網址、隱私權政策與 app 內購買項目。
+
+## 貢獻
+
+歡迎提出 issue 與 pull request。設定方式與專案界線請見
+[CONTRIBUTING.md](./CONTRIBUTING.md)。
+
+## 授權
+
+原始碼使用 MIT License。OnTrack 名稱、App 圖示、logo、截圖、App Store listing
+素材、網域與其他品牌資產不授權重用。詳見 [NOTICE.md](./NOTICE.md)。
