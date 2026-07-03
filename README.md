@@ -144,4 +144,4 @@ for setup notes and project boundaries.
 
 Source code is licensed under the MIT License. The OnTrack name, app icon, logo,
 screenshots, App Store listing materials, domain, and other brand assets are not
-licensed for reuse. See [NOTICE.md](./NOTICE.md).
+licensed for reuse. See [BRAND.md](./BRAND.md).

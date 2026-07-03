@@ -134,4 +134,4 @@ iOS 發佈請使用自己的 Apple Developer 帳號、bundle identifier、App St
 ## 授權
 
 原始碼使用 MIT License。OnTrack 名稱、App 圖示、logo、截圖、App Store listing
-素材、網域與其他品牌資產不授權重用。詳見 [NOTICE.md](./NOTICE.md)。
+素材、網域與其他品牌資產不授權重用。詳見 [BRAND.md](./BRAND.md)。
