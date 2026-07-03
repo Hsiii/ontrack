@@ -15,6 +15,13 @@
 - 打開 App 即可掌握即時班次與延誤資訊
 - 班次與抵達時間快速分享
 
+## 專案結構
+
+- `apps/ios`：iOS App、Xcode 專案與 Xcode 建置資源
+- `apps/web`：網頁版與公開網站素材
+- `apps/worker`：Cloudflare Worker 部署包裝
+- `assets/app-store/screenshots`：由 `bun run ios:screenshots` 產生的 App Store 截圖
+
 ## 安裝
 
 iOS App 目前仍在 App Store 審查中。正式上架前，iPhone 請先使用

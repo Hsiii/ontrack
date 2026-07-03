@@ -5,7 +5,7 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ios-common.sh"
 
 CONFIGURATION="${IOS_CONFIGURATION:-Debug}"
 DERIVED_DATA_PATH="${IOS_DERIVED_DATA_PATH:-$IOS_ROOT_DIR/build/ScreenshotDerivedData}"
-OUTPUT_DIR="${IOS_SCREENSHOT_OUTPUT_DIR:-$IOS_ROOT_DIR/apps/ios/AppStore/Screenshots}"
+OUTPUT_DIR="${IOS_SCREENSHOT_OUTPUT_DIR:-$IOS_ROOT_DIR/assets/app-store/screenshots}"
 DEVICE_NAME="${IOS_SCREENSHOT_DEVICE_NAME:-OnTrack 14 Plus Screenshots}"
 DEVICE_TYPE="${IOS_SCREENSHOT_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus}"
 RUNTIME="${IOS_SCREENSHOT_RUNTIME:-}"
