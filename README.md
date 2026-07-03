@@ -63,6 +63,13 @@ Build the web app and Worker:
 bun run build
 ```
 
+Deploy a development Worker after filling the D1 placeholder in
+`apps/worker/wrangler.jsonc`:
+
+```sh
+bun run deploy:dev
+```
+
 Run lint:
 
 ```sh
@@ -77,19 +84,36 @@ bun run ios
 
 ## Self-Hosting
 
-OnTrack reads public railway data from TDX through a Cloudflare Worker. To host a
-fork, use your own infrastructure and credentials.
+OnTrack reads public railway data from TDX through a Cloudflare Worker. The
+tracked `apps/worker/wrangler.jsonc` is a development-safe config with
+placeholder D1 values. To host a fork, use your own infrastructure and
+credentials.
 
 1. Create your own Cloudflare D1 database.
-2. Replace the placeholder `database_id` in `apps/worker/wrangler.jsonc`.
-3. Add your own Worker route or custom domain if you deploy one.
+2. Copy the production config example:
+
+```sh
+cp apps/worker/wrangler.production.example.jsonc apps/worker/wrangler.production.jsonc
+```
+
+3. Fill in your production route and D1 `database_id` in the ignored
+   `apps/worker/wrangler.production.jsonc`.
 4. Set Worker secrets as needed:
 
 ```sh
-wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.jsonc
-wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.jsonc
-wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.jsonc
+wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
+wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.jsonc
+wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
 ```
+
+5. Deploy:
+
+```sh
+bun run deploy
+```
+
+Official maintainers also use the ignored production config, so production
+deploys do not require editing the tracked public config.
 
 TDX credentials are optional for development because the Worker falls back to
 Visitor Mode when they are not configured.

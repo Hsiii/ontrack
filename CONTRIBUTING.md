@@ -35,22 +35,26 @@ bun run ios:check
 
 ## Worker Setup
 
-The tracked Worker config uses placeholder deployment values. Before deploying a
-fork:
+The tracked Worker config uses placeholder deployment values and is intended for
+local development or fork setup. Before deploying a fork:
 
 1. Create your own Cloudflare D1 database.
-2. Replace `database_id` in `apps/worker/wrangler.jsonc`.
-3. Add your own route or custom domain.
+2. Copy `apps/worker/wrangler.production.example.jsonc` to
+   `apps/worker/wrangler.production.jsonc`.
+3. Fill in your production route and D1 `database_id`.
 4. Set Worker secrets for production:
 
 ```sh
-wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.jsonc
-wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.jsonc
-wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.jsonc
+wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
+wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.jsonc
+wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
 ```
 
 `TDX_CLIENT_ID` and `TDX_CLIENT_SECRET` are optional for development. Without
 them, the Worker uses TDX Visitor Mode.
+
+Use `bun run deploy:dev` for the tracked development config after filling its D1
+placeholder. Use `bun run deploy` for the ignored production config.
 
 ## Pull Requests
 

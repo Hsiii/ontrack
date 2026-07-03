@@ -35,6 +35,7 @@ apps/ios/OnTrack/OnTrack.local.storekit
 .vercel
 .wrangler
 next-env.d.ts
+apps/worker/wrangler.production.jsonc
 
 # Environment variables
 .env
