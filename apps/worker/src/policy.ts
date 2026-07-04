@@ -1,4 +1,5 @@
 import { getTaipeiDate } from './time';
+import type { Station } from './types';
 
 export const SCHEDULE_FUTURE_DAY_LIMIT = 7;
 
@@ -46,4 +47,20 @@ export function normalizeScheduleDate(
         .slice(0, 10);
 
     return date >= today && date <= maxDate ? date : null;
+}
+
+export function resolveScheduleStations(
+    stations: Station[],
+    origin: string,
+    dest: string
+) {
+    const stationMap = new Map(
+        stations.map((station) => [station.id, station])
+    );
+    const originStation = stationMap.get(origin);
+    const destinationStation = stationMap.get(dest);
+
+    return originStation && destinationStation
+        ? { originStation, destinationStation }
+        : null;
 }

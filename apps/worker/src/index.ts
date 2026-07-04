@@ -1,5 +1,5 @@
 import { recordRouteInterest } from './d1';
-import { normalizeScheduleDate } from './policy';
+import { normalizeScheduleDate, resolveScheduleStations } from './policy';
 import {
     ensureRouteTimetable,
     ensureStations,
@@ -399,6 +399,19 @@ async function handleSchedule(
     const isToday = queryDate === getTaipeiDate();
     const requestedAt = new Date();
     const livePolicy = getLiveBoardPolicy(requestedAt);
+    const stations = await ensureStations(env);
+    const scheduleStations = resolveScheduleStations(stations, origin, dest);
+    if (!scheduleStations) {
+        return jsonError(
+            'bad_request',
+            'One of the selected stations is invalid. Choose the stations again.',
+            400,
+            requestId
+        );
+    }
+
+    const { originStation, destinationStation } = scheduleStations;
+
     waitUntilLogged(
         ctx,
         recordRouteInterest(env, origin, dest, requestedAt),
@@ -465,8 +478,8 @@ async function handleSchedule(
     return json(
         {
             date: queryDate,
-            origin: { id: origin, name: origin },
-            destination: { id: dest, name: dest },
+            origin: originStation,
+            destination: destinationStation,
             trains,
             meta,
         },
