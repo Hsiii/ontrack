@@ -40,6 +40,106 @@ export const translations = {
         'settings.links': '連結',
         'settings.support': '支援',
         'settings.privacy': '隱私權',
+        'docs.nav.label': '頁面導覽',
+        'docs.nav.docs': '文件',
+        'docs.nav.support': '支援',
+        'docs.nav.privacy': '隱私',
+        'docs.nav.switchLanguage': '切換語言',
+        'docs.footer.label': '支援連結',
+        'docs.footer.support': '支援',
+        'docs.footer.privacy': '隱私權政策',
+        'support.title': 'OnTrack 支援',
+        'support.subtitle': '需要協助使用 OnTrack？歡迎聯絡我們。',
+        'support.footerNote': 'OnTrack 支援資訊。',
+        'support.contact.title': '聯絡方式',
+        'support.contact.body':
+            '若有問題、建議，或遇到錯誤，請寄信給支援信箱，並附上可協助重現問題的資訊。',
+        'support.contact.action': '寄信給支援',
+        'support.contact.response':
+            '{email} · 我們通常會在 1-3 個工作天內回覆。',
+        'support.faq.title': '常見問題',
+        'support.faq.station.title': 'App 無法偵測車站。',
+        'support.faq.station.locationServices': '確認定位服務已開啟。',
+        'support.faq.station.permission': '確認 OnTrack 有定位權限。',
+        'support.faq.station.wait': '請等待數秒讓 App 判斷附近車站。',
+        'support.faq.times.title': '列車時間看起來不正確。',
+        'support.faq.times.refresh': '點選重新整理按鈕。',
+        'support.faq.times.source':
+            '誤點資訊來自官方鐵路資料來源，可能會分批更新。',
+        'support.faq.share.title': '如何分享目前列車？',
+        'support.faq.share.body': '開啟列車詳細資訊後，點選分享按鈕。',
+        'support.faq.bug.title': '我發現錯誤或想提出功能建議。',
+        'support.faq.bug.include': '請盡量附上：',
+        'support.faq.bug.device': '裝置型號',
+        'support.faq.bug.ios': 'iOS 版本',
+        'support.faq.bug.version': 'OnTrack 版本',
+        'support.faq.bug.screenshots': '相關截圖',
+        'support.faq.bug.steps': '重現步驟',
+        'privacy.title': '隱私權政策',
+        'privacy.meta': '更新日期：2026 年 6 月',
+        'privacy.subtitle':
+            'OnTrack 不需要帳號、不會出售使用者資料，定位車站偵測會保留在您的裝置上。',
+        'privacy.footerNote': 'OnTrack 隱私權資訊。',
+        'privacy.overview.title': '概覽',
+        'privacy.summary.title': '重點摘要',
+        'privacy.summary.location.title': '定位',
+        'privacy.summary.location.body':
+            '僅在裝置上用於偵測附近車站；原始經緯度不會傳送到 OnTrack 伺服器。',
+        'privacy.summary.lookups.title': '查詢',
+        'privacy.summary.lookups.body': '查詢時刻表時會傳送車站代碼與日期。',
+        'privacy.summary.local.title': '本機資料',
+        'privacy.summary.local.body':
+            '偏好設定與常用目的地會保留在您的裝置上，除非您用它們進行時刻查詢。',
+        'privacy.summary.aggregates.title': '彙總資料',
+        'privacy.summary.aggregates.body':
+            'OnTrack 只保存彙總路線需求，不保存帳號或原始定位紀錄。',
+        'privacy.overview.body':
+            'OnTrack 是用來查詢列車出發時間、目的地與即時誤點資訊的時刻表 App。OnTrack 採用最少資料原則：偏好設定與常用目的地會保存在您的裝置上，OnTrack 伺服器只保存時刻查詢產生的彙總路線需求，用於快取熱門路線並減少不必要的背景更新。',
+        'privacy.collect.title': '我們收集的資訊',
+        'privacy.collect.location.title': '定位',
+        'privacy.collect.location.body':
+            '若您授權定位，OnTrack 會在您的裝置或瀏覽器中使用目前位置來選擇最近的出發車站。',
+        'privacy.collect.location.detect': '偵測附近車站',
+        'privacy.collect.location.fill': '更快速填入出發站',
+        'privacy.collect.location.fallback': '必要時使用已快取的出發站',
+        'privacy.collect.location.noRaw':
+            '此功能不會將您的原始經緯度傳送到 OnTrack 伺服器。',
+        'privacy.collect.schedule.title': '時刻查詢與路線需求',
+        'privacy.collect.schedule.request':
+            '當您查詢時刻表時，OnTrack 會將出發站代碼、目的地站代碼、選擇日期，以及選擇性的重新整理請求傳送到 OnTrack 伺服器，以便回傳列車時間與即時誤點狀態。',
+        'privacy.collect.schedule.aggregate':
+            '為了維持服務速度並避免浪費背景更新，OnTrack 會保存彙總路線需求紀錄：出發站代碼、目的地站代碼、請求次數、最後出現時間，以及台北時區小時需求區間。這些紀錄用於路線時刻表快取預熱、即時看板更新判斷與排程最佳化。',
+        'privacy.collect.local.title': '本機偏好設定與目的地紀錄',
+        'privacy.collect.local.body':
+            'OnTrack 會在您的裝置上保存偏好設定，例如已選擇的出發站與目的地、快取出發站、語言、外觀、分享格式與常用目的地紀錄。這些資料用於還原您的設定並提供目的地自動填入。',
+        'privacy.collect.local.noProfile':
+            '本機偏好紀錄不會作為獨立個人檔案上傳。只有當您使用某個目的地進行時刻查詢時，它才會成為伺服器請求的一部分。',
+        'privacy.collect.analytics.title': '分析與診斷',
+        'privacy.collect.analytics.body':
+            '正式網站可能使用 Cloudflare Web Analytics 與主機遙測來了解基本網站可靠性與效能。Apple、Cloudflare 與其他平台服務提供者可能會依其政策處理診斷資料、當機報告或請求中繼資料。',
+        'privacy.collect.personal.title': '個人資訊',
+        'privacy.collect.personal.body':
+            'OnTrack 不需要帳號，也不會收集您的姓名、電話號碼、通訊地址等可識別個人的資訊。',
+        'privacy.thirdParty.title': '第三方服務',
+        'privacy.thirdParty.intro': 'OnTrack 可能依賴以下服務：',
+        'privacy.thirdParty.apple':
+            'Apple 服務用於 iOS 系統功能、權限、當機報告與 App Store 發布。',
+        'privacy.thirdParty.railway':
+            '官方鐵路資料來源，包括台灣交通資料服務，用於時刻與誤點資訊。',
+        'privacy.thirdParty.cloudflare':
+            'Cloudflare 服務用於主機、效能、基礎設施與基本網站分析。',
+        'privacy.sharing.title': '資料分享',
+        'privacy.sharing.neverSold': '我們不會出售使用者資料。',
+        'privacy.sharing.body':
+            'OnTrack 只會在提供 App 功能、營運主機與分析、維護或排除服務問題，或符合法律義務所需時分享資訊。OnTrack 應用程式資料庫不保存帳號、姓名、電話號碼、通訊地址或原始定位座標。',
+        'privacy.retention.title': '資料保留',
+        'privacy.retention.body':
+            '本機偏好設定會保留在您的裝置上，直到您清除網站資料、重設 App 資料或解除安裝 App。OnTrack 伺服器的路線需求彙總資料會在對快取預熱與更新最佳化仍有用時保留。由平台或主機提供者處理的診斷資料、當機報告、請求中繼資料與分析資料，會依各提供者政策保留。',
+        'privacy.rights.title': '您的權利',
+        'privacy.rights.disableLocation': '您可以在 iOS 設定中關閉定位權限。',
+        'privacy.rights.contact':
+            '若有隱私相關問題，您可以透過 {email} 聯絡我們。',
+        'privacy.contact.title': '聯絡方式',
         'time.selectTime': '選擇時間',
         'time.departure': '出發',
         'time.arrival': '抵達',
@@ -125,6 +225,114 @@ export const translations = {
         'settings.links': 'Links',
         'settings.support': 'Support',
         'settings.privacy': 'Privacy Policy',
+        'docs.nav.label': 'Page navigation',
+        'docs.nav.docs': 'Docs',
+        'docs.nav.support': 'Support',
+        'docs.nav.privacy': 'Privacy',
+        'docs.nav.switchLanguage': 'Switch language',
+        'docs.footer.label': 'Support links',
+        'docs.footer.support': 'Support',
+        'docs.footer.privacy': 'Privacy Policy',
+        'support.title': 'OnTrack Support',
+        'support.subtitle': 'Need help with OnTrack? Send us a note.',
+        'support.footerNote': 'Support resources for OnTrack.',
+        'support.contact.title': 'Contact',
+        'support.contact.body':
+            'For questions, feedback, or bug reports, email support and include any details that can help us reproduce the issue.',
+        'support.contact.action': 'Email support',
+        'support.contact.response':
+            '{email} · We typically respond within 1-3 business days.',
+        'support.faq.title': 'Frequently Asked Questions',
+        'support.faq.station.title': "The app can't detect my station.",
+        'support.faq.station.locationServices':
+            'Ensure Location Services are enabled.',
+        'support.faq.station.permission':
+            'Verify OnTrack has permission to access your location.',
+        'support.faq.station.wait': 'Wait a few seconds for station detection.',
+        'support.faq.times.title': 'Train times seem incorrect.',
+        'support.faq.times.refresh': 'Tap the refresh button.',
+        'support.faq.times.source':
+            'Delay information depends on the official railway data source and may update periodically.',
+        'support.faq.share.title': 'How do I share my current train?',
+        'support.faq.share.body':
+            'Open the train details page and tap the Share button.',
+        'support.faq.bug.title': 'I found a bug or have a feature request.',
+        'support.faq.bug.include': 'Please include these details if available:',
+        'support.faq.bug.device': 'Device model',
+        'support.faq.bug.ios': 'iOS version',
+        'support.faq.bug.version': 'OnTrack version',
+        'support.faq.bug.screenshots': 'Screenshots, if applicable',
+        'support.faq.bug.steps': 'Steps to reproduce',
+        'privacy.title': 'Privacy Policy',
+        'privacy.meta': 'Last updated: June 2026',
+        'privacy.subtitle':
+            'OnTrack does not require an account, does not sell user data, and keeps location-based station detection on your device.',
+        'privacy.footerNote': 'Privacy information for OnTrack.',
+        'privacy.overview.title': 'Overview',
+        'privacy.summary.title': 'At a glance',
+        'privacy.summary.location.title': 'Location',
+        'privacy.summary.location.body':
+            'Used on your device for nearby station detection. Raw latitude and longitude are not sent to the OnTrack server.',
+        'privacy.summary.lookups.title': 'Lookups',
+        'privacy.summary.lookups.body':
+            'Schedule lookups send station IDs and a date.',
+        'privacy.summary.local.title': 'Local data',
+        'privacy.summary.local.body':
+            'Preferences and frequent destinations stay on your device unless used in a schedule lookup.',
+        'privacy.summary.aggregates.title': 'Aggregates',
+        'privacy.summary.aggregates.body':
+            'OnTrack stores aggregate route-demand counts, not accounts or raw location history.',
+        'privacy.overview.body':
+            'OnTrack is a train schedule app for checking departures, destinations, and live delay information. The app is designed around minimal data use: your device keeps preferences and frequent destinations locally, while the OnTrack server stores only aggregate route demand from schedule lookups so popular routes can be cached and refresh jobs can avoid unnecessary work.',
+        'privacy.collect.title': 'Information We Collect',
+        'privacy.collect.location.title': 'Location',
+        'privacy.collect.location.body':
+            'If you grant permission, OnTrack uses your current location on your device or in your browser to choose the nearest departure station.',
+        'privacy.collect.location.detect': 'Detect nearby stations',
+        'privacy.collect.location.fill': 'Fill the origin station more quickly',
+        'privacy.collect.location.fallback':
+            'Fall back to your cached origin if needed',
+        'privacy.collect.location.noRaw':
+            'OnTrack does not send your raw latitude or longitude to the OnTrack server for this feature.',
+        'privacy.collect.schedule.title': 'Schedule Requests and Route Demand',
+        'privacy.collect.schedule.request':
+            'When you request a schedule, OnTrack sends the origin station ID, destination station ID, selected date, and optional refresh request to the OnTrack server so it can return train times and live delay status.',
+        'privacy.collect.schedule.aggregate':
+            'To keep the service fast and avoid wasteful background refreshes, OnTrack stores aggregate route-demand records: origin station ID, destination station ID, request count, last-seen time, and Taipei-hour demand buckets. These records are used for route timetable cache prewarming, live-board refresh decisions, and cron optimization.',
+        'privacy.collect.local.title':
+            'Local Preferences and Destination History',
+        'privacy.collect.local.body':
+            'OnTrack stores preferences on your device, such as your selected origin and destination, cached origin, language, appearance, share format, and frequent destination history. This is used to restore your setup and power destination auto-fill.',
+        'privacy.collect.local.noProfile':
+            'This local preference history is not uploaded as a separate profile. A destination becomes part of a server request only when you use it in a schedule lookup.',
+        'privacy.collect.analytics.title': 'Analytics and Diagnostics',
+        'privacy.collect.analytics.body':
+            'The production website may use Cloudflare Web Analytics and hosting telemetry to understand basic site reliability and performance. Apple, Cloudflare, and other platform providers may process diagnostics, crash reports, or request metadata according to their own policies.',
+        'privacy.collect.personal.title': 'Personal Information',
+        'privacy.collect.personal.body':
+            'OnTrack does not require an account and does not collect personally identifiable information such as your name, phone number, or mailing address.',
+        'privacy.thirdParty.title': 'Third-Party Services',
+        'privacy.thirdParty.intro':
+            'OnTrack may rely on the following services:',
+        'privacy.thirdParty.apple':
+            'Apple services for iOS system features, permissions, crash reports, and App Store distribution.',
+        'privacy.thirdParty.railway':
+            'Official railway data sources, including Taiwan transport data services, for schedules and delay information.',
+        'privacy.thirdParty.cloudflare':
+            'Cloudflare services for hosting, performance, infrastructure, and basic web analytics.',
+        'privacy.sharing.title': 'Data Sharing',
+        'privacy.sharing.neverSold': 'User data is never sold.',
+        'privacy.sharing.body':
+            'OnTrack shares information only when needed to provide app functionality, operate hosting and analytics, maintain or troubleshoot the service, or comply with legal obligations. The OnTrack application database does not store accounts, names, phone numbers, mailing addresses, or raw location coordinates.',
+        'privacy.retention.title': 'Data Retention',
+        'privacy.retention.body':
+            "Local preferences stay on your device until you clear site data, reset app data, or uninstall the app. OnTrack server route-demand aggregates are kept while they are useful for cache prewarming and refresh optimization. Diagnostics, crash reports, request metadata, and analytics handled by platform or hosting providers are retained according to those providers' policies.",
+        'privacy.rights.title': 'Your Rights',
+        'privacy.rights.disableLocation':
+            'You may disable Location permission in iOS Settings.',
+        'privacy.rights.contact':
+            'You may contact us with privacy-related questions at {email}.',
+        'privacy.contact.title': 'Contact',
         'time.selectTime': 'Select Time',
         'time.departure': 'Depart',
         'time.arrival': 'Arrive',
