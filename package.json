@@ -24,6 +24,7 @@
         "ios:release": "scripts/ios-release.sh",
         "lint": "eslint .",
         "security:scan": "gitleaks detect --source . --redact --no-banner",
+        "test": "bun test apps/worker/tests",
         "format": "prettier --write .",
         "prepare": "husky"
     },

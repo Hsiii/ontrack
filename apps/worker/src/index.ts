@@ -1,4 +1,5 @@
 import { recordRouteInterest } from './d1';
+import { normalizeScheduleDate } from './policy';
 import {
     ensureRouteTimetable,
     ensureStations,
@@ -266,10 +267,6 @@ function isValidStationId(id: unknown): id is string {
     );
 }
 
-function isValidDate(date: unknown): date is string {
-    return typeof date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(date);
-}
-
 function mapTrainToAppTrainInfo(
     timetable: TDXFullTimetable,
     origin: string,
@@ -389,7 +386,8 @@ async function handleSchedule(
         );
     }
 
-    if (date && !isValidDate(date)) {
+    const queryDate = normalizeScheduleDate(date);
+    if (!queryDate) {
         return jsonError(
             'bad_request',
             'The selected date is invalid. Choose a date again.',
@@ -398,7 +396,6 @@ async function handleSchedule(
         );
     }
 
-    const queryDate = date || getTaipeiDate();
     const isToday = queryDate === getTaipeiDate();
     const requestedAt = new Date();
     const livePolicy = getLiveBoardPolicy(requestedAt);
