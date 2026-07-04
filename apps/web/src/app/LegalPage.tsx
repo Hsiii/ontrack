@@ -6,6 +6,7 @@ import styles from './legal-page.module.css';
 type LegalPageProps = {
     title: string;
     subtitle: string;
+    meta?: string;
     children: ReactNode;
     footerLinks: Array<{
         href: string;
@@ -17,6 +18,7 @@ type LegalPageProps = {
 export function LegalPage({
     title,
     subtitle,
+    meta,
     children,
     footerLinks,
     footerNote,
@@ -51,6 +53,7 @@ export function LegalPage({
 
                 <header className={styles.hero}>
                     <h1 className={styles.title}>{title}</h1>
+                    {meta ? <p className={styles.meta}>{meta}</p> : null}
                     <p className={styles.subtitle}>{subtitle}</p>
                 </header>
 
@@ -74,9 +77,6 @@ export function LegalPage({
                                 {link.label}
                             </Link>
                         ))}
-                        <a className={styles.footerLink} href='#terms'>
-                            Terms of Service (coming soon)
-                        </a>
                     </nav>
                 </footer>
             </div>
