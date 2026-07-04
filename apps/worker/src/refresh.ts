@@ -8,6 +8,7 @@ import {
     reserveLiveRefreshCall,
     upsertSnapshot,
 } from './d1';
+import { MANUAL_LIVE_REFRESH_CLIENT_DAILY_LIMIT } from './policy';
 import { fetchTDX, fetchTDXWithCache } from './tdx';
 import {
     getLookbackIso,
@@ -269,7 +270,8 @@ function logLiveBoardRefreshSkipped(
 async function refreshLiveBoardWithBudget(
     env: Env,
     bucket: LiveBoardBudgetBucket,
-    date = new Date()
+    date = new Date(),
+    clientBucket?: string
 ) {
     if (liveBoardRefresh) {
         return liveBoardRefresh;
@@ -288,6 +290,24 @@ async function refreshLiveBoardWithBudget(
             bucket === 'manual'
                 ? LIVE_BOARD_MANUAL_DAILY_LIMIT
                 : LIVE_BOARD_BACKGROUND_DAILY_LIMIT;
+        if (bucket === 'manual' && clientBucket) {
+            const clientReserved = await reserveLiveRefreshCall(
+                env,
+                clientBucket,
+                MANUAL_LIVE_REFRESH_CLIENT_DAILY_LIMIT,
+                date
+            );
+
+            if (!clientReserved) {
+                logLiveBoardRefreshSkipped(
+                    'client-daily-budget-exhausted',
+                    bucket,
+                    getLiveBoardPolicy(date)
+                );
+                return null;
+            }
+        }
+
         const reserved = await reserveLiveRefreshCall(env, bucket, limit, date);
 
         if (!reserved) {
@@ -307,8 +327,12 @@ async function refreshLiveBoardWithBudget(
     return liveBoardAdmission;
 }
 
-export async function refreshLiveBoardForManual(env: Env, date = new Date()) {
-    return refreshLiveBoardWithBudget(env, 'manual', date);
+export async function refreshLiveBoardForManual(
+    env: Env,
+    date = new Date(),
+    clientBucket?: string
+) {
+    return refreshLiveBoardWithBudget(env, 'manual', date, clientBucket);
 }
 
 export async function refreshLiveBoardForAuto(

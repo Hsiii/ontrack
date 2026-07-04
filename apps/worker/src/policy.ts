@@ -2,6 +2,7 @@ import { getTaipeiDate } from './time';
 import type { Station } from './types';
 
 export const SCHEDULE_FUTURE_DAY_LIMIT = 7;
+export const MANUAL_LIVE_REFRESH_CLIENT_DAILY_LIMIT = 3;
 
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
@@ -63,4 +64,38 @@ export function resolveScheduleStations(
     return originStation && destinationStation
         ? { originStation, destinationStation }
         : null;
+}
+
+function toHex(buffer: ArrayBuffer) {
+    return [...new Uint8Array(buffer)]
+        .map((byte) => byte.toString(16).padStart(2, '0'))
+        .join('');
+}
+
+function getClientAddress(request: Request) {
+    const connectingIp = request.headers.get('cf-connecting-ip');
+    if (connectingIp) {
+        return connectingIp;
+    }
+
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    if (forwardedFor) {
+        return forwardedFor.split(',')[0]?.trim() || 'unknown';
+    }
+
+    return request.headers.get('true-client-ip') ?? 'unknown';
+}
+
+export async function getManualLiveRefreshClientBucket(request: Request) {
+    const identity = JSON.stringify({
+        ip: getClientAddress(request),
+        userAgent:
+            request.headers.get('user-agent')?.slice(0, 200) ?? 'unknown',
+    });
+    const digest = await crypto.subtle.digest(
+        'SHA-256',
+        new TextEncoder().encode(identity)
+    );
+
+    return `manual-client:${toHex(digest).slice(0, 32)}`;
 }

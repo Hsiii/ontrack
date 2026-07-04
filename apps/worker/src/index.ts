@@ -1,5 +1,9 @@
 import { recordRouteInterest } from './d1';
-import { normalizeScheduleDate, resolveScheduleStations } from './policy';
+import {
+    getManualLiveRefreshClientBucket,
+    normalizeScheduleDate,
+    resolveScheduleStations,
+} from './policy';
 import {
     ensureRouteTimetable,
     ensureStations,
@@ -358,6 +362,7 @@ function getLiveDataStatus(
 }
 
 async function handleSchedule(
+    request: Request,
     url: URL,
     env: Env,
     ctx: ExecutionContext,
@@ -441,7 +446,11 @@ async function handleSchedule(
         liveData.status === 'stale' || liveData.status === 'unavailable';
     if (forceLiveRefresh && isToday && shouldAttemptLiveRefresh) {
         try {
-            await refreshLiveBoardForManual(env, requestedAt);
+            await refreshLiveBoardForManual(
+                env,
+                requestedAt,
+                await getManualLiveRefreshClientBucket(request)
+            );
             liveBoard = await getLiveBoardSnapshot(env);
             liveData = getLiveDataStatus(
                 isToday,
@@ -532,7 +541,7 @@ async function handleApi(request: Request, env: Env, ctx: ExecutionContext) {
         }
 
         if (url.pathname === '/api/schedule') {
-            return handleSchedule(url, env, ctx, requestId);
+            return handleSchedule(request, url, env, ctx, requestId);
         }
 
         if (url.pathname === '/api/refresh') {

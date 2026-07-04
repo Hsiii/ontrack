@@ -10,10 +10,6 @@ interface SnapshotRow {
     chunk_count: number;
 }
 
-interface SnapshotChunkRow {
-    data: string;
-}
-
 export interface RouteInterest {
     origin: string;
     dest: string;
@@ -21,7 +17,9 @@ export interface RouteInterest {
     last_seen_at: string;
 }
 
-type LiveRefreshBudgetBucket = 'background' | 'manual';
+interface SnapshotChunkRow {
+    data: string;
+}
 
 const INLINE_DATA_LIMIT = 200_000;
 
@@ -323,7 +321,7 @@ export async function hasRecentRelatedRouteTimeInterest(
 
 export async function reserveLiveRefreshCall(
     env: Env,
-    bucket: LiveRefreshBudgetBucket,
+    bucket: string,
     limit: number,
     date = new Date()
 ) {
