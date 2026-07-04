@@ -140,10 +140,17 @@
     font-weight: var(--font-bold);
     text-decoration: none;
     box-shadow: var(--shadow-surface-hover);
+    transition: transform var(--motion-fast) var(--ease-out);
 }
 
 .secondaryCta {
     background: var(--color-bg-light);
+    transition: transform var(--motion-fast) var(--ease-out);
+}
+
+.primaryCta:active,
+.secondaryCta:active {
+    transform: scale(0.96);
 }
 
 .appStoreDialog {

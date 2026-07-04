@@ -6,7 +6,7 @@ import { AppStoreDialog } from './AppStoreDialog';
 import styles from './page.module.css';
 
 const HOME_URL = 'https://ontrack.hsichen.dev/';
-const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 const APP_DESCRIPTION =
     '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 

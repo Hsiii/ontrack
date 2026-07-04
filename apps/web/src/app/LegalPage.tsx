@@ -40,13 +40,13 @@ export function LegalPage({
                     </Link>
                     <div className={styles.navLinks}>
                         <Link className={styles.navLink} href='/docs'>
-                            Docs
+                            Docs 文件
                         </Link>
                         <Link className={styles.navLink} href='/docs/support'>
-                            Support
+                            Support 支援
                         </Link>
                         <Link className={styles.navLink} href='/docs/privacy'>
-                            Privacy
+                            Privacy 隱私
                         </Link>
                     </div>
                 </nav>

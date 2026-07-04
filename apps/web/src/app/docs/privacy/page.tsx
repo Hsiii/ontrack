@@ -4,7 +4,7 @@ import { LegalPage, legalPageStyles as styles } from '../../LegalPage';
 
 const SUPPORT_EMAIL = 'its.hsichen@gmail.com';
 const PRIVACY_URL = 'https://ontrack.hsichen.dev/docs/privacy';
-const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 const APP_DESCRIPTION =
     'OnTrack Privacy Policy. OnTrack does not require an account, does not sell user data, and keeps location-based station detection on your device. OnTrack 隱私權政策。';
 
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: 'website',
     },
     twitter: {
-        card: 'summary',
+        card: 'summary_large_image',
         title: 'Privacy Policy | OnTrack',
         description: APP_DESCRIPTION,
         images: [APP_IMAGE],
@@ -42,24 +42,8 @@ export default function PrivacyPage() {
         >
             <section className={styles.section} aria-labelledby='overview'>
                 <h2 id='overview'>Overview / 概覽</h2>
-                <p>
-                    OnTrack is a train schedule app for checking departures,
-                    destinations, and live delay information. The app is
-                    designed around minimal data use: your device keeps
-                    preferences and frequent destinations locally, while the
-                    OnTrack server stores only aggregate route demand from
-                    schedule lookups so popular routes can be cached and refresh
-                    jobs can avoid unnecessary work.
-                </p>
-                <p>
-                    OnTrack 是用來查詢列車出發時間、目的地與即時誤點資訊的時刻表
-                    App。OnTrack
-                    採用最少資料原則：偏好設定與常用目的地會保存在您的裝置上，
-                    OnTrack
-                    伺服器只保存時刻查詢產生的彙總路線需求，用於快取熱門路線並減少不必要的背景更新。
-                </p>
                 <div className={styles.callout}>
-                    <strong>At a glance</strong>
+                    <strong>At a glance / 重點摘要</strong>
                     <dl className={styles.summaryList}>
                         <div className={styles.summaryItem}>
                             <dt>Location / 定位</dt>
@@ -96,6 +80,22 @@ export default function PrivacyPage() {
                         </div>
                     </dl>
                 </div>
+                <p>
+                    OnTrack is a train schedule app for checking departures,
+                    destinations, and live delay information. The app is
+                    designed around minimal data use: your device keeps
+                    preferences and frequent destinations locally, while the
+                    OnTrack server stores only aggregate route demand from
+                    schedule lookups so popular routes can be cached and refresh
+                    jobs can avoid unnecessary work.
+                </p>
+                <p>
+                    OnTrack 是用來查詢列車出發時間、目的地與即時誤點資訊的時刻表
+                    App。OnTrack
+                    採用最少資料原則：偏好設定與常用目的地會保存在您的裝置上，
+                    OnTrack
+                    伺服器只保存時刻查詢產生的彙總路線需求，用於快取熱門路線並減少不必要的背景更新。
+                </p>
             </section>
 
             <section className={styles.section} aria-labelledby='collect'>

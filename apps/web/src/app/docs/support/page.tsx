@@ -4,7 +4,7 @@ import { LegalPage, legalPageStyles as styles } from '../../LegalPage';
 
 const SUPPORT_EMAIL = 'its.hsichen@gmail.com';
 const SUPPORT_URL = 'https://ontrack.hsichen.dev/docs/support';
-const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 const APP_DESCRIPTION =
     'OnTrack support and troubleshooting for station detection, train times, sharing, and bug reports. OnTrack 支援與疑難排解。';
 
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: 'website',
     },
     twitter: {
-        card: 'summary',
+        card: 'summary_large_image',
         title: 'OnTrack Support',
         description: APP_DESCRIPTION,
         images: [APP_IMAGE],

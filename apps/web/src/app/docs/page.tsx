@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { LegalPage, legalPageStyles as styles } from '../LegalPage';
 
 const DOCS_URL = 'https://ontrack.hsichen.dev/docs';
-const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 const APP_DESCRIPTION =
     'Learn how OnTrack handles station detection, live railway data, preferences, sharing, and support.';
 
@@ -24,7 +24,7 @@ export const metadata: Metadata = {
         type: 'website',
     },
     twitter: {
-        card: 'summary',
+        card: 'summary_large_image',
         title: 'OnTrack Docs',
         description: APP_DESCRIPTION,
         images: [APP_IMAGE],

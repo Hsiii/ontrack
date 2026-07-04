@@ -8,7 +8,7 @@ const APP_TITLE = 'OnTrack | 極速台鐵時刻表';
 const APP_DESCRIPTION =
     '自動偵測您的所在車站，並依搭乘習慣預測路線。打開 App 的瞬間，即可掌握即時班次與延誤資訊。';
 const APP_URL = 'https://ontrack.hsichen.dev/';
-const APP_IMAGE = 'https://ontrack.hsichen.dev/ontrack-logo.png';
+const APP_IMAGE = 'https://ontrack.hsichen.dev/demo.png';
 const CF_WEB_ANALYTICS_TOKEN = process.env.NEXT_PUBLIC_CF_WEB_ANALYTICS_TOKEN;
 const ENABLE_ANALYTICS =
     process.env.NODE_ENV === 'production' && Boolean(CF_WEB_ANALYTICS_TOKEN);
@@ -135,7 +135,7 @@ export const metadata: Metadata = {
         images: [APP_IMAGE],
     },
     twitter: {
-        card: 'summary',
+        card: 'summary_large_image',
         title: APP_TITLE,
         description: APP_DESCRIPTION,
         images: [APP_IMAGE],
