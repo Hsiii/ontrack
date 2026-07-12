@@ -2453,7 +2453,7 @@ private struct SettingsSupportGroup: View {
         }
 
         guard let displayPrice = purchaseManager.supporterDisplayPrice else {
-            return AppText.purchaseUnavailable
+            return AppText.leaveTip
         }
 
         return AppText.leaveTip(price: displayPrice)

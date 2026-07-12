@@ -476,6 +476,8 @@ enum AppText {
         isZh ? "留下 \(price) 小費" : "Leave a \(price) Tip"
     }
 
+    static var leaveTip: String { isZh ? "留下小費" : "Leave a Tip" }
+
     static func arrivalMessage(time: String, station: String) -> String {
         isZh ? "\(time)到\(station)" : "Arrive at \(station) by \(time)"
     }
