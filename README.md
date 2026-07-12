@@ -35,7 +35,7 @@ and deployment endpoints.
 
 The native iOS app is currently under App Store review. Until it is available,
 use the web app at [ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app) on
-iPhone. The web app can also be installed on Android.
+iPhone or iPad. The web app can also be installed on Android.
 
 ### Android (Chrome)
 

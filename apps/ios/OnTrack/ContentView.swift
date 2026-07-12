@@ -288,7 +288,7 @@ struct ContentView: View {
                                     onSwap: swapStations
                                 )
                             }
-                            .frame(maxWidth: 480)
+                            .frame(maxWidth: OnTrackTheme.contentMaxWidth)
                             .padding(.horizontal, OnTrackTheme.space5)
                             .padding(.top, OnTrackTheme.space3)
                             .padding(.bottom, TrainPanelLayout.contentReserve(
@@ -1787,7 +1787,8 @@ private struct StationSearchView: View {
             .padding(.bottom, OnTrackTheme.space2)
             .frame(maxHeight: .infinity, alignment: .top)
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: OnTrackTheme.modalContentMaxWidth)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(OnTrackTheme.background.ignoresSafeArea())
         .tint(OnTrackTheme.primary)
         .task {
@@ -1930,7 +1931,7 @@ private struct TrainBoardingPanel: View {
             }
             boardingSection
         }
-        .frame(maxWidth: 480)
+        .frame(maxWidth: OnTrackTheme.contentMaxWidth)
         .padding(.horizontal, OnTrackTheme.space5)
         .frame(maxWidth: .infinity, alignment: .bottom)
     }
@@ -2147,6 +2148,8 @@ private struct SettingsSheet: View {
                     .padding(.horizontal, OnTrackTheme.space5)
                     .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
                     .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+                    .frame(maxWidth: OnTrackTheme.modalContentMaxWidth, alignment: .leading)
+                    .frame(maxWidth: .infinity)
                 }
                 .scrollIndicators(.hidden)
 #if DEBUG
@@ -2189,6 +2192,8 @@ private struct SettingsSheet: View {
             }
             .padding(.top, topSafeAreaInset + OnTrackTheme.space5)
             .padding(.horizontal, OnTrackTheme.space5)
+            .frame(maxWidth: OnTrackTheme.modalContentMaxWidth)
+            .frame(maxWidth: .infinity)
 
             SettingsDivider()
         }
@@ -2967,6 +2972,8 @@ private enum OnTrackTheme {
     static let routeGlyphColumnWidth: CGFloat = 24
     static let routeDividerHeight: CGFloat = 1
     static let routeRowHeight: CGFloat = 56
+    static let contentMaxWidth: CGFloat = 520
+    static let modalContentMaxWidth: CGFloat = 640
     static let timeModePickerMaxWidth: CGFloat = 260
     static let timeModePickerMinWidth: CGFloat = 192
 

@@ -111,8 +111,8 @@ ios_assert_project_build_setting_equals() {
     fi
 }
 
-ios_assert_iphone_only_project() {
-    ios_assert_project_build_setting_equals TARGETED_DEVICE_FAMILY 1
+ios_assert_universal_ios_project() {
+    ios_assert_project_build_setting_equals TARGETED_DEVICE_FAMILY 1,2
     ios_assert_project_build_setting_equals SUPPORTS_MACCATALYST NO
     ios_assert_project_build_setting_equals SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD NO
     ios_assert_project_build_setting_equals SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD NO
@@ -149,18 +149,38 @@ ios_built_app_path() {
         "$product_name"
 }
 
-ios_assert_iphone_only_app() {
+ios_app_device_family() {
     local app_path="$1"
     local info_plist="$app_path/Info.plist"
 
     [[ -f "$info_plist" ]] || ios_die "Missing built app Info.plist: $info_plist"
 
-    local device_family
-    device_family="$(plutil -extract UIDeviceFamily raw -o - "$info_plist" 2>/dev/null || true)"
+    local device_family_json
+    device_family_json="$(plutil -extract UIDeviceFamily json -o - "$info_plist" 2>/dev/null || true)"
+    printf '%s\n' "$device_family_json" | tr -d '[][:space:]' | tr ',' '\n' | sed '/^$/d' | sort -n | paste -sd, -
+}
 
-    if [[ "$device_family" != "1" ]]; then
-        local displayed_device_family="${device_family//$'\n'/, }"
-        ios_die "Expected built app UIDeviceFamily to be exactly 1 for iPhone-only, found: ${displayed_device_family:-missing}."
+ios_assert_supported_ios_app() {
+    local app_path="$1"
+    local normalized_device_family
+    normalized_device_family="$(ios_app_device_family "$app_path")"
+
+    case "$normalized_device_family" in
+        1|2|1,2)
+            return
+            ;;
+    esac
+
+    ios_die "Expected built app UIDeviceFamily to contain only iPhone and iPad families, found: ${normalized_device_family:-missing}."
+}
+
+ios_assert_universal_ios_app() {
+    local app_path="$1"
+    local normalized_device_family
+    normalized_device_family="$(ios_app_device_family "$app_path")"
+
+    if [[ "$normalized_device_family" != "1,2" ]]; then
+        ios_die "Expected built app UIDeviceFamily to be exactly 1,2 for iPhone and iPad, found: ${normalized_device_family:-missing}."
     fi
 }
 
