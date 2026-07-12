@@ -39,6 +39,8 @@ const CORS_ALLOWED_METHODS = new Set(['GET']);
 const CORS_ALLOWED_HEADERS = 'Authorization, Content-Type';
 const CORS_MAX_AGE_SECONDS = '86400';
 const ACTIVE_SCHEDULE_CRON = '*/10 * * * *';
+let cachedCorsOriginsKey: string | undefined;
+let cachedCorsOrigins: Set<string> | undefined;
 const PUBLIC_DOCUMENT_PATHS = new Set([
     '/',
     '/app',
@@ -78,14 +80,18 @@ function normalizeOrigin(origin: string) {
 }
 
 function getCorsAllowedOrigins(env: Env) {
-    return new Set(
-        [
-            ...DEFAULT_CORS_ALLOWED_ORIGINS,
-            ...(env.CORS_ALLOWED_ORIGINS ?? '').split(','),
-        ]
+    const originsKey = env.CORS_ALLOWED_ORIGINS ?? '';
+    if (cachedCorsOrigins && cachedCorsOriginsKey === originsKey) {
+        return cachedCorsOrigins;
+    }
+
+    cachedCorsOriginsKey = originsKey;
+    cachedCorsOrigins = new Set(
+        [...DEFAULT_CORS_ALLOWED_ORIGINS, ...originsKey.split(',')]
             .map((origin) => normalizeOrigin(origin.trim()))
             .filter((origin): origin is string => Boolean(origin))
     );
+    return cachedCorsOrigins;
 }
 
 function getAllowedCorsOrigin(request: Request, env: Env) {
