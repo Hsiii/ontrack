@@ -18,3 +18,5 @@ xcodebuild \
     ONTRACK_API_ORIGIN="$IOS_API_ORIGIN_VALUE" \
     CODE_SIGNING_ALLOWED=NO \
     build
+
+ios_assert_iphone_only_app "$(ios_built_app_path "$DERIVED_DATA_PATH" "$CONFIGURATION" "$SDK")"

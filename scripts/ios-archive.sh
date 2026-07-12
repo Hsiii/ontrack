@@ -32,5 +32,6 @@ XCODEBUILD_ARGS=(
 )
 
 xcodebuild "${XCODEBUILD_ARGS[@]}"
+ios_assert_iphone_only_app "$ARCHIVE_PATH/Products/Applications/$IOS_SCHEME_NAME.app"
 
 echo "Archive written to $ARCHIVE_PATH"

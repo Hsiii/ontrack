@@ -65,6 +65,105 @@ ios_project_build_setting() {
     printf '%s\n' "${setting_value:-$fallback}"
 }
 
+ios_assert_project_build_setting_equals() {
+    local setting_name="$1"
+    local expected_value="$2"
+    local project_file="$IOS_PROJECT_PATH/project.pbxproj"
+
+    [[ -f "$project_file" ]] || ios_die "Missing Xcode project file: $project_file"
+
+    local invalid_values
+    invalid_values="$(
+        awk -F= -v key="$setting_name" -v expected="$expected_value" '
+            {
+                lhs = $1
+                gsub(/[[:space:]]/, "", lhs)
+
+                if (lhs != key) {
+                    next
+                }
+
+                value = $2
+                gsub(/[;"]/, "", value)
+                gsub(/[[:space:]]/, "", value)
+                count += 1
+
+                if (value != expected) {
+                    printf "%s%s", separator, value
+                    separator = ", "
+                }
+            }
+
+            END {
+                if (count == 0) {
+                    print "__MISSING__"
+                }
+            }
+        ' "$project_file"
+    )"
+
+    if [[ "$invalid_values" == "__MISSING__" ]]; then
+        ios_die "Missing required iOS build setting $setting_name=$expected_value."
+    fi
+
+    if [[ -n "$invalid_values" ]]; then
+        ios_die "Expected $setting_name=$expected_value for every iOS build configuration, found: $invalid_values."
+    fi
+}
+
+ios_assert_iphone_only_project() {
+    ios_assert_project_build_setting_equals TARGETED_DEVICE_FAMILY 1
+    ios_assert_project_build_setting_equals SUPPORTS_MACCATALYST NO
+    ios_assert_project_build_setting_equals SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD NO
+    ios_assert_project_build_setting_equals SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD NO
+}
+
+ios_sdk_product_suffix() {
+    local sdk="$1"
+
+    case "$sdk" in
+        iphonesimulator*)
+            printf 'iphonesimulator\n'
+            ;;
+        iphoneos*)
+            printf 'iphoneos\n'
+            ;;
+        *)
+            printf '%s\n' "$sdk"
+            ;;
+    esac
+}
+
+ios_built_app_path() {
+    local derived_data_path="$1"
+    local configuration="$2"
+    local sdk="$3"
+    local product_name="${4:-$IOS_SCHEME_NAME}"
+    local platform_suffix
+
+    platform_suffix="$(ios_sdk_product_suffix "$sdk")"
+    printf '%s/Build/Products/%s-%s/%s.app\n' \
+        "$derived_data_path" \
+        "$configuration" \
+        "$platform_suffix" \
+        "$product_name"
+}
+
+ios_assert_iphone_only_app() {
+    local app_path="$1"
+    local info_plist="$app_path/Info.plist"
+
+    [[ -f "$info_plist" ]] || ios_die "Missing built app Info.plist: $info_plist"
+
+    local device_family
+    device_family="$(plutil -extract UIDeviceFamily raw -o - "$info_plist" 2>/dev/null || true)"
+
+    if [[ "$device_family" != "1" ]]; then
+        local displayed_device_family="${device_family//$'\n'/, }"
+        ios_die "Expected built app UIDeviceFamily to be exactly 1 for iPhone-only, found: ${displayed_device_family:-missing}."
+    fi
+}
+
 ios_next_build_number() {
     local build_number="$1"
 
