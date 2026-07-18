@@ -6,7 +6,11 @@ source "$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/ios-common.sh"
 CONFIGURATION="${IOS_CONFIGURATION:-Debug}"
 DERIVED_DATA_ROOT="${IOS_DERIVED_DATA_PATH:-$IOS_ROOT_DIR/build/ScreenshotDerivedData}"
 OUTPUT_DIR="${IOS_SCREENSHOT_OUTPUT_DIR:-$IOS_ROOT_DIR/assets/app-store/screenshots}"
-SCREENSHOT_PROFILES="${IOS_SCREENSHOT_PROFILES:-iphone ipad}"
+SCREENSHOT_PROFILES="${IOS_SCREENSHOT_PROFILES:-iphone69 iphone ipad}"
+IPHONE_69_DEVICE_NAME="${IOS_SCREENSHOT_IPHONE_69_DEVICE_NAME:-OnTrack 16 Pro Max Screenshots}"
+IPHONE_69_DEVICE_TYPE="${IOS_SCREENSHOT_IPHONE_69_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-16-Pro-Max}"
+IPHONE_69_EXPECTED_WIDTH="${IOS_SCREENSHOT_IPHONE_69_EXPECTED_WIDTH:-1320}"
+IPHONE_69_EXPECTED_HEIGHT="${IOS_SCREENSHOT_IPHONE_69_EXPECTED_HEIGHT:-2868}"
 IPHONE_DEVICE_NAME="${IOS_SCREENSHOT_IPHONE_DEVICE_NAME:-${IOS_SCREENSHOT_DEVICE_NAME:-OnTrack 14 Plus Screenshots}}"
 IPHONE_DEVICE_TYPE="${IOS_SCREENSHOT_IPHONE_DEVICE_TYPE:-${IOS_SCREENSHOT_DEVICE_TYPE:-com.apple.CoreSimulator.SimDeviceType.iPhone-14-Plus}}"
 IPHONE_EXPECTED_WIDTH="${IOS_SCREENSHOT_IPHONE_EXPECTED_WIDTH:-1284}"
@@ -92,7 +96,7 @@ set_status_bar() {
         --batteryLevel 100
     )
 
-    if [[ "$profile" == "iphone" ]]; then
+    if [[ "$profile" == iphone* ]]; then
         args+=(--cellularBars 4)
     fi
 
@@ -167,6 +171,15 @@ fi
 
 for profile in $SCREENSHOT_PROFILES; do
     case "$profile" in
+        iphone69)
+            capture_profile \
+                iphone69 \
+                "$IPHONE_69_DEVICE_NAME" \
+                "$IPHONE_69_DEVICE_TYPE" \
+                "$IPHONE_69_EXPECTED_WIDTH" \
+                "$IPHONE_69_EXPECTED_HEIGHT" \
+                ontrack-iphone-6-9
+            ;;
         iphone)
             capture_profile \
                 iphone \
