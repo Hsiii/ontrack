@@ -1442,10 +1442,25 @@ private struct TrainCard: View {
 
                     Spacer(minLength: OnTrackTheme.space2)
 
-                    trainIdentifier
+                    Text(TrainDisplay.price(train.price) ?? "")
+                        .font(OnTrackFont.caption)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                        .frame(width: 96, alignment: .trailing)
                 }
 
-                trainMetadata
+                HStack(spacing: OnTrackTheme.space2) {
+                    trainIdentifier
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Text(TrainDisplay.tripLine(train.tripLine) ?? "")
+                        .frame(width: 96, alignment: .trailing)
+                }
+                .font(OnTrackFont.metadata.weight(.medium))
+                .foregroundStyle(OnTrackTheme.dimText)
+                .monospacedDigit()
+                .lineLimit(1)
             }
             .padding(.horizontal, OnTrackTheme.space5)
             .padding(.vertical, OnTrackTheme.space2)
@@ -1491,34 +1506,8 @@ private struct TrainCard: View {
     }
 
     private var trainIdentifier: some View {
-        HStack(alignment: .firstTextBaseline, spacing: OnTrackTheme.space1) {
-            Text(TrainDisplay.trainType(train.trainType))
-                .font(OnTrackFont.metadata.weight(.medium))
-                .lineLimit(1)
-
-            Text(train.trainNo)
-                .font(OnTrackFont.metadata)
-                .monospacedDigit()
-                .lineLimit(1)
-        }
-        .foregroundStyle(OnTrackTheme.dimText)
-        .frame(width: 96, alignment: .trailing)
+        Text("\(TrainDisplay.trainType(train.trainType)) \(train.trainNo)")
         .minimumScaleFactor(0.85)
-    }
-
-    private var trainMetadata: some View {
-        HStack(spacing: OnTrackTheme.space2) {
-            Text(TrainDisplay.price(train.price) ?? "")
-                .font(OnTrackFont.caption.weight(.medium))
-                .frame(maxWidth: .infinity, alignment: .leading)
-
-            Text(TrainDisplay.tripLine(train.tripLine) ?? "")
-                .font(OnTrackFont.caption)
-                .frame(width: 96, alignment: .trailing)
-        }
-        .foregroundStyle(OnTrackTheme.dimText)
-        .monospacedDigit()
-        .lineLimit(1)
     }
 
     private var accessibilityLabel: String {

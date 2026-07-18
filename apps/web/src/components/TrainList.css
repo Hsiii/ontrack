@@ -168,7 +168,8 @@
     background: var(--color-border);
 }
 
-.train-card-trip-time {
+.train-card-trip-time,
+.train-card-price {
     font-size: var(--text-xs);
     color: var(--color-text-dim);
     white-space: nowrap;
@@ -176,49 +177,22 @@
 }
 
 .train-card-info {
+    grid-column: 1;
+    grid-row: 2;
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     min-width: 0;
 }
 
 .train-card-identifier {
-    width: 100%;
-    display: inline-flex;
-    align-items: baseline;
-    justify-content: flex-end;
-    gap: var(--space-1);
     font-size: var(--text-sm);
+    font-weight: var(--font-medium);
     color: var(--color-text-dim);
     white-space: nowrap;
     overflow: hidden;
     font-variant-numeric: tabular-nums;
-    text-align: right;
     text-overflow: ellipsis;
-}
-
-.train-card-type {
-    min-width: 0;
-    overflow: hidden;
-    font-weight: var(--font-medium);
-    text-overflow: ellipsis;
-}
-
-.train-card-number {
-    flex-shrink: 0;
-}
-
-.train-card-meta {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 6rem;
-    column-gap: var(--space-2);
-    align-items: center;
-    min-width: 0;
-    min-height: var(--space-4);
-    font-size: var(--text-xs);
-    color: var(--color-text-dim);
-    line-height: var(--space-4);
 }
 
 .train-card-price,
@@ -228,12 +202,19 @@
 }
 
 .train-card-price {
-    font-variant-numeric: tabular-nums;
-    font-weight: var(--font-medium);
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
 }
 
 .train-card-route {
+    grid-column: 2;
+    grid-row: 2;
     overflow: hidden;
+    color: var(--color-text-dim);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    font-variant-numeric: tabular-nums;
     text-align: right;
     text-overflow: ellipsis;
 }

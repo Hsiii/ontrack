@@ -403,24 +403,17 @@ export function TrainList({
                                         </span>
                                     </span>
                                 </div>
+                                <span className='train-card-price'>
+                                    {price}
+                                </span>
                                 <div className='train-card-info'>
                                     <span className='train-card-identifier'>
-                                        <span className='train-card-type'>
-                                            {trainType}
-                                        </span>
-                                        <span className='train-card-number'>
-                                            {trainData.trainNo}
-                                        </span>
+                                        {trainType} {trainData.trainNo}
                                     </span>
                                 </div>
-                                <div className='train-card-meta'>
-                                    <span className='train-card-price'>
-                                        {price}
-                                    </span>
-                                    <span className='train-card-route'>
-                                        {tripLine}
-                                    </span>
-                                </div>
+                                <span className='train-card-route'>
+                                    {tripLine}
+                                </span>
                             </button>
                         );
                     })}

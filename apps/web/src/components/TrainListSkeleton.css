@@ -30,15 +30,9 @@
     border-radius: var(--radius-pill);
 }
 
-.skeleton-type {
-    width: calc(var(--space-10) + var(--space-4));
+.skeleton-identifier {
+    width: calc(var(--space-15) + var(--space-5));
     height: var(--space-4);
-    border-radius: var(--radius-pill);
-}
-
-.skeleton-number {
-    width: 2rem;
-    height: var(--space-3);
     border-radius: var(--radius-pill);
 }
 
@@ -49,9 +43,11 @@
 }
 
 .skeleton-price {
+    justify-self: end;
     width: calc(var(--space-10) + var(--space-2));
 }
 
 .skeleton-route {
+    justify-self: end;
     width: var(--space-10);
 }
