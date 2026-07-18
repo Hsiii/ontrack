@@ -1447,23 +1447,31 @@ private struct TrainCard: View {
                         .foregroundStyle(OnTrackTheme.dimText)
                         .monospacedDigit()
                         .lineLimit(1)
-                        .frame(width: 96, alignment: .trailing)
+                        .frame(
+                            width: TrainPanelLayout.detailColumnWidth,
+                            alignment: .trailing
+                        )
                 }
+                .frame(height: TrainPanelLayout.topRowHeight)
 
                 HStack(spacing: OnTrackTheme.space2) {
                     trainIdentifier
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     Text(TrainDisplay.tripLine(train.tripLine) ?? "")
-                        .frame(width: 96, alignment: .trailing)
+                        .frame(
+                            width: TrainPanelLayout.detailColumnWidth,
+                            alignment: .trailing
+                        )
                 }
                 .font(OnTrackFont.metadata.weight(.medium))
                 .foregroundStyle(OnTrackTheme.dimText)
                 .monospacedDigit()
                 .lineLimit(1)
+                .frame(height: TrainPanelLayout.bottomRowHeight)
             }
-            .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.vertical, OnTrackTheme.space2)
+            .padding(.horizontal, TrainPanelLayout.cardHorizontalInset)
+            .padding(.vertical, TrainPanelLayout.cardVerticalInset)
             .frame(maxWidth: .infinity)
             .frame(height: TrainPanelLayout.trainCardHeight)
             .background(
@@ -1527,7 +1535,6 @@ private struct TrainCard: View {
 
 private struct TripSeparator: View {
     private static let minimumLineWidth: CGFloat = 4
-    private static let minimumWidth: CGFloat = 68
 
     let duration: String
 
@@ -1545,7 +1552,7 @@ private struct TripSeparator: View {
 
             separatorLine
         }
-        .frame(width: Self.minimumWidth)
+        .frame(width: TrainPanelLayout.tripSeparatorWidth)
     }
 
     private var separatorLine: some View {
@@ -1577,10 +1584,14 @@ private struct TimeColumn: View {
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                    .offset(y: -OnTrackTheme.space4)
+                    .offset(y: -OnTrackTheme.space3)
             }
         }
-        .frame(width: 56, height: OnTrackTheme.space6, alignment: alignment)
+        .frame(
+            width: TrainPanelLayout.timeColumnWidth,
+            height: TrainPanelLayout.topRowHeight,
+            alignment: alignment
+        )
     }
 }
 
@@ -1877,6 +1888,13 @@ private struct StationSearchRow: View {
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
     static let trainCardHeight: CGFloat = 72
+    static let cardHorizontalInset = OnTrackTheme.space5
+    static let cardVerticalInset = OnTrackTheme.space3
+    static let topRowHeight = OnTrackTheme.space6
+    static let bottomRowHeight = OnTrackTheme.space5
+    static let detailColumnWidth = OnTrackTheme.space6 * 4
+    static let timeColumnWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space2
+    static let tripSeparatorWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space5
     static let cardBorderAllowance: CGFloat = 1
     static let maxVisibleRows = 4
     static let loadingRows = 3

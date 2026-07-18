@@ -37,8 +37,8 @@ export function TrainListSkeleton({
                             <div className='train-card-info'>
                                 <span className='skeleton skeleton-identifier'></span>
                             </div>
-                            <span className='skeleton skeleton-price'></span>
-                            <span className='skeleton skeleton-route'></span>
+                            <span className='train-card-price skeleton skeleton-price'></span>
+                            <span className='train-card-route skeleton skeleton-route'></span>
                         </div>
                     )
                 )}
