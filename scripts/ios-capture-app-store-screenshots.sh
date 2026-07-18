@@ -141,7 +141,7 @@ capture_profile() {
 
     echo "Capturing $profile main screenshot..."
     launch_for_screenshot "$device_id" main
-    sleep 3
+    sleep 5
     capture_png "$device_id" "$main_output" "$expected_width" "$expected_height"
 
     echo "Capturing $profile Support OnTrack screenshot..."
