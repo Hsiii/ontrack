@@ -64,6 +64,7 @@
     --train-card-side-column: calc(var(--space-6) * 4);
     --train-card-time-column: calc(var(--space-6) * 2 + var(--space-2));
     --train-card-trip-column: calc(var(--space-6) * 2 + var(--space-5));
+    --train-card-row-gap: calc(var(--size-hairline) + var(--size-hairline));
     --train-card-delay-offset: calc(
         var(--space-3) + var(--size-hairline) + var(--size-hairline)
     );
@@ -75,8 +76,9 @@
     grid-template-columns: minmax(0, 1fr) var(--train-card-side-column);
     grid-template-rows: var(--space-6) var(--space-6);
     column-gap: var(--space-2);
-    row-gap: var(--space-1);
+    row-gap: var(--train-card-row-gap);
     align-items: center;
+    align-content: center;
     background: var(--color-bg-light);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-surface);

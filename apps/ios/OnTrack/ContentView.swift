@@ -1436,7 +1436,7 @@ private struct TrainCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            VStack(spacing: OnTrackTheme.space1) {
+            VStack(spacing: TrainPanelLayout.rowGap) {
                 HStack(spacing: OnTrackTheme.space2) {
                     timeCluster
 
@@ -1892,6 +1892,7 @@ private enum TrainPanelLayout {
     static let cardVerticalInset = OnTrackTheme.space3
     static let topRowHeight = OnTrackTheme.space6
     static let bottomRowHeight = OnTrackTheme.space6
+    static let rowGap = OnTrackTheme.space1 / 2
     static let detailColumnWidth = OnTrackTheme.space6 * 4
     static let timeColumnWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space2
     static let tripSeparatorWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space5
