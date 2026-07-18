@@ -122,7 +122,7 @@
 
 .train-card-departure-time,
 .train-card-arrival-time {
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     font-weight: var(--font-bold);
     font-variant-numeric: tabular-nums;
     line-height: var(--space-6);
@@ -154,7 +154,7 @@
 }
 
 .train-card-time-cell.delayed .train-card-original-time {
-    font-size: var(--text-base);
+    font-size: var(--text-sm);
     font-weight: var(--font-bold);
     color: var(--color-text);
     font-variant-numeric: tabular-nums;

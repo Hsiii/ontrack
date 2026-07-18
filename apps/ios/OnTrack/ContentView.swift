@@ -2770,7 +2770,7 @@ private enum OnTrackFont {
     static let metadata = Font.subheadline
     static let routeGlyph = Font.caption.weight(.bold)
     static let symbol = Font.body.weight(.semibold)
-    static let time = Font.body.weight(.bold)
+    static let time = Font.subheadline.weight(.bold)
     static let title = Font.headline
 }
 
