@@ -24,6 +24,8 @@ import type {
     Snapshot,
     Station,
     TDXFullTimetable,
+    TDXODFare,
+    TDXODFareResponse,
     TDXStation,
     TDXTimetableResponse,
 } from './types';
@@ -36,6 +38,7 @@ const ROUTE_TIMETABLE_RETENTION_DAYS = 2;
 const FULL_TIMETABLE_RETENTION_DAYS = 2;
 const POPULAR_ROUTE_PREWARM_LIMIT = 12;
 const LIVE_BOARD_DEMAND_LOOKBACK_DAYS = 30;
+const ROUTE_FARE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
 const LIVE_BOARD_BACKGROUND_DAILY_LIMIT = 125;
 const LIVE_BOARD_MANUAL_DAILY_LIMIT = 15;
 const LIVE_BOARD_MAX_AGE_SECONDS = {
@@ -44,6 +47,7 @@ const LIVE_BOARD_MAX_AGE_SECONDS = {
     'non-active': 60 * 60,
 } satisfies Record<LiveBoardActivityWindow, number>;
 const dailyTimetableRefreshes = new Map<string, Promise<TDXFullTimetable[]>>();
+const routeFareRefreshes = new Map<string, Promise<TDXODFare[]>>();
 let liveBoardRefresh: Promise<DelaySnapshot> | null = null;
 let liveBoardAdmission: Promise<DelaySnapshot | null> | null = null;
 
@@ -115,6 +119,10 @@ export function routeTimetableKey(date: string, origin: string, dest: string) {
     return `daily-timetable-od:${date}:${origin}:${dest}`;
 }
 
+export function routeFareKey(origin: string, dest: string) {
+    return `route-fare:${origin}:${dest}`;
+}
+
 function toStations(data: TDXStation[]): Station[] {
     return data.map((station) => ({
         id: station.StationID,
@@ -162,6 +170,58 @@ export async function refreshTimetable(env: Env, date = getTaipeiDate()) {
 
     await upsertSnapshot(env, timetableKey(date), timetables, null);
     return timetables;
+}
+
+async function refreshRouteFares(
+    env: Env,
+    origin: string,
+    dest: string
+): Promise<TDXODFare[]> {
+    const data = await fetchTDX<TDXODFareResponse | TDXODFare[]>(
+        env,
+        `v3/Rail/TRA/ODFare/${origin}/to/${dest}`,
+        {
+            tier: 'basic',
+            caller: 'route-fare-refresh',
+        }
+    );
+    const fares = Array.isArray(data) ? data : (data.ODFares ?? []);
+
+    await upsertSnapshot(env, routeFareKey(origin, dest), fares, null);
+    return fares;
+}
+
+export async function getRouteFares(
+    env: Env,
+    origin: string,
+    dest: string
+): Promise<TDXODFare[]> {
+    const key = routeFareKey(origin, dest);
+    const snapshot = await getSnapshot<TDXODFare[]>(env, key);
+    if (
+        snapshot &&
+        getSnapshotAgeSeconds(snapshot) <= ROUTE_FARE_MAX_AGE_SECONDS
+    ) {
+        return snapshot.data;
+    }
+
+    const existingRefresh = routeFareRefreshes.get(key);
+    if (existingRefresh) {
+        return existingRefresh;
+    }
+
+    const refresh = refreshRouteFares(env, origin, dest)
+        .catch((error) => {
+            if (snapshot) {
+                console.error('Failed to refresh route fares:', error);
+                return snapshot.data;
+            }
+
+            throw error;
+        })
+        .finally(() => routeFareRefreshes.delete(key));
+    routeFareRefreshes.set(key, refresh);
+    return refresh;
 }
 
 export function filterRouteTimetables(

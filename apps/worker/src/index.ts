@@ -10,6 +10,7 @@ import {
     getCachedRouteTimetable,
     getLiveBoardPolicy,
     getLiveBoardSnapshot,
+    getRouteFares,
     getSnapshotAgeSeconds,
     getTaipeiDate,
     refreshDailySnapshots,
@@ -23,6 +24,7 @@ import type {
     LiveDataStatus,
     ScheduleMeta,
     TDXFullTimetable,
+    TDXODFare,
     TDXStopTime,
     TrainInfo,
 } from './types';
@@ -277,11 +279,35 @@ function isValidStationId(id: unknown): id is string {
     );
 }
 
-function mapTrainToAppTrainInfo(
+function getTrainPrice(timetable: TDXFullTimetable, routeFares: TDXODFare[]) {
+    const trainType = Number(timetable.TrainInfo.TrainTypeCode);
+    if (!Number.isFinite(trainType)) {
+        return null;
+    }
+
+    const matchingFare = routeFares.find(
+        (fare) =>
+            fare.Direction === timetable.TrainInfo.Direction &&
+            fare.TrainType === trainType
+    );
+    const adultFare = matchingFare?.Fares.find(
+        (fare) =>
+            fare.TicketType === 1 &&
+            fare.FareClass === 1 &&
+            fare.CabinClass === 1
+    );
+
+    return adultFare && Number.isFinite(adultFare.Price)
+        ? adultFare.Price
+        : null;
+}
+
+export function mapTrainToAppTrainInfo(
     timetable: TDXFullTimetable,
     origin: string,
     dest: string,
-    delayMap: Map<string, number>
+    delayMap: Map<string, number>,
+    routeFares: TDXODFare[] = []
 ): TrainInfo | null {
     const stops = timetable.StopTimes || [];
     let originStop: TDXStopTime | null = null;
@@ -318,6 +344,8 @@ function mapTrainToAppTrainInfo(
         destinationStation: destStop.StationName.Zh_tw,
         departureTime: originStop.DepartureTime,
         arrivalTime: destStop.ArrivalTime,
+        tripLine: timetable.TrainInfo.TripLine ?? 0,
+        price: getTrainPrice(timetable, routeFares),
         delay: delay || 0,
         status,
     };
@@ -429,9 +457,13 @@ async function handleSchedule(
         'Route interest update'
     );
 
-    const [routeResult, liveBoardSnapshot] = await Promise.all([
+    const [routeResult, liveBoardSnapshot, routeFares] = await Promise.all([
         getCachedRouteTimetable(env, queryDate, origin, dest),
         isToday ? getLiveBoardSnapshot(env) : Promise.resolve(null),
+        getRouteFares(env, origin, dest).catch((error) => {
+            console.error('Failed to load route fares:', error);
+            return [];
+        }),
     ]);
     let liveBoard = liveBoardSnapshot;
     let liveData = getLiveDataStatus(
@@ -479,7 +511,9 @@ async function handleSchedule(
             ? new Map(Object.entries(liveBoard.data.delays))
             : new Map<string, number>();
     const trains = routeResult.timetables
-        .map((t) => mapTrainToAppTrainInfo(t, origin, dest, delayMap))
+        .map((t) =>
+            mapTrainToAppTrainInfo(t, origin, dest, delayMap, routeFares)
+        )
         .filter((t): t is TrainInfo => t !== null)
         .sort((a, b) => a.departureTime.localeCompare(b.departureTime));
     const meta: ScheduleMeta = {

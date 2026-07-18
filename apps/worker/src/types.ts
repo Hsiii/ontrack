@@ -3,6 +3,7 @@ export type TDXTier = 'basic' | 'advanced';
 export type TDXCaller =
     | 'station-refresh'
     | 'daily-timetable-refresh'
+    | 'route-fare-refresh'
     | 'live-board-refresh';
 
 export interface Env {
@@ -45,13 +46,31 @@ export interface TDXFullTimetable {
     TrainInfo: {
         TrainNo: string;
         TrainTypeName: { Zh_tw: string };
+        TrainTypeCode?: string;
         Direction: number;
+        TripLine?: number;
     };
     StopTimes: TDXStopTime[];
 }
 
 export interface TDXTimetableResponse {
     TrainTimetables?: TDXFullTimetable[];
+}
+
+export interface TDXODFare {
+    Direction: number;
+    TrainType: number;
+    Fares: Array<{
+        TicketType: number;
+        FareClass: number;
+        CabinClass: number;
+        Price: number;
+    }>;
+    TravelDistance: number;
+}
+
+export interface TDXODFareResponse {
+    ODFares?: TDXODFare[];
 }
 
 export interface TrainInfo {
@@ -62,6 +81,8 @@ export interface TrainInfo {
     destinationStation: string;
     departureTime: string;
     arrivalTime: string;
+    tripLine: number;
+    price: number | null;
     delay: number;
     status: 'on-time' | 'delayed' | 'cancelled' | 'unknown';
 }
