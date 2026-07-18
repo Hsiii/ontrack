@@ -73,6 +73,10 @@ function formatDuration(minutes: number): string {
     return m === 0 ? `${h}h` : `${h}h${m}m`;
 }
 
+function formatPrice(price?: number | null): string | null {
+    return price == null ? null : `NT$${price.toLocaleString('en-US')}`;
+}
+
 function buildDisplayState(
     trains: TrainInfo[],
     targetTime: string,
@@ -308,6 +312,13 @@ export function TrainList({
                             trainData.trainType,
                             language
                         );
+                        const price = formatPrice(trainData.price);
+                        const tripLine =
+                            trainData.tripLine === 1
+                                ? t('train.mountainLine')
+                                : trainData.tripLine === 2
+                                  ? t('train.coastLine')
+                                  : null;
                         const delayStatus = isDelayed
                             ? t('train.delayedBy', {
                                   minutes: trainData.delay ?? 0,
@@ -325,6 +336,8 @@ export function TrainList({
                             t('train.duration', {
                                 duration: formatDuration(tripMin),
                             }),
+                            price ? t('train.fare', { price }) : '',
+                            tripLine ?? '',
                             delayStatus,
                         ]
                             .filter(Boolean)
@@ -392,7 +405,20 @@ export function TrainList({
                                 </div>
                                 <div className='train-card-info'>
                                     <span className='train-card-identifier'>
-                                        {trainType} {trainData.trainNo}
+                                        <span className='train-card-type'>
+                                            {trainType}
+                                        </span>
+                                        <span className='train-card-number'>
+                                            {trainData.trainNo}
+                                        </span>
+                                    </span>
+                                </div>
+                                <div className='train-card-meta'>
+                                    <span className='train-card-price'>
+                                        {price}
+                                    </span>
+                                    <span className='train-card-route'>
+                                        {tripLine}
                                     </span>
                                 </div>
                             </button>

@@ -1436,17 +1436,21 @@ private struct TrainCard: View {
 
     var body: some View {
         Button(action: onSelect) {
-            ZStack {
-                timeCluster
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: OnTrackTheme.space1) {
+                HStack(spacing: OnTrackTheme.space2) {
+                    timeCluster
 
-                trainIdentifier
-                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    Spacer(minLength: OnTrackTheme.space2)
+
+                    trainIdentifier
+                }
+
+                trainMetadata
             }
             .padding(.horizontal, OnTrackTheme.space5)
-            .padding(.vertical, OnTrackTheme.space3)
+            .padding(.vertical, OnTrackTheme.space2)
             .frame(maxWidth: .infinity)
-            .frame(height: TrainPanelLayout.cardHeight)
+            .frame(height: TrainPanelLayout.trainCardHeight)
             .background(
                 isSelected ? OnTrackTheme.primarySubtle : OnTrackTheme.panel,
                 in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
@@ -1467,7 +1471,8 @@ private struct TrainCard: View {
         HStack(spacing: OnTrackTheme.space1) {
             TimeColumn(
                 time: train.departureTime,
-                adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.departureTime, delay: train.delay) : nil
+                adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.departureTime, delay: train.delay) : nil,
+                alignment: .leading
             )
 
             TripSeparator(
@@ -1479,22 +1484,41 @@ private struct TrainCard: View {
 
             TimeColumn(
                 time: train.arrivalTime,
-                adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.arrivalTime, delay: train.delay) : nil
+                adjustedTime: isDelayed ? TrainDisplay.adjustedTime(train.arrivalTime, delay: train.delay) : nil,
+                alignment: .trailing
             )
         }
     }
 
     private var trainIdentifier: some View {
-        Text(TrainDisplay.trainIdentifier(
-            trainType: train.trainType,
-            number: train.trainNo
-        ))
-            .font(OnTrackFont.metadata)
-            .foregroundStyle(OnTrackTheme.dimText)
-            .monospacedDigit()
-            .frame(width: 96, alignment: .trailing)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
+        HStack(alignment: .firstTextBaseline, spacing: OnTrackTheme.space1) {
+            Text(TrainDisplay.trainType(train.trainType))
+                .font(OnTrackFont.metadata.weight(.medium))
+                .lineLimit(1)
+
+            Text(train.trainNo)
+                .font(OnTrackFont.metadata)
+                .monospacedDigit()
+                .lineLimit(1)
+        }
+        .foregroundStyle(OnTrackTheme.dimText)
+        .frame(width: 96, alignment: .trailing)
+        .minimumScaleFactor(0.85)
+    }
+
+    private var trainMetadata: some View {
+        HStack(spacing: OnTrackTheme.space2) {
+            Text(TrainDisplay.price(train.price) ?? "")
+                .font(OnTrackFont.caption.weight(.medium))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Text(TrainDisplay.tripLine(train.tripLine) ?? "")
+                .font(OnTrackFont.caption)
+                .frame(width: 96, alignment: .trailing)
+        }
+        .foregroundStyle(OnTrackTheme.dimText)
+        .monospacedDigit()
+        .lineLimit(1)
     }
 
     private var accessibilityLabel: String {
@@ -1504,6 +1528,8 @@ private struct TrainCard: View {
             departure: train.departureTime,
             arrival: train.arrivalTime,
             duration: TrainDisplay.tripDuration(departure: train.departureTime, arrival: train.arrivalTime),
+            price: TrainDisplay.price(train.price),
+            tripLine: TrainDisplay.tripLine(train.tripLine),
             delay: train.delay,
             isSelected: isSelected
         )
@@ -1544,6 +1570,7 @@ private struct TripSeparator: View {
 private struct TimeColumn: View {
     let time: String
     let adjustedTime: String?
+    let alignment: Alignment
 
     var body: some View {
         ZStack {
@@ -1564,7 +1591,7 @@ private struct TimeColumn: View {
                     .offset(y: -OnTrackTheme.space4)
             }
         }
-        .frame(width: 56, height: OnTrackTheme.space6)
+        .frame(width: 56, height: OnTrackTheme.space6, alignment: alignment)
     }
 }
 
@@ -1860,6 +1887,7 @@ private struct StationSearchRow: View {
 
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
+    static let trainCardHeight: CGFloat = 72
     static let cardBorderAllowance: CGFloat = 1
     static let maxVisibleRows = 4
     static let loadingRows = 3
@@ -1911,7 +1939,7 @@ private enum TrainPanelLayout {
         let rows = CGFloat(max(0, rowCount))
         let gaps = CGFloat(max(0, rowCount - 1))
 
-        return cardHeight * rows + cardGap * gaps
+        return trainCardHeight * rows + cardGap * gaps
     }
 }
 
@@ -2703,7 +2731,7 @@ private struct SkeletonTrainCard: View {
     var body: some View {
         RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
             .fill(OnTrackTheme.panel)
-            .frame(height: TrainPanelLayout.cardHeight)
+            .frame(height: TrainPanelLayout.trainCardHeight)
             .onTrackSurfaceRing(castsShadow: false)
             .opacity(0.7)
     }

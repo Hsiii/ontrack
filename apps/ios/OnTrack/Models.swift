@@ -94,6 +94,8 @@ struct TrainInfo: Decodable, Identifiable {
     let destinationStation: String
     let departureTime: String
     let arrivalTime: String
+    let tripLine: Int?
+    let price: Int?
     let delay: Int?
     let status: TrainStatus
 
@@ -230,6 +232,22 @@ enum TrainDisplay {
         return "\(Self.trainType(trainType))\(separator)\(number)"
     }
 
+    static func tripLine(_ tripLine: Int?) -> String? {
+        switch tripLine {
+        case 1:
+            AppText.mountainLine
+        case 2:
+            AppText.coastLine
+        default:
+            nil
+        }
+    }
+
+    static func price(_ price: Int?) -> String? {
+        guard let price else { return nil }
+        return "NT$\(price.formatted())"
+    }
+
     static func adjustedTime(_ time: String, delay: Int?) -> String {
         addMinutes(delay ?? 0, to: time)
     }
@@ -364,6 +382,8 @@ enum AppText {
     static var expandTrainPanel: String { isZh ? "展開班次面板" : "Expand train panel" }
     static var collapseTrainPanel: String { isZh ? "收合班次面板" : "Collapse train panel" }
     static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
+    static var mountainLine: String { isZh ? "山線" : "Mountain Line" }
+    static var coastLine: String { isZh ? "海線" : "Coast Line" }
     static var shareText: String { isZh ? "分享到站資訊" : "Share arrival info" }
     static var shareVia: String { isZh ? "分享" : "Share" }
     static var swapStations: String { isZh ? "交換出發站和抵達站" : "Swap origin and destination" }
@@ -516,6 +536,8 @@ enum AppText {
         departure: String,
         arrival: String,
         duration: String,
+        price: String?,
+        tripLine: String?,
         delay: Int?,
         isSelected: Bool
     ) -> String {
@@ -529,12 +551,12 @@ enum AppText {
         }
 
         if isZh {
-            return [status, "\(type) \(number)", "\(departure) 出發", "\(arrival) 抵達", "車程 \(duration)", delayText]
+            return [status, "\(type) \(number)", "\(departure) 出發", "\(arrival) 抵達", "車程 \(duration)", price.map { "票價 \($0)" } ?? "", tripLine ?? "", delayText]
                 .filter { !$0.isEmpty }
                 .joined(separator: "，")
         }
 
-        return [status, "\(type) \(number)", "Departs \(departure)", "Arrives \(arrival)", "Duration \(duration)", delayText]
+        return [status, "\(type) \(number)", "Departs \(departure)", "Arrives \(arrival)", "Duration \(duration)", price.map { "Fare \($0)" } ?? "", tripLine ?? "", delayText]
             .filter { !$0.isEmpty }
             .joined(separator: ", ")
     }

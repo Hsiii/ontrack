@@ -194,6 +194,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: clockTime(departureMinutes),
                 arrivalTime: clockTime(departureMinutes + durationMinutes),
+                tripLine: index.isMultiple(of: 4) ? 2 : 1,
+                price: trainPrice(for: index),
                 delay: delay,
                 status: delay == nil ? .onTime : .delayed
             )
@@ -210,6 +212,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "09:20",
                 arrivalTime: "10:38",
+                tripLine: 2,
+                price: 322,
                 delay: nil,
                 status: .onTime
             ),
@@ -221,6 +225,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "09:38",
                 arrivalTime: "10:54",
+                tripLine: 1,
+                price: 322,
                 delay: 4,
                 status: .delayed
             ),
@@ -232,6 +238,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "09:54",
                 arrivalTime: "11:10",
+                tripLine: 1,
+                price: 500,
                 delay: nil,
                 status: .onTime
             ),
@@ -243,6 +251,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "10:08",
                 arrivalTime: "11:26",
+                tripLine: 1,
+                price: 322,
                 delay: nil,
                 status: .onTime
             ),
@@ -254,6 +264,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "10:22",
                 arrivalTime: "11:38",
+                tripLine: 1,
+                price: 500,
                 delay: nil,
                 status: .onTime
             ),
@@ -265,6 +277,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "10:38",
                 arrivalTime: "11:56",
+                tripLine: 2,
+                price: 322,
                 delay: nil,
                 status: .onTime
             ),
@@ -276,6 +290,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "10:52",
                 arrivalTime: "12:08",
+                tripLine: 1,
+                price: 500,
                 delay: nil,
                 status: .onTime
             ),
@@ -287,6 +303,8 @@ private enum MockAPI {
                 destinationStation: destination.id,
                 departureTime: "11:08",
                 arrivalTime: "12:26",
+                tripLine: 2,
+                price: 322,
                 delay: nil,
                 status: .onTime
             ),
@@ -302,6 +320,10 @@ private enum MockAPI {
         default:
             return "區間"
         }
+    }
+
+    private static func trainPrice(for index: Int) -> Int {
+        index.isMultiple(of: 3) ? 500 : 322
     }
 
     private static func clockTime(_ minutes: Int) -> String {

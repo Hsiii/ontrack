@@ -38,6 +38,10 @@ export function TrainListSkeleton({
                                 <span className='skeleton skeleton-type'></span>
                                 <span className='skeleton skeleton-number'></span>
                             </div>
+                            <div className='train-card-meta'>
+                                <span className='skeleton skeleton-price'></span>
+                                <span className='skeleton skeleton-route'></span>
+                            </div>
                         </div>
                     )
                 )}

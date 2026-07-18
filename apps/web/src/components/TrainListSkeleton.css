@@ -41,3 +41,17 @@
     height: var(--space-3);
     border-radius: var(--radius-pill);
 }
+
+.skeleton-price,
+.skeleton-route {
+    height: var(--space-3);
+    border-radius: var(--radius-pill);
+}
+
+.skeleton-price {
+    width: calc(var(--space-10) + var(--space-2));
+}
+
+.skeleton-route {
+    width: var(--space-10);
+}

@@ -14,6 +14,8 @@ export interface TrainInfo {
     destinationStation: string;
     departureTime: string; // HH:mm
     arrivalTime: string; // HH:mm
+    tripLine?: number; // 1: Mountain Line, 2: Coast Line
+    price?: number | null; // Adult fare in TWD
     delay?: number; // Minutes, 0 = On Time, undefined = Unknown
     status: 'on-time' | 'delayed' | 'cancelled' | 'unknown';
 }
