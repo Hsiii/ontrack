@@ -60,7 +60,7 @@
 }
 
 .train-card {
-    --train-card-height: calc(var(--size-control) + var(--space-2));
+    --train-card-height: calc(var(--size-control) + var(--space-3));
     --train-card-side-column: calc(var(--space-6) * 4);
     --train-card-time-column: calc(var(--space-6) * 2 + var(--space-2));
     --train-card-trip-column: calc(var(--space-6) * 2 + var(--space-5));
@@ -73,7 +73,7 @@
     padding: var(--space-3) var(--space-5);
     display: grid;
     grid-template-columns: minmax(0, 1fr) var(--train-card-side-column);
-    grid-template-rows: var(--space-6) var(--space-5);
+    grid-template-rows: var(--space-6) var(--space-6);
     column-gap: var(--space-2);
     row-gap: var(--space-1);
     align-items: center;

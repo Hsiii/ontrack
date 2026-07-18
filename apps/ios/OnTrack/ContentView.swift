@@ -1887,11 +1887,11 @@ private struct StationSearchRow: View {
 
 private enum TrainPanelLayout {
     static let cardHeight: CGFloat = 64
-    static let trainCardHeight: CGFloat = 72
+    static let trainCardHeight: CGFloat = 76
     static let cardHorizontalInset = OnTrackTheme.space5
     static let cardVerticalInset = OnTrackTheme.space3
     static let topRowHeight = OnTrackTheme.space6
-    static let bottomRowHeight = OnTrackTheme.space5
+    static let bottomRowHeight = OnTrackTheme.space6
     static let detailColumnWidth = OnTrackTheme.space6 * 4
     static let timeColumnWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space2
     static let tripSeparatorWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space5
