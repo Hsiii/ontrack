@@ -1584,7 +1584,7 @@ private struct TimeColumn: View {
                     .monospacedDigit()
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                    .offset(y: -OnTrackTheme.space3)
+                    .offset(y: -TrainPanelLayout.delayTextOffset)
             }
         }
         .frame(
@@ -1895,6 +1895,7 @@ private enum TrainPanelLayout {
     static let detailColumnWidth = OnTrackTheme.space6 * 4
     static let timeColumnWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space2
     static let tripSeparatorWidth = OnTrackTheme.space6 * 2 + OnTrackTheme.space5
+    static let delayTextOffset = OnTrackTheme.space3 + 2
     static let cardBorderAllowance: CGFloat = 1
     static let maxVisibleRows = 4
     static let loadingRows = 3

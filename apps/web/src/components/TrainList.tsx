@@ -356,22 +356,24 @@ export function TrainList({
                                     <span
                                         className={`train-card-time-cell ${isDelayed ? 'delayed' : ''}`}
                                     >
-                                        {isDelayed && (
-                                            <span className='train-card-delayed-time'>
-                                                {addMinutes(
-                                                    trainData.departureTime,
-                                                    trainData.delay!
-                                                )}
+                                        <span className='train-card-time-value'>
+                                            {isDelayed && (
+                                                <span className='train-card-delayed-time'>
+                                                    {addMinutes(
+                                                        trainData.departureTime,
+                                                        trainData.delay!
+                                                    )}
+                                                </span>
+                                            )}
+                                            <span
+                                                className={
+                                                    isDelayed
+                                                        ? 'train-card-original-time'
+                                                        : 'train-card-departure-time'
+                                                }
+                                            >
+                                                {trainData.departureTime}
                                             </span>
-                                        )}
-                                        <span
-                                            className={
-                                                isDelayed
-                                                    ? 'train-card-original-time'
-                                                    : 'train-card-departure-time'
-                                            }
-                                        >
-                                            {trainData.departureTime}
                                         </span>
                                     </span>
                                     <div className='train-card-separator'>
@@ -384,22 +386,24 @@ export function TrainList({
                                     <span
                                         className={`train-card-time-cell ${isDelayed ? 'delayed' : ''}`}
                                     >
-                                        {isDelayed && (
-                                            <span className='train-card-delayed-time'>
-                                                {addMinutes(
-                                                    trainData.arrivalTime,
-                                                    trainData.delay!
-                                                )}
+                                        <span className='train-card-time-value'>
+                                            {isDelayed && (
+                                                <span className='train-card-delayed-time'>
+                                                    {addMinutes(
+                                                        trainData.arrivalTime,
+                                                        trainData.delay!
+                                                    )}
+                                                </span>
+                                            )}
+                                            <span
+                                                className={
+                                                    isDelayed
+                                                        ? 'train-card-original-time'
+                                                        : 'train-card-arrival-time'
+                                                }
+                                            >
+                                                {trainData.arrivalTime}
                                             </span>
-                                        )}
-                                        <span
-                                            className={
-                                                isDelayed
-                                                    ? 'train-card-original-time'
-                                                    : 'train-card-arrival-time'
-                                            }
-                                        >
-                                            {trainData.arrivalTime}
                                         </span>
                                     </span>
                                 </div>
