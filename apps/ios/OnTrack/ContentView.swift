@@ -136,6 +136,7 @@ struct ContentView: View {
     @State private var isLoadingStations = false
     @State private var isLoadingSchedule = false
     @State private var isRefreshingLive = false
+    @State private var widgetLiveDataIsFresh = false
     @State private var errorMessage: String?
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
@@ -307,7 +308,7 @@ struct ContentView: View {
                                 trains: trains,
                                 isLoading: isLoadingSchedule,
                                 canLoadSchedule: canLoadSchedule,
-                                onSelect: { selectedTrain = $0 }
+                                onSelect: selectTrain
                             )
                             .padding(.bottom, trainPanelBottomInset)
                             .transition(.move(edge: .bottom))
@@ -550,9 +551,13 @@ struct ContentView: View {
             guard let response, response.meta?.scheduleCacheStatus != .warming else {
                 trains = []
                 selectedTrain = nil
+                widgetLiveDataIsFresh = false
+                WidgetSnapshotStore.clear()
                 return
             }
 
+            widgetLiveDataIsFresh = response.meta?.liveDataStatus == .fresh
+                && (response.meta?.liveDataAgeSeconds ?? 0) <= 15 * 60
             let display = TrainDisplay.displaySchedule(
                 trains: response.trains,
                 targetTime: timeSelection.scheduleTime,
@@ -560,9 +565,15 @@ struct ContentView: View {
             )
             trains = display.trains
             selectedTrain = display.recommendedTrain
+            if let recommendedTrain = display.recommendedTrain {
+                persistWidgetSnapshot(for: recommendedTrain)
+            } else {
+                WidgetSnapshotStore.clear()
+            }
         } catch {
             trains = []
             selectedTrain = nil
+            widgetLiveDataIsFresh = false
             errorMessage = error.localizedDescription
         }
     }
@@ -575,6 +586,60 @@ struct ContentView: View {
         Task {
             await loadSchedule(refreshLive: true)
         }
+    }
+
+    private func selectTrain(_ train: TrainInfo) {
+        selectedTrain = train
+        persistWidgetSnapshot(for: train)
+    }
+
+    private func persistWidgetSnapshot(for train: TrainInfo) {
+        guard let originStation, let destinationStation else {
+            return
+        }
+
+        WidgetRouteContextStore.save(WidgetRouteContext(
+            originID: originStation.id,
+            destinationID: destinationStation.id,
+            cachedOriginID: cachedOriginId,
+            frequentDestinationRecordsData: frequentDestinationRecordsData,
+            legacyDestinationIDs: legacyRecentDestinationIDs,
+            messageFormatRaw: messageFormatRaw
+        ))
+
+        let trainType = TrainDisplay.trainType(train.trainType)
+        let trainLine = TrainDisplay.tripLine(train.tripLine)
+        let trainIdentifier = ["\(trainType) \(train.trainNo)", trainLine]
+            .compactMap { $0 }
+            .joined(separator: " · ")
+        let widgetTrain = TrainInfo(
+            trainNo: train.trainNo,
+            trainType: train.trainType,
+            direction: train.direction,
+            originStation: train.originStation,
+            destinationStation: train.destinationStation,
+            departureTime: train.departureTime,
+            arrivalTime: train.arrivalTime,
+            tripLine: train.tripLine,
+            price: train.price,
+            delay: widgetLiveDataIsFresh ? train.delay : nil,
+            status: widgetLiveDataIsFresh ? train.status : .unknown
+        )
+
+        WidgetSnapshotStore.save(WidgetSnapshot(
+            trainIdentifier: trainIdentifier,
+            departureTime: TrainDisplay.adjustedTime(widgetTrain.departureTime, delay: widgetTrain.delay),
+            arrivalTime: TrainDisplay.adjustedTime(widgetTrain.arrivalTime, delay: widgetTrain.delay),
+            originName: originStation.displayName,
+            destinationName: destinationStation.displayName,
+            delayMinutes: widgetLiveDataIsFresh ? max(0, widgetTrain.delay ?? 0) : nil,
+            shareMessage: (ShareMessageFormat(rawValue: messageFormatRaw) ?? .arrivalOnly).message(
+                train: widgetTrain,
+                origin: originStation,
+                destination: destinationStation
+            ),
+            updatedAt: Date()
+        ))
     }
 
     private func select(station: Station, for role: StationPickerRole) {
