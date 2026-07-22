@@ -93,34 +93,26 @@ IOS_API_ORIGIN=https://example.com bun run ios
 ## 自行部署
 
 OnTrack 透過 Cloudflare Worker 讀取 TDX 公開鐵路資料。已追蹤的
-`apps/worker/wrangler.jsonc` 是適合公開的開發設定，D1 值為佔位值。若要部署
-fork，請使用自己的基礎設施與憑證。
+`apps/worker/wrangler.jsonc` 同時包含開發佔位設定與正式環境。Cloudflare
+account ID、D1 ID 與 route 都是公開識別碼；憑證只存放在 Wrangler secrets。
+正式部署統一使用 `bun run deploy`。
 
 1. 建立自己的 Cloudflare D1 資料庫。
-2. 複製 production 設定範本：
+2. 替換 `apps/worker/wrangler.jsonc` 中 `env.production` 的 account、route
+   與 D1 識別碼。
+3. 視需要設定 Worker secrets：
 
 ```sh
-cp apps/worker/wrangler.production.example.jsonc apps/worker/wrangler.production.jsonc
+wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.jsonc --env production
+wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.jsonc --env production
+wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.jsonc --env production
 ```
 
-3. 在被 git 忽略的 `apps/worker/wrangler.production.jsonc` 裡填入你的
-   production route 與 D1 `database_id`。
-4. 在 production 設定中把 `CORS_ALLOWED_ORIGINS` 設為你的網頁版 origin。
-5. 視需要設定 Worker secrets：
-
-```sh
-wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
-wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.jsonc
-wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
-```
-
-6. 部署：
+4. 部署：
 
 ```sh
 bun run deploy
 ```
-
-官方維護者也使用被 git 忽略的 production 設定，因此正式部署不需要修改已追蹤的公開設定。
 
 TDX 憑證在開發時不是必要的；未設定時 Worker 會 fallback 到 Visitor Mode。
 

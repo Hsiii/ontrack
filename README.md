@@ -98,36 +98,29 @@ IOS_API_ORIGIN=https://example.com bun run ios
 ## Self-Hosting
 
 OnTrack reads public railway data from TDX through a Cloudflare Worker. The
-tracked `apps/worker/wrangler.jsonc` is a development-safe config with
-placeholder D1 values. To host a fork, use your own infrastructure and
-credentials.
+tracked `apps/worker/wrangler.jsonc` contains a placeholder development target
+and the production environment. Cloudflare account IDs, D1 IDs, and routes are
+public identifiers; credentials remain Wrangler secrets. Official deployments
+use `bun run deploy`, so GitHub CI and remote workers use the same configuration.
+
+To host a fork, use your own infrastructure and credentials.
 
 1. Create your own Cloudflare D1 database.
-2. Copy the production config example:
+2. Replace the account, route, and D1 identifiers under `env.production` in
+   `apps/worker/wrangler.jsonc`.
+3. Set Worker secrets as needed:
 
 ```sh
-cp apps/worker/wrangler.production.example.jsonc apps/worker/wrangler.production.jsonc
+wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.jsonc --env production
+wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.jsonc --env production
+wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.jsonc --env production
 ```
 
-3. Fill in your production route and D1 `database_id` in the ignored
-   `apps/worker/wrangler.production.jsonc`.
-4. Set `CORS_ALLOWED_ORIGINS` in the production config to your web origin.
-5. Set Worker secrets as needed:
-
-```sh
-wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
-wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.jsonc
-wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
-```
-
-6. Deploy:
+4. Deploy:
 
 ```sh
 bun run deploy
 ```
-
-Official maintainers also use the ignored production config, so production
-deploys do not require editing the tracked public config.
 
 TDX credentials are optional for development because the Worker falls back to
 Visitor Mode when they are not configured.

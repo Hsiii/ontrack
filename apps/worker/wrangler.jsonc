@@ -1,6 +1,7 @@
 {
     "$schema": "../../node_modules/wrangler/config-schema.json",
     "name": "ontrack-dev",
+    "account_id": "4ca10b237c0aec43ae93afba11ef6633",
     "main": "src/index.ts",
     "compatibility_date": "2026-06-07",
     "d1_databases": [
@@ -18,11 +19,28 @@
         "run_worker_first": true,
     },
     "triggers": {
-        "crons": [
-            "*/10 * * * *",
-        ],
+        "crons": ["*/10 * * * *"],
     },
     "observability": {
         "enabled": true,
+    },
+    "env": {
+        "production": {
+            "name": "ontrack-dev",
+            "routes": [
+                {
+                    "pattern": "ontrack.hsichen.dev",
+                    "custom_domain": true,
+                },
+            ],
+            "d1_databases": [
+                {
+                    "binding": "DB",
+                    "database_name": "ontrack",
+                    "database_id": "4f20034f-9bf4-40f6-9122-31b0a151f574",
+                    "migrations_dir": "d1/migrations",
+                },
+            ],
+        },
     },
 }

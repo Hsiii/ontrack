@@ -35,33 +35,31 @@ bun run ios:check
 
 ## Worker Setup
 
-The tracked Worker config uses placeholder deployment values and is intended for
-local development or fork setup. Before deploying a fork:
+The tracked Worker config contains the development target and the maintainer's
+production environment. Before deploying a fork:
 
 1. Create your own Cloudflare D1 database.
-2. Copy `apps/worker/wrangler.production.example.jsonc` to
-   `apps/worker/wrangler.production.jsonc`.
-3. Fill in your production route and D1 `database_id`.
-4. Set `CORS_ALLOWED_ORIGINS` in the production config to your web origin.
-5. Set Worker secrets for production:
+2. Replace the account, route, and D1 identifiers under `env.production` in
+   `apps/worker/wrangler.jsonc`.
+3. Set Worker secrets for production:
 
 ```sh
-wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.production.jsonc
-wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.production.jsonc
-wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.production.jsonc
+wrangler secret put TDX_CLIENT_ID --config apps/worker/wrangler.jsonc --env production
+wrangler secret put TDX_CLIENT_SECRET --config apps/worker/wrangler.jsonc --env production
+wrangler secret put REFRESH_SECRET --config apps/worker/wrangler.jsonc --env production
 ```
 
 `TDX_CLIENT_ID` and `TDX_CLIENT_SECRET` are optional for development. Without
 them, the Worker uses TDX Visitor Mode.
 
 Use `bun run deploy:dev` for the tracked development config after filling its D1
-placeholder. Use `bun run deploy` for the ignored production config.
+placeholder. Use `bun run deploy` for the tracked production environment.
 
 ## Pull Requests
 
 - Keep changes focused.
 - Include tests or manual verification notes for behavior changes.
 - Use existing code style and project conventions.
-- Do not commit credentials, private `.env` files, provisioning profiles,
-  archives, or production deployment identifiers.
+- Do not commit credentials, private `.env` files, provisioning profiles, or
+  archives.
 - Do not reuse OnTrack brand assets for redistributed forks.
