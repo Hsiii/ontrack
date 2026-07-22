@@ -26,6 +26,9 @@
         A20000000000000000000026 /* APIClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000013 /* APIClient.swift */; };
         A20000000000000000000027 /* DestinationAutofill.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000016 /* DestinationAutofill.swift */; };
         A20000000000000000000028 /* destination-autofill.json in Resources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000017 /* destination-autofill.json */; };
+        A20000000000000000000029 /* launch-logo.png in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* launch-logo.png */; };
+        A2000000000000000000002A /* launch-logo@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000017 /* launch-logo@2x.png */; };
+        A2000000000000000000002B /* launch-logo@3x.png in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000018 /* launch-logo@3x.png */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -72,6 +75,9 @@
         A20000000000000000000013 /* WidgetSnapshot.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetSnapshot.swift; sourceTree = "<group>"; };
         A20000000000000000000014 /* TrainWidgetContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrainWidgetContent.swift; sourceTree = "<group>"; };
         A20000000000000000000015 /* WidgetTimelineLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WidgetTimelineLoader.swift; sourceTree = "<group>"; };
+        A20000000000000000000016 /* launch-logo.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "../OnTrack/Assets.xcassets/LaunchLogo.imageset/launch-logo.png"; sourceTree = "<group>"; };
+        A20000000000000000000017 /* launch-logo@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "../OnTrack/Assets.xcassets/LaunchLogo.imageset/launch-logo@2x.png"; sourceTree = "<group>"; };
+        A20000000000000000000018 /* launch-logo@3x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "../OnTrack/Assets.xcassets/LaunchLogo.imageset/launch-logo@3x.png"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -145,6 +151,9 @@
                 A20000000000000000000015 /* WidgetTimelineLoader.swift */,
                 A20000000000000000000011 /* Info.plist */,
                 A20000000000000000000012 /* OnTrackWidget.entitlements */,
+                A20000000000000000000016 /* launch-logo.png */,
+                A20000000000000000000017 /* launch-logo@2x.png */,
+                A20000000000000000000018 /* launch-logo@3x.png */,
             );
             path = OnTrackWidget;
             sourceTree = "<group>";
@@ -240,6 +249,9 @@
             buildActionMask = 2147483647;
             files = (
                 A20000000000000000000028 /* destination-autofill.json in Resources */,
+                A20000000000000000000029 /* launch-logo.png in Resources */,
+                A2000000000000000000002A /* launch-logo@2x.png in Resources */,
+                A2000000000000000000002B /* launch-logo@3x.png in Resources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };

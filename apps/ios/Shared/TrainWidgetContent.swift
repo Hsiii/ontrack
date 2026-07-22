@@ -11,37 +11,50 @@ struct TrainWidgetContent: View {
                 emptyContent
             }
         }
-        .padding(TrainWidgetLayout.padding)
+        .padding(.horizontal, TrainWidgetLayout.horizontalPadding)
+        .padding(.vertical, TrainWidgetLayout.verticalPadding)
         .background(TrainWidgetPalette.background)
     }
 
     private func widgetContent(_ snapshot: WidgetSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text(snapshot.trainIdentifier)
-                .font(TrainWidgetTypography.large.weight(.semibold))
-                .foregroundStyle(TrainWidgetPalette.text)
-                .lineLimit(1)
-
-            Spacer(minLength: TrainWidgetLayout.sectionGap)
-
-            HStack(alignment: .firstTextBaseline, spacing: TrainWidgetLayout.inlineGap) {
-                scheduleStop(time: snapshot.departureTime, station: snapshot.originName)
-
-                Spacer(minLength: TrainWidgetLayout.inlineGap)
+        VStack(alignment: .leading, spacing: TrainWidgetLayout.rowGap) {
+            HStack(spacing: TrainWidgetLayout.inlineGap) {
+                Text(snapshot.originName)
 
                 Image(systemName: "arrow.right")
-                    .font(TrainWidgetTypography.small.weight(.semibold))
-                    .foregroundStyle(TrainWidgetPalette.secondaryText)
 
-                scheduleStop(time: snapshot.arrivalTime, station: snapshot.destinationName)
+                Text(snapshot.destinationName)
+
+                Spacer(minLength: TrainWidgetLayout.sectionGap)
+
+                appLogo
+                    .layoutPriority(1)
             }
+            .font(TrainWidgetTypography.medium.weight(.semibold))
+            .foregroundStyle(TrainWidgetPalette.secondaryText)
+            .lineLimit(1)
 
-            Spacer(minLength: TrainWidgetLayout.sectionGap)
+            HStack(spacing: TrainWidgetLayout.inlineGap) {
+                scheduleTime(snapshot.departureTime)
 
-            HStack(alignment: .center) {
+                tripSeparator(for: snapshot)
+
+                scheduleTime(snapshot.arrivalTime)
+            }
+            .padding(.top, TrainWidgetLayout.firstRowGapIncrease)
+
+            Spacer(minLength: 0)
+
+            HStack(alignment: .bottom, spacing: TrainWidgetLayout.sectionGap) {
+                Text(snapshot.trainIdentifier)
+                    .font(TrainWidgetTypography.medium.weight(.semibold))
+                    .foregroundStyle(TrainWidgetPalette.secondaryText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
                 if let statusText = statusText(for: snapshot) {
                     Text(statusText)
-                        .font(TrainWidgetTypography.small.weight(.semibold))
+                        .font(TrainWidgetTypography.medium.weight(.semibold))
                         .foregroundStyle(statusColor(for: snapshot))
                 }
 
@@ -50,12 +63,12 @@ struct TrainWidgetContent: View {
                 if let copyURL = snapshot.copyURL {
                     Link(destination: copyURL) {
                         Image(systemName: "square.and.arrow.up")
-                            .font(TrainWidgetTypography.small.weight(.semibold))
+                            .font(TrainWidgetTypography.medium.weight(.semibold))
                             .foregroundStyle(TrainWidgetPalette.primary)
                             .frame(
                                 width: TrainWidgetLayout.minimumTapTarget,
                                 height: TrainWidgetLayout.minimumTapTarget,
-                                alignment: .trailing
+                                alignment: .bottomTrailing
                             )
                             .contentShape(Rectangle())
                     }
@@ -66,18 +79,57 @@ struct TrainWidgetContent: View {
         }
     }
 
-    private func scheduleStop(time: String, station: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: TrainWidgetLayout.inlineGap) {
-            Text(time)
-                .font(TrainWidgetTypography.large.weight(.bold))
-                .monospacedDigit()
-                .foregroundStyle(TrainWidgetPalette.text)
+    private func scheduleTime(_ time: String) -> some View {
+        Text(time)
+            .font(TrainWidgetTypography.large.weight(.bold))
+            .monospacedDigit()
+            .foregroundStyle(TrainWidgetPalette.text)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+    }
 
-            Text(station)
-                .font(TrainWidgetTypography.small.weight(.semibold))
-                .foregroundStyle(TrainWidgetPalette.secondaryText)
-                .lineLimit(1)
+    @ViewBuilder
+    private var appLogo: some View {
+        if let path = Bundle.main.path(forResource: "launch-logo", ofType: "png"),
+           let image = UIImage(contentsOfFile: path) {
+            Image(uiImage: image)
+                .renderingMode(.original)
+                .resizable()
+                .scaledToFit()
+                .frame(
+                    width: TrainWidgetLayout.logoSize,
+                    height: TrainWidgetLayout.logoSize
+                )
+                .accessibilityHidden(true)
         }
+    }
+
+    private func tripSeparator(for snapshot: WidgetSnapshot) -> some View {
+        HStack(spacing: TrainWidgetLayout.inlineGap) {
+            separatorLine
+
+            Text(
+                TrainDisplay.tripDuration(
+                    departure: snapshot.departureTime,
+                    arrival: snapshot.arrivalTime
+                )
+            )
+            .font(TrainWidgetTypography.small.weight(.medium))
+            .foregroundStyle(TrainWidgetPalette.secondaryText)
+            .monospacedDigit()
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
+
+            separatorLine
+        }
+        .frame(maxWidth: .infinity)
+    }
+
+    private var separatorLine: some View {
+        Rectangle()
+            .fill(TrainWidgetPalette.border)
+            .frame(minWidth: TrainWidgetLayout.minimumLineWidth, maxWidth: .infinity)
+            .frame(height: 1)
     }
 
     private var emptyContent: some View {
@@ -109,13 +161,19 @@ struct TrainWidgetContent: View {
 
 enum TrainWidgetTypography {
     static let large = Font.system(size: 26)
+    static let medium = Font.system(size: 16)
     static let small = Font.system(size: 12)
 }
 
 enum TrainWidgetLayout {
-    static let padding: CGFloat = 16
+    static let horizontalPadding: CGFloat = 16
+    static let verticalPadding: CGFloat = 20
     static let sectionGap: CGFloat = 8
+    static let rowGap: CGFloat = 4
+    static let firstRowGapIncrease: CGFloat = 4
     static let inlineGap: CGFloat = 4
+    static let logoSize: CGFloat = 20
+    static let minimumLineWidth: CGFloat = 4
     static let minimumTapTarget: CGFloat = 44
 }
 
@@ -139,6 +197,11 @@ enum TrainWidgetPalette {
         traits.userInterfaceStyle == .dark
             ? UIColor(red: 96 / 255, green: 165 / 255, blue: 250 / 255, alpha: 1)
             : UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 1)
+    })
+    static let border = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark
+            ? UIColor(red: 71 / 255, green: 85 / 255, blue: 105 / 255, alpha: 1)
+            : UIColor(red: 226 / 255, green: 232 / 255, blue: 240 / 255, alpha: 1)
     })
     static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
 }
