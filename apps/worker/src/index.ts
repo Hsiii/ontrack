@@ -3,6 +3,7 @@ import {
     getManualLiveRefreshClientBucket,
     normalizeScheduleDate,
     resolveScheduleStations,
+    shouldRefreshLiveBoardForManual,
 } from './policy';
 import {
     ensureRouteTimetable,
@@ -480,9 +481,13 @@ async function handleSchedule(
         );
     }
 
-    const shouldAttemptLiveRefresh =
+    const shouldAttemptAutomaticLiveRefresh =
         liveData.status === 'stale' || liveData.status === 'unavailable';
-    if (forceLiveRefresh && isToday && shouldAttemptLiveRefresh) {
+    const shouldAttemptManualLiveRefresh = shouldRefreshLiveBoardForManual(
+        isToday,
+        liveData.ageSeconds
+    );
+    if (forceLiveRefresh && shouldAttemptManualLiveRefresh) {
         try {
             await refreshLiveBoardForManual(
                 env,
@@ -498,7 +503,7 @@ async function handleSchedule(
         } catch (error) {
             console.error('Manual live board refresh failed:', error);
         }
-    } else if (shouldAttemptLiveRefresh) {
+    } else if (!forceLiveRefresh && shouldAttemptAutomaticLiveRefresh) {
         waitUntilLogged(
             ctx,
             refreshLiveBoardForAuto(env, origin, dest, requestedAt),
