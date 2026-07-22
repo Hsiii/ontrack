@@ -423,7 +423,7 @@
                 CODE_SIGN_ENTITLEMENTS = OnTrack/OnTrack.entitlements;
                 CODE_SIGN_STYLE = Automatic;
                 CURRENT_PROJECT_VERSION = 6;
-                DEVELOPMENT_TEAM = "";
+                DEVELOPMENT_TEAM = D925G8G7CS;
                 GENERATE_INFOPLIST_FILE = NO;
                 INFOPLIST_FILE = OnTrack/Info.plist;
                 IPHONEOS_DEPLOYMENT_TARGET = 17.0;
@@ -456,7 +456,7 @@
                 CODE_SIGN_ENTITLEMENTS = OnTrack/OnTrack.entitlements;
                 CODE_SIGN_STYLE = Automatic;
                 CURRENT_PROJECT_VERSION = 6;
-                DEVELOPMENT_TEAM = "";
+                DEVELOPMENT_TEAM = D925G8G7CS;
                 GENERATE_INFOPLIST_FILE = NO;
                 INFOPLIST_FILE = OnTrack/Info.plist;
                 IPHONEOS_DEPLOYMENT_TARGET = 17.0;
