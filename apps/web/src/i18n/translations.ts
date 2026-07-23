@@ -15,6 +15,11 @@ export const translations = {
         'app.switchToChinese': '切換成中文',
         'app.enableAutoDetectOrigin': '開啟定位起點',
         'app.disableAutoDetectOrigin': '關閉定位起點',
+        'app.locationRequesting': '正在請求定位權限…',
+        'app.locationDenied':
+            '定位權限未開啟，請在瀏覽器設定中允許後再試一次。',
+        'app.locationTimedOut': '無法取得目前位置，請再試一次。',
+        'app.locationUnavailable': '此瀏覽器不支援定位。',
         'station.origin': '出發站',
         'station.destination': '抵達站',
         'station.selectOrigin': '選擇出發站',
@@ -203,6 +208,12 @@ export const translations = {
         'app.switchToChinese': 'Switch to Chinese',
         'app.enableAutoDetectOrigin': 'Enable origin auto-detect',
         'app.disableAutoDetectOrigin': 'Disable origin auto-detect',
+        'app.locationRequesting': 'Requesting location access…',
+        'app.locationDenied':
+            'Location access is blocked. Allow it in browser settings, then try again.',
+        'app.locationTimedOut':
+            'Your current location could not be found. Try again.',
+        'app.locationUnavailable': 'Location is not supported by this browser.',
         'station.origin': 'Start',
         'station.destination': 'Destination',
         'station.selectOrigin': 'Select Start',
