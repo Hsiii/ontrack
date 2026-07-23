@@ -382,6 +382,7 @@ enum AppText {
     static var expandTrainPanel: String { isZh ? "展開班次面板" : "Expand train panel" }
     static var collapseTrainPanel: String { isZh ? "收合班次面板" : "Collapse train panel" }
     static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
+    static var enableLocationAccess: String { isZh ? "開啟定位權限" : "Enable location access" }
     static var mountainLine: String { isZh ? "山線" : "Mountain Line" }
     static var coastLine: String { isZh ? "海線" : "Coast Line" }
     static var shareText: String { isZh ? "分享到站資訊" : "Share arrival info" }

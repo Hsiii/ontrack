@@ -282,10 +282,12 @@ struct ContentView: View {
                                     origin: originStation,
                                     destination: destinationStation,
                                     isLoading: isLoadingStations,
+                                    locationAuthorizationStatus: locationService.authorizationStatus,
                                     originGlyphColor: OnTrackTheme.routeDot(for: appearanceSetting),
                                     destinationGlyphColor: OnTrackTheme.routeFlag(for: appearanceSetting),
                                     onPickOrigin: { openStationPicker(.origin) },
                                     onPickDestination: { openStationPicker(.destination) },
+                                    onRequestLocationAccess: promptForAutoDetectedOrigin,
                                     onSwap: swapStations
                                 )
                             }
@@ -433,10 +435,6 @@ struct ContentView: View {
     }
 
     private func openStationPicker(_ role: StationPickerRole) {
-        if role == .origin {
-            promptForAutoDetectedOrigin()
-        }
-
         activeSheet = nil
 
         withAnimation(stationPickerAnimation) {
@@ -688,7 +686,15 @@ struct ContentView: View {
     }
 
     private func promptForAutoDetectedOrigin() {
-        requestAutoDetectedOrigin(allowPermissionPrompt: true)
+        manualOriginSelectedAt = 0
+
+        if locationService.authorizationStatus == .denied,
+           let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+            UIApplication.shared.open(settingsURL)
+            return
+        }
+
+        locationService.requestLocation()
     }
 
     private func refreshAutoDetectedOrigin() {
@@ -1215,10 +1221,12 @@ private struct RouteSelectorView: View {
     let origin: Station?
     let destination: Station?
     let isLoading: Bool
+    let locationAuthorizationStatus: CLAuthorizationStatus
     let originGlyphColor: Color
     let destinationGlyphColor: Color
     let onPickOrigin: () -> Void
     let onPickDestination: () -> Void
+    let onRequestLocationAccess: () -> Void
     let onSwap: () -> Void
     @State private var swapFeedbackTrigger = 0
 
@@ -1230,6 +1238,13 @@ private struct RouteSelectorView: View {
                 isLoading: isLoading,
                 glyph: .origin,
                 glyphColor: originGlyphColor,
+                trailingAction: hasLocationAuthorization ? nil : AnyView(
+                    IconPlainButton(
+                        systemName: "location.slash",
+                        action: onRequestLocationAccess
+                    )
+                    .accessibilityLabel(AppText.enableLocationAccess)
+                ),
                 onTap: onPickOrigin
             )
 
@@ -1266,6 +1281,11 @@ private struct RouteSelectorView: View {
         }
         .onTrackPanelSurface(castsShadow: false)
         .sensoryFeedback(.selection, trigger: swapFeedbackTrigger)
+    }
+
+    private var hasLocationAuthorization: Bool {
+        locationAuthorizationStatus == .authorizedAlways
+            || locationAuthorizationStatus == .authorizedWhenInUse
     }
 }
 
