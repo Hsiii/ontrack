@@ -30,9 +30,11 @@
 
 ## 安裝
 
-iOS App 目前仍在 App Store 審查中。正式上架前，iPhone 請先使用
-[ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app) 網頁版；網頁版也支援
-Android 安裝。
+iPhone 與 iPad 使用者可於
+[App Store](https://apps.apple.com/tw/app/ontrack/id6784708806) 下載 OnTrack。
+
+Android 使用者可透過
+[ontrack.hsichen.dev/app](https://ontrack.hsichen.dev/app) 安裝網頁版。
 
 ### Android（Chrome）
 
