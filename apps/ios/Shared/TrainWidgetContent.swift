@@ -106,9 +106,10 @@ struct TrainWidgetContent: View {
         if let path = Bundle.main.path(forResource: "launch-logo", ofType: "png"),
            let image = UIImage(contentsOfFile: path) {
             Image(uiImage: image)
-                .renderingMode(.original)
+                .renderingMode(.template)
                 .resizable()
                 .scaledToFit()
+                .foregroundStyle(palette.primary)
                 .frame(
                     width: TrainWidgetLayout.logoSize,
                     height: TrainWidgetLayout.logoSize
