@@ -43,7 +43,10 @@ struct OnTrackTrainWidget: Widget {
     var body: some WidgetConfiguration {
         StaticConfiguration(kind: WidgetSnapshotStore.widgetKind, provider: TrainWidgetProvider()) { entry in
             TrainWidgetContent(snapshot: entry.snapshot)
-                .containerBackground(TrainWidgetPalette.background, for: .widget)
+                .containerBackground(
+                    TrainWidgetPalette(setting: WidgetAppearanceStore.load()).background,
+                    for: .widget
+                )
                 .widgetURL(URL(string: "ontrack://open"))
         }
         .configurationDisplayName("預計搭乘")

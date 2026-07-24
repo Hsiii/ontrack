@@ -71,6 +71,42 @@ enum WidgetSnapshotStore {
     }
 }
 
+enum WidgetAppearanceSetting: String {
+    case system
+    case light
+    case dark
+    case sage
+    case amethyst
+    case ember
+}
+
+enum WidgetAppearanceStore {
+    private static let appearanceKey = "ontrack_widget_appearance"
+
+    static func load() -> WidgetAppearanceSetting {
+        guard
+            let rawValue = UserDefaults(suiteName: WidgetSnapshotStore.suiteName)?
+                .string(forKey: appearanceKey),
+            let setting = WidgetAppearanceSetting(rawValue: rawValue)
+        else {
+            return .light
+        }
+
+        return setting
+    }
+
+    static func save(rawValue: String) {
+        guard let setting = WidgetAppearanceSetting(rawValue: rawValue),
+              let defaults = UserDefaults(suiteName: WidgetSnapshotStore.suiteName),
+              defaults.string(forKey: appearanceKey) != setting.rawValue else {
+            return
+        }
+
+        defaults.set(setting.rawValue, forKey: appearanceKey)
+        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
+    }
+}
+
 struct WidgetRouteContext: Codable, Equatable {
     let originID: String
     let destinationID: String

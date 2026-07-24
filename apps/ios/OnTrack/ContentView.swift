@@ -349,7 +349,11 @@ struct ContentView: View {
                     return
                 }
 #endif
+                WidgetAppearanceStore.save(rawValue: appearanceRaw)
                 refreshAutoDetectedOrigin()
+            }
+            .onChange(of: appearanceRaw) { _, rawValue in
+                WidgetAppearanceStore.save(rawValue: rawValue)
             }
             .task(id: scheduleTaskID) {
                 await loadSchedule()
