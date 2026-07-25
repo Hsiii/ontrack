@@ -42,6 +42,8 @@ export const translations = {
         'settings.defaultMessageFormat': '預設訊息格式',
         'settings.messageFormatArrivalOnly': '抵達時間',
         'settings.messageFormatRouteArrival': '路線與抵達',
+        'settings.trainFilters': '列車篩選',
+        'settings.electronicTicketOnly': '僅顯示電子票證適用列車',
         'settings.links': '連結',
         'settings.support': '支援',
         'settings.privacy': '隱私權',
@@ -236,6 +238,9 @@ export const translations = {
         'settings.defaultMessageFormat': 'Default message format',
         'settings.messageFormatArrivalOnly': 'Arrival only',
         'settings.messageFormatRouteArrival': 'Route and arrival',
+        'settings.trainFilters': 'Train filters',
+        'settings.electronicTicketOnly':
+            'Only show trains that accept electronic fare cards',
         'settings.links': 'Links',
         'settings.support': 'Support',
         'settings.privacy': 'Privacy Policy',

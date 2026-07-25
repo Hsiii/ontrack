@@ -127,6 +127,62 @@
         transform var(--motion-fast) ease;
 }
 
+.settings-toggle {
+    display: flex;
+    min-height: var(--size-touch);
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: 0 var(--space-3);
+    border-radius: var(--radius-md);
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-size: var(--text-sm);
+    font-weight: var(--font-medium);
+    cursor: pointer;
+}
+
+.settings-toggle input {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+}
+
+.settings-toggle-track {
+    display: flex;
+    width: var(--space-10);
+    height: var(--space-6);
+    flex: 0 0 var(--space-10);
+    align-items: center;
+    padding: var(--space-1);
+    border-radius: var(--radius-pill);
+    background: var(--color-border);
+    transition: background-color var(--motion-base) ease;
+}
+
+.settings-toggle-thumb {
+    width: var(--space-4);
+    height: var(--space-4);
+    border-radius: var(--radius-pill);
+    background: var(--color-bg-light);
+    box-shadow: var(--shadow-surface);
+    transition: transform var(--motion-base) var(--ease-out);
+}
+
+.settings-toggle input:checked + .settings-toggle-track {
+    background: var(--color-primary);
+}
+
+.settings-toggle input:checked + .settings-toggle-track .settings-toggle-thumb {
+    transform: translateX(var(--space-4));
+}
+
+.settings-toggle input:focus-visible + .settings-toggle-track {
+    outline: var(--space-1) solid var(--color-primary-subtle);
+    outline-offset: var(--space-1);
+}
+
 .settings-option-link {
     display: flex;
     min-height: var(--size-touch);
