@@ -379,6 +379,9 @@ enum AppText {
     static var selected: String { isZh ? "已選取" : "Selected" }
     static var expectedBoarding: String { isZh ? "預計搭乘" : "Planned ride" }
     static var selectTrain: String { isZh ? "選擇列車" : "Select train" }
+    static func delayedMinutes(_ minutes: Int) -> String {
+        isZh ? "延誤\(minutes)分" : "Delayed \(minutes) min"
+    }
     static var expandTrainPanel: String { isZh ? "展開班次面板" : "Expand train panel" }
     static var collapseTrainPanel: String { isZh ? "收合班次面板" : "Collapse train panel" }
     static var refreshLiveStatus: String { isZh ? "更新即時狀態" : "Refresh live status" }
