@@ -69,8 +69,8 @@ struct OnTrackRouteCardsWidget: Widget {
                 )
                 .widgetURL(URL(string: "ontrack://open"))
         }
-        .configurationDisplayName("行程卡片")
-        .description("以三張卡片快速查看行程時間、車次與誤點資訊。")
+        .configurationDisplayName("班次比較")
+        .description("同時查看三班列車的時間、車次、誤點與票價。")
         .supportedFamilies([.systemMedium])
         .contentMarginsDisabled()
     }
