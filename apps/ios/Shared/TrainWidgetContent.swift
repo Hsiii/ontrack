@@ -185,12 +185,8 @@ struct RouteCardsWidgetContent: View {
     }
 
     private func widgetContent(_ snapshot: WidgetSnapshot) -> some View {
-        HStack(spacing: TrainWidgetLayout.sectionGap) {
-            routeColumn(snapshot)
-                .frame(
-                    width: TrainWidgetLayout.compactRouteColumnWidth,
-                    alignment: .leading
-                )
+        VStack(alignment: .leading, spacing: TrainWidgetLayout.rowGap) {
+            routeRow(snapshot)
 
             VStack(spacing: TrainWidgetLayout.rowGap) {
                 ForEach(
@@ -200,28 +196,24 @@ struct RouteCardsWidgetContent: View {
                     trainCard(train)
                 }
             }
-            .frame(maxWidth: .infinity)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
     }
 
-    private func routeColumn(_ snapshot: WidgetSnapshot) -> some View {
-        VStack(alignment: .leading, spacing: TrainWidgetLayout.sectionGap) {
-            TrainWidgetLogo(color: palette.primary)
+    private func routeRow(_ snapshot: WidgetSnapshot) -> some View {
+        HStack(spacing: TrainWidgetLayout.sectionGap) {
+            Text(snapshot.originName)
+
+            Image(systemName: "arrow.right")
+                .accessibilityHidden(true)
+
+            Text(snapshot.destinationName)
 
             Spacer(minLength: 0)
-
-            VStack(alignment: .leading, spacing: TrainWidgetLayout.inlineGap) {
-                Text(snapshot.originName)
-
-                Image(systemName: "arrow.down")
-                    .accessibilityHidden(true)
-
-                Text(snapshot.destinationName)
-            }
-            .font(TrainWidgetTypography.small.weight(.semibold))
-            .foregroundStyle(palette.secondaryText)
-            .lineLimit(1)
         }
+        .font(TrainWidgetTypography.small.weight(.semibold))
+        .foregroundStyle(palette.secondaryText)
+        .lineLimit(1)
     }
 
     private func trainCard(_ train: WidgetTrainSnapshot) -> some View {
@@ -282,27 +274,22 @@ struct RouteCardsWidgetContent: View {
     }
 
     private func delayText(_ delay: Int) -> some View {
-        Text(String(format: "%+d", delay))
+        Text("Delay \(delay) mins")
             .font(TrainWidgetTypography.small)
             .monospacedDigit()
     }
 
     private var emptyContent: some View {
-        HStack(spacing: TrainWidgetLayout.sectionGap) {
-            TrainWidgetLogo(color: palette.primary)
+        VStack(alignment: .leading, spacing: TrainWidgetLayout.rowGap) {
+            Text("尚未設定行程")
+                .font(TrainWidgetTypography.medium.weight(.semibold))
+                .foregroundStyle(palette.text)
 
-            VStack(alignment: .leading, spacing: TrainWidgetLayout.rowGap) {
-                Text("尚未設定行程")
-                    .font(TrainWidgetTypography.medium.weight(.semibold))
-                    .foregroundStyle(palette.text)
-
-                Text("開啟 OnTrack 選擇路線")
-                    .font(TrainWidgetTypography.small.weight(.medium))
-                    .foregroundStyle(palette.secondaryText)
-            }
-
-            Spacer()
+            Text("開啟 OnTrack 選擇路線")
+                .font(TrainWidgetTypography.small.weight(.medium))
+                .foregroundStyle(palette.secondaryText)
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
     }
 }
 
@@ -345,7 +332,6 @@ enum TrainWidgetLayout {
     static let minimumLineWidth: CGFloat = 4
     static let minimumTapTarget: CGFloat = 44
     static let compactPadding: CGFloat = 12
-    static let compactRouteColumnWidth: CGFloat = 104
     static let compactCardPadding: CGFloat = 12
     static let compactCardRadius: CGFloat = 8
 }
