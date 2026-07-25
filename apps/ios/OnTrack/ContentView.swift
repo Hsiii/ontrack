@@ -484,6 +484,8 @@ struct ContentView: View {
 
             resolveInitialStations(loadedStations)
             refreshAutoDetectedOrigin()
+        } catch is CancellationError {
+            return
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -571,6 +573,8 @@ struct ContentView: View {
             } else {
                 WidgetSnapshotStore.clear()
             }
+        } catch is CancellationError {
+            return
         } catch {
             trains = []
             selectedTrain = nil
