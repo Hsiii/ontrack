@@ -232,7 +232,7 @@ struct RouteCardsWidgetContent: View {
                 Spacer(minLength: TrainWidgetLayout.inlineGap)
 
                 if let delay = train.delayMinutes, delay > 0 {
-                    delayBadge(delay)
+                    delayText(delay)
                 }
             }
 
@@ -263,7 +263,10 @@ struct RouteCardsWidgetContent: View {
 
     private func timeCluster(_ train: WidgetTrainSnapshot) -> some View {
         HStack(spacing: TrainWidgetLayout.inlineGap) {
-            Text(train.departureTime)
+            Text("\(train.departureTime) - \(train.arrivalTime)")
+                .font(TrainWidgetTypography.compactTime.weight(.bold))
+
+            Text("|")
 
             Text(
                 TrainDisplay.tripDuration(
@@ -271,26 +274,17 @@ struct RouteCardsWidgetContent: View {
                     arrival: train.arrivalTime
                 )
             )
-            .font(TrainWidgetTypography.small.weight(.medium))
-
-            Text(train.arrivalTime)
         }
-        .font(TrainWidgetTypography.compactTime.weight(.bold))
+        .font(TrainWidgetTypography.small)
         .monospacedDigit()
         .lineLimit(1)
         .minimumScaleFactor(0.85)
     }
 
-    private func delayBadge(_ delay: Int) -> some View {
+    private func delayText(_ delay: Int) -> some View {
         Text(String(format: "%+d", delay))
             .font(TrainWidgetTypography.small)
             .monospacedDigit()
-            .foregroundStyle(TrainWidgetPalette.onDanger)
-            .padding(.horizontal, TrainWidgetLayout.inlineGap)
-            .background {
-                RoundedRectangle(cornerRadius: TrainWidgetLayout.inlineGap)
-                    .fill(TrainWidgetPalette.danger)
-            }
     }
 
     private var emptyContent: some View {
@@ -501,10 +495,6 @@ struct TrainWidgetPalette {
         alpha: 1
     )
     static let danger = Color(uiColor: dangerUIColor)
-    static let onDanger = contrastingText(
-        lightBackground: dangerUIColor,
-        darkBackground: dangerUIColor
-    )
 
     private static func adaptive(light: UIColor, dark: UIColor) -> Color {
         Color(uiColor: UIColor { traits in
