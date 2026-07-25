@@ -213,38 +213,41 @@ enum WidgetTimelineLoader {
             return nil
         }
 
-        let trainIdentifier = [
-            "\(TrainDisplay.trainType(train.trainType)) \(train.trainNo)",
-            TrainDisplay.tripLine(train.tripLine),
-        ]
-        .compactMap { $0 }
-        .joined(separator: " · ")
-        let departureTime = TrainDisplay.adjustedTime(train.departureTime, delay: train.delay)
-        let arrivalTime = TrainDisplay.adjustedTime(train.arrivalTime, delay: train.delay)
+        let primaryTrain = WidgetTrainSnapshot(
+            train: train,
+            liveDataIsFresh: liveDataIsFresh
+        )
+        let trainCards = Array(display.trains.prefix(3)).map {
+            WidgetTrainSnapshot(
+                train: $0,
+                liveDataIsFresh: liveDataIsFresh
+            )
+        }
         let shareMessage: String
 
         if context?.messageFormatRaw == "routeArrival" {
             shareMessage = AppText.routeArrivalMessage(
                 origin: response.origin.displayName,
                 destination: response.destination.displayName,
-                time: arrivalTime
+                time: primaryTrain.arrivalTime
             )
         } else {
             shareMessage = AppText.arrivalMessage(
-                time: arrivalTime,
+                time: primaryTrain.arrivalTime,
                 station: response.destination.displayName
             )
         }
 
         return WidgetSnapshot(
-            trainIdentifier: trainIdentifier,
-            departureTime: departureTime,
-            arrivalTime: arrivalTime,
+            trainIdentifier: primaryTrain.trainIdentifier,
+            departureTime: primaryTrain.departureTime,
+            arrivalTime: primaryTrain.arrivalTime,
             originName: response.origin.displayName,
             destinationName: response.destination.displayName,
-            delayMinutes: liveDataIsFresh ? max(0, train.delay ?? 0) : nil,
+            delayMinutes: primaryTrain.delayMinutes,
             shareMessage: shareMessage,
-            updatedAt: fetchedAt
+            updatedAt: fetchedAt,
+            trainCards: trainCards
         )
     }
 
@@ -310,7 +313,8 @@ enum WidgetTimelineLoader {
             destinationName: snapshot.destinationName,
             delayMinutes: nil,
             shareMessage: snapshot.shareMessage,
-            updatedAt: snapshot.updatedAt
+            updatedAt: snapshot.updatedAt,
+            trainCards: snapshot.trainCards?.map { $0.removingLiveStatus() }
         )
     }
 }

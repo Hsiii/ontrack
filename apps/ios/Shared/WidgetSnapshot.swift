@@ -1,6 +1,47 @@
 import Foundation
 import WidgetKit
 
+struct WidgetTrainSnapshot: Codable, Equatable {
+    let trainIdentifier: String
+    let departureTime: String
+    let arrivalTime: String
+    let delayMinutes: Int?
+
+    init(train: TrainInfo, liveDataIsFresh: Bool) {
+        let delay = liveDataIsFresh ? train.delay : nil
+        trainIdentifier = [
+            "\(TrainDisplay.trainType(train.trainType)) \(train.trainNo)",
+            TrainDisplay.tripLine(train.tripLine),
+        ]
+        .compactMap { $0 }
+        .joined(separator: " · ")
+        departureTime = TrainDisplay.adjustedTime(train.departureTime, delay: delay)
+        arrivalTime = TrainDisplay.adjustedTime(train.arrivalTime, delay: delay)
+        delayMinutes = liveDataIsFresh ? max(0, delay ?? 0) : nil
+    }
+
+    init(
+        trainIdentifier: String,
+        departureTime: String,
+        arrivalTime: String,
+        delayMinutes: Int?
+    ) {
+        self.trainIdentifier = trainIdentifier
+        self.departureTime = departureTime
+        self.arrivalTime = arrivalTime
+        self.delayMinutes = delayMinutes
+    }
+
+    func removingLiveStatus() -> WidgetTrainSnapshot {
+        WidgetTrainSnapshot(
+            trainIdentifier: trainIdentifier,
+            departureTime: departureTime,
+            arrivalTime: arrivalTime,
+            delayMinutes: nil
+        )
+    }
+}
+
 struct WidgetSnapshot: Codable, Equatable {
     let trainIdentifier: String
     let departureTime: String
@@ -10,6 +51,29 @@ struct WidgetSnapshot: Codable, Equatable {
     let delayMinutes: Int?
     let shareMessage: String
     let updatedAt: Date
+    let trainCards: [WidgetTrainSnapshot]?
+
+    init(
+        trainIdentifier: String,
+        departureTime: String,
+        arrivalTime: String,
+        originName: String,
+        destinationName: String,
+        delayMinutes: Int?,
+        shareMessage: String,
+        updatedAt: Date,
+        trainCards: [WidgetTrainSnapshot]? = nil
+    ) {
+        self.trainIdentifier = trainIdentifier
+        self.departureTime = departureTime
+        self.arrivalTime = arrivalTime
+        self.originName = originName
+        self.destinationName = destinationName
+        self.delayMinutes = delayMinutes
+        self.shareMessage = shareMessage
+        self.updatedAt = updatedAt
+        self.trainCards = trainCards
+    }
 
     var copyURL: URL? {
         var components = URLComponents()
@@ -19,6 +83,21 @@ struct WidgetSnapshot: Codable, Equatable {
             URLQueryItem(name: "message", value: shareMessage),
         ]
         return components.url
+    }
+
+    var displayedTrainCards: [WidgetTrainSnapshot] {
+        if let trainCards, !trainCards.isEmpty {
+            return Array(trainCards.prefix(3))
+        }
+
+        return [
+            WidgetTrainSnapshot(
+                trainIdentifier: trainIdentifier,
+                departureTime: departureTime,
+                arrivalTime: arrivalTime,
+                delayMinutes: delayMinutes
+            ),
+        ]
     }
 }
 
@@ -31,7 +110,27 @@ extension WidgetSnapshot {
         destinationName: "新竹",
         delayMinutes: 4,
         shareMessage: "10:58 到新竹",
-        updatedAt: Date()
+        updatedAt: Date(),
+        trainCards: [
+            WidgetTrainSnapshot(
+                trainIdentifier: "區間快 2005 · 山線",
+                departureTime: "09:42",
+                arrivalTime: "10:58",
+                delayMinutes: 0
+            ),
+            WidgetTrainSnapshot(
+                trainIdentifier: "區間 1107 · 山線",
+                departureTime: "09:50",
+                arrivalTime: "11:33",
+                delayMinutes: 2
+            ),
+            WidgetTrainSnapshot(
+                trainIdentifier: "區間 2133 · 山線",
+                departureTime: "10:02",
+                arrivalTime: "11:46",
+                delayMinutes: 12
+            ),
+        ]
     )
 }
 
