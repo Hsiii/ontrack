@@ -208,12 +208,11 @@ struct RouteCardsWidgetContent: View {
                 .accessibilityHidden(true)
 
             Text(snapshot.destinationName)
-
-            Spacer(minLength: 0)
         }
         .font(TrainWidgetTypography.small.weight(.semibold))
         .foregroundStyle(palette.secondaryText)
         .lineLimit(1)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private func trainCard(_ train: WidgetTrainSnapshot) -> some View {
@@ -274,7 +273,7 @@ struct RouteCardsWidgetContent: View {
     }
 
     private func delayText(_ delay: Int) -> some View {
-        Text("Delay \(delay) mins")
+        Text(AppText.delayedMinutes(delay))
             .font(TrainWidgetTypography.small)
             .monospacedDigit()
     }
