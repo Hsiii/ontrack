@@ -56,15 +56,42 @@ struct OnTrackTrainWidget: Widget {
     }
 }
 
+struct OnTrackRouteCardsWidget: Widget {
+    var body: some WidgetConfiguration {
+        StaticConfiguration(
+            kind: WidgetSnapshotStore.routeCardsWidgetKind,
+            provider: TrainWidgetProvider()
+        ) { entry in
+            RouteCardsWidgetContent(snapshot: entry.snapshot)
+                .containerBackground(
+                    TrainWidgetPalette(setting: WidgetAppearanceStore.load()).background,
+                    for: .widget
+                )
+                .widgetURL(URL(string: "ontrack://open"))
+        }
+        .configurationDisplayName("行程卡片")
+        .description("以三張卡片快速查看行程時間、車次與誤點資訊。")
+        .supportedFamilies([.systemMedium])
+        .contentMarginsDisabled()
+    }
+}
+
 @main
 struct OnTrackWidgetBundle: WidgetBundle {
     var body: some Widget {
         OnTrackTrainWidget()
+        OnTrackRouteCardsWidget()
     }
 }
 
 #Preview(as: .systemMedium) {
     OnTrackTrainWidget()
+} timeline: {
+    TrainWidgetEntry(date: Date(), snapshot: .preview)
+}
+
+#Preview("Route cards", as: .systemMedium) {
+    OnTrackRouteCardsWidget()
 } timeline: {
     TrainWidgetEntry(date: Date(), snapshot: .preview)
 }

@@ -38,8 +38,10 @@ extension WidgetSnapshot {
 enum WidgetSnapshotStore {
     static let suiteName = "group.dev.hsichen.ontrack"
     static let widgetKind = "OnTrackTrainWidget"
+    static let routeCardsWidgetKind = "OnTrackRouteCardsWidget"
 
     private static let snapshotKey = "ontrack_widget_snapshot"
+    private static let widgetKinds = [widgetKind, routeCardsWidgetKind]
 
     static func load() -> WidgetSnapshot? {
         guard
@@ -54,7 +56,7 @@ enum WidgetSnapshotStore {
 
     static func save(_ snapshot: WidgetSnapshot) {
         saveWithoutReload(snapshot)
-        WidgetCenter.shared.reloadTimelines(ofKind: widgetKind)
+        reloadAllTimelines()
     }
 
     static func saveWithoutReload(_ snapshot: WidgetSnapshot) {
@@ -67,7 +69,13 @@ enum WidgetSnapshotStore {
 
     static func clear() {
         UserDefaults(suiteName: suiteName)?.removeObject(forKey: snapshotKey)
-        WidgetCenter.shared.reloadTimelines(ofKind: widgetKind)
+        reloadAllTimelines()
+    }
+
+    static func reloadAllTimelines() {
+        for kind in widgetKinds {
+            WidgetCenter.shared.reloadTimelines(ofKind: kind)
+        }
     }
 }
 
@@ -103,7 +111,7 @@ enum WidgetAppearanceStore {
         }
 
         defaults.set(setting.rawValue, forKey: appearanceKey)
-        WidgetCenter.shared.reloadTimelines(ofKind: WidgetSnapshotStore.widgetKind)
+        WidgetSnapshotStore.reloadAllTimelines()
     }
 }
 
