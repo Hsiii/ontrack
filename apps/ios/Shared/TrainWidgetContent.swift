@@ -40,7 +40,7 @@ struct TrainWidgetContent: View {
 
                 Spacer(minLength: TrainWidgetLayout.sectionGap)
 
-                appLogo
+                TrainWidgetLogo(color: palette.primary)
                     .layoutPriority(1)
             }
             .font(TrainWidgetTypography.medium.weight(.semibold))
@@ -101,23 +101,6 @@ struct TrainWidgetContent: View {
             .minimumScaleFactor(0.85)
     }
 
-    @ViewBuilder
-    private var appLogo: some View {
-        if let path = Bundle.main.path(forResource: "launch-logo", ofType: "png"),
-           let image = UIImage(contentsOfFile: path) {
-            Image(uiImage: image)
-                .renderingMode(.template)
-                .resizable()
-                .scaledToFit()
-                .foregroundStyle(palette.primary)
-                .frame(
-                    width: TrainWidgetLayout.logoSize,
-                    height: TrainWidgetLayout.logoSize
-                )
-                .accessibilityHidden(true)
-        }
-    }
-
     private func tripSeparator(for snapshot: WidgetSnapshot) -> some View {
         HStack(spacing: TrainWidgetLayout.inlineGap) {
             separatorLine
@@ -173,6 +156,158 @@ struct TrainWidgetContent: View {
     }
 }
 
+struct RouteCardsWidgetContent: View {
+    let snapshot: WidgetSnapshot?
+    private let appearance: WidgetAppearanceSetting
+
+    init(
+        snapshot: WidgetSnapshot?,
+        appearance: WidgetAppearanceSetting = WidgetAppearanceStore.load()
+    ) {
+        self.snapshot = snapshot
+        self.appearance = appearance
+    }
+
+    private var palette: TrainWidgetPalette {
+        TrainWidgetPalette(setting: appearance)
+    }
+
+    var body: some View {
+        Group {
+            if let snapshot {
+                widgetContent(snapshot)
+            } else {
+                emptyContent
+            }
+        }
+        .padding(TrainWidgetLayout.compactPadding)
+        .background(palette.background)
+    }
+
+    private func widgetContent(_ snapshot: WidgetSnapshot) -> some View {
+        HStack(spacing: TrainWidgetLayout.sectionGap) {
+            routeColumn(snapshot)
+                .frame(
+                    width: TrainWidgetLayout.compactRouteColumnWidth,
+                    alignment: .leading
+                )
+
+            VStack(spacing: TrainWidgetLayout.rowGap) {
+                infoCard(
+                    "\(snapshot.departureTime) - \(snapshot.arrivalTime)",
+                    background: palette.primary,
+                    foreground: palette.onPrimary
+                )
+
+                infoCard(
+                    snapshot.trainIdentifier,
+                    background: palette.primary,
+                    foreground: palette.onPrimary
+                )
+
+                delayCard(snapshot.delayMinutes)
+            }
+            .frame(maxWidth: .infinity)
+        }
+    }
+
+    private func routeColumn(_ snapshot: WidgetSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: TrainWidgetLayout.sectionGap) {
+            TrainWidgetLogo(color: palette.primary)
+
+            Spacer(minLength: 0)
+
+            VStack(alignment: .leading, spacing: TrainWidgetLayout.inlineGap) {
+                Text(snapshot.originName)
+
+                Image(systemName: "arrow.down")
+                    .accessibilityHidden(true)
+
+                Text(snapshot.destinationName)
+            }
+            .font(TrainWidgetTypography.small.weight(.semibold))
+            .foregroundStyle(palette.secondaryText)
+            .lineLimit(1)
+        }
+    }
+
+    private func delayCard(_ delayMinutes: Int?) -> some View {
+        guard let delay = delayMinutes else {
+            return infoCard(
+                "—",
+                background: palette.primary,
+                foreground: palette.onPrimary
+            )
+        }
+
+        let isDelayed = delay > 0
+
+        return infoCard(
+            String(format: "%+d", delay),
+            background: isDelayed ? TrainWidgetPalette.danger : TrainWidgetPalette.success,
+            foreground: isDelayed ? TrainWidgetPalette.onDanger : TrainWidgetPalette.onSuccess
+        )
+    }
+
+    private func infoCard(
+        _ text: String,
+        background: Color,
+        foreground: Color
+    ) -> some View {
+        Text(text)
+            .font(TrainWidgetTypography.small.weight(.semibold))
+            .monospacedDigit()
+            .foregroundStyle(foreground)
+            .lineLimit(1)
+            .minimumScaleFactor(0.85)
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+            .padding(.horizontal, TrainWidgetLayout.compactCardPadding)
+            .background {
+                RoundedRectangle(cornerRadius: TrainWidgetLayout.compactCardRadius)
+                    .fill(background)
+            }
+    }
+
+    private var emptyContent: some View {
+        HStack(spacing: TrainWidgetLayout.sectionGap) {
+            TrainWidgetLogo(color: palette.primary)
+
+            VStack(alignment: .leading, spacing: TrainWidgetLayout.rowGap) {
+                Text("尚未設定行程")
+                    .font(TrainWidgetTypography.medium.weight(.semibold))
+                    .foregroundStyle(palette.text)
+
+                Text("開啟 OnTrack 選擇路線")
+                    .font(TrainWidgetTypography.small.weight(.medium))
+                    .foregroundStyle(palette.secondaryText)
+            }
+
+            Spacer()
+        }
+    }
+}
+
+private struct TrainWidgetLogo: View {
+    let color: Color
+
+    @ViewBuilder
+    var body: some View {
+        if let path = Bundle.main.path(forResource: "launch-logo", ofType: "png"),
+           let image = UIImage(contentsOfFile: path) {
+            Image(uiImage: image)
+                .renderingMode(.template)
+                .resizable()
+                .scaledToFit()
+                .foregroundStyle(color)
+                .frame(
+                    width: TrainWidgetLayout.logoSize,
+                    height: TrainWidgetLayout.logoSize
+                )
+                .accessibilityHidden(true)
+        }
+    }
+}
+
 enum TrainWidgetTypography {
     static let large = Font.system(size: 26)
     static let medium = Font.system(size: 16)
@@ -189,6 +324,10 @@ enum TrainWidgetLayout {
     static let logoSize: CGFloat = 20
     static let minimumLineWidth: CGFloat = 4
     static let minimumTapTarget: CGFloat = 44
+    static let compactPadding: CGFloat = 12
+    static let compactRouteColumnWidth: CGFloat = 104
+    static let compactCardPadding: CGFloat = 12
+    static let compactCardRadius: CGFloat = 8
 }
 
 struct TrainWidgetPalette {
@@ -274,6 +413,41 @@ struct TrainWidgetPalette {
         }
     }
 
+    var onPrimary: Color {
+        switch setting {
+        case .sage:
+            Self.contrastingText(
+                lightBackground: UIColor(red: 101 / 255, green: 145 / 255, blue: 87 / 255, alpha: 1),
+                darkBackground: UIColor(red: 101 / 255, green: 145 / 255, blue: 87 / 255, alpha: 1)
+            )
+        case .amethyst:
+            Self.contrastingText(
+                lightBackground: UIColor(red: 173 / 255, green: 150 / 255, blue: 218 / 255, alpha: 1),
+                darkBackground: UIColor(red: 173 / 255, green: 150 / 255, blue: 218 / 255, alpha: 1)
+            )
+        case .ember:
+            Self.contrastingText(
+                lightBackground: UIColor(red: 209 / 255, green: 105 / 255, blue: 35 / 255, alpha: 1),
+                darkBackground: UIColor(red: 209 / 255, green: 105 / 255, blue: 35 / 255, alpha: 1)
+            )
+        case .light:
+            Self.contrastingText(
+                lightBackground: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 1),
+                darkBackground: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 1)
+            )
+        case .dark:
+            Self.contrastingText(
+                lightBackground: UIColor(red: 96 / 255, green: 165 / 255, blue: 250 / 255, alpha: 1),
+                darkBackground: UIColor(red: 96 / 255, green: 165 / 255, blue: 250 / 255, alpha: 1)
+            )
+        case .system:
+            Self.contrastingText(
+                lightBackground: UIColor(red: 53 / 255, green: 125 / 255, blue: 233 / 255, alpha: 1),
+                darkBackground: UIColor(red: 96 / 255, green: 165 / 255, blue: 250 / 255, alpha: 1)
+            )
+        }
+    }
+
     var border: Color {
         switch setting {
         case .sage:
@@ -294,11 +468,69 @@ struct TrainWidgetPalette {
         }
     }
 
-    static let danger = Color(red: 239 / 255, green: 68 / 255, blue: 68 / 255)
+    private static let dangerUIColor = UIColor(
+        red: 239 / 255,
+        green: 68 / 255,
+        blue: 68 / 255,
+        alpha: 1
+    )
+    private static let successUIColor = UIColor(
+        red: 34 / 255,
+        green: 197 / 255,
+        blue: 94 / 255,
+        alpha: 1
+    )
+
+    static let danger = Color(uiColor: dangerUIColor)
+    static let success = Color(uiColor: successUIColor)
+    static let onDanger = contrastingText(
+        lightBackground: dangerUIColor,
+        darkBackground: dangerUIColor
+    )
+    static let onSuccess = contrastingText(
+        lightBackground: successUIColor,
+        darkBackground: successUIColor
+    )
 
     private static func adaptive(light: UIColor, dark: UIColor) -> Color {
         Color(uiColor: UIColor { traits in
             traits.userInterfaceStyle == .dark ? dark : light
         })
+    }
+
+    private static func contrastingText(
+        lightBackground: UIColor,
+        darkBackground: UIColor
+    ) -> Color {
+        Color(uiColor: UIColor { traits in
+            let background = traits.userInterfaceStyle == .dark
+                ? darkBackground
+                : lightBackground
+            return background.prefersLightForeground ? .white : .black
+        })
+    }
+}
+
+private extension UIColor {
+    var prefersLightForeground: Bool {
+        var red: CGFloat = 0
+        var green: CGFloat = 0
+        var blue: CGFloat = 0
+        getRed(&red, green: &green, blue: &blue, alpha: nil)
+
+        func linearized(_ component: CGFloat) -> CGFloat {
+            component <= 0.04045
+                ? component / 12.92
+                : pow((component + 0.055) / 1.055, 2.4)
+        }
+
+        let luminance =
+            0.2126 * linearized(red)
+            + 0.7152 * linearized(green)
+            + 0.0722 * linearized(blue)
+
+        let whiteContrast = 1.05 / (luminance + 0.05)
+        let blackContrast = (luminance + 0.05) / 0.05
+        return whiteContrast >= blackContrast
     }
 }
