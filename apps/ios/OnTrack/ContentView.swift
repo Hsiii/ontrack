@@ -608,11 +608,6 @@ struct ContentView: View {
             messageFormatRaw: messageFormatRaw
         ))
 
-        let trainType = TrainDisplay.trainType(train.trainType)
-        let trainLine = TrainDisplay.tripLine(train.tripLine)
-        let trainIdentifier = ["\(trainType) \(train.trainNo)", trainLine]
-            .compactMap { $0 }
-            .joined(separator: " · ")
         let widgetTrain = TrainInfo(
             trainNo: train.trainNo,
             trainType: train.trainType,
@@ -626,20 +621,31 @@ struct ContentView: View {
             delay: widgetLiveDataIsFresh ? train.delay : nil,
             status: widgetLiveDataIsFresh ? train.status : .unknown
         )
+        let primaryTrain = WidgetTrainSnapshot(
+            train: train,
+            liveDataIsFresh: widgetLiveDataIsFresh
+        )
+        let trainCards = Array(trains.prefix(3)).map {
+            WidgetTrainSnapshot(
+                train: $0,
+                liveDataIsFresh: widgetLiveDataIsFresh
+            )
+        }
 
         WidgetSnapshotStore.save(WidgetSnapshot(
-            trainIdentifier: trainIdentifier,
-            departureTime: TrainDisplay.adjustedTime(widgetTrain.departureTime, delay: widgetTrain.delay),
-            arrivalTime: TrainDisplay.adjustedTime(widgetTrain.arrivalTime, delay: widgetTrain.delay),
+            trainIdentifier: primaryTrain.trainIdentifier,
+            departureTime: primaryTrain.departureTime,
+            arrivalTime: primaryTrain.arrivalTime,
             originName: originStation.displayName,
             destinationName: destinationStation.displayName,
-            delayMinutes: widgetLiveDataIsFresh ? max(0, widgetTrain.delay ?? 0) : nil,
+            delayMinutes: primaryTrain.delayMinutes,
             shareMessage: (ShareMessageFormat(rawValue: messageFormatRaw) ?? .arrivalOnly).message(
                 train: widgetTrain,
                 origin: originStation,
                 destination: destinationStation
             ),
-            updatedAt: Date()
+            updatedAt: Date(),
+            trainCards: trainCards
         ))
     }
 

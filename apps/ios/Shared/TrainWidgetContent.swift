@@ -193,19 +193,12 @@ struct RouteCardsWidgetContent: View {
                 )
 
             VStack(spacing: TrainWidgetLayout.rowGap) {
-                infoCard(
-                    "\(snapshot.departureTime) - \(snapshot.arrivalTime)",
-                    background: palette.primary,
-                    foreground: palette.onPrimary
-                )
-
-                infoCard(
-                    snapshot.trainIdentifier,
-                    background: palette.primary,
-                    foreground: palette.onPrimary
-                )
-
-                delayCard(snapshot.delayMinutes)
+                ForEach(
+                    Array(snapshot.displayedTrainCards.enumerated()),
+                    id: \.offset
+                ) { _, train in
+                    trainCard(train)
+                }
             }
             .frame(maxWidth: .infinity)
         }
@@ -231,41 +224,58 @@ struct RouteCardsWidgetContent: View {
         }
     }
 
-    private func delayCard(_ delayMinutes: Int?) -> some View {
-        guard let delay = delayMinutes else {
-            return infoCard(
-                "—",
-                background: palette.primary,
-                foreground: palette.onPrimary
-            )
+    private func trainCard(_ train: WidgetTrainSnapshot) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("\(train.departureTime) - \(train.arrivalTime)")
+                .font(TrainWidgetTypography.small.weight(.bold))
+                .monospacedDigit()
+
+            HStack(spacing: TrainWidgetLayout.inlineGap) {
+                Text(train.trainIdentifier)
+                    .font(TrainWidgetTypography.small)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+
+                Spacer(minLength: TrainWidgetLayout.inlineGap)
+
+                delayBadge(train.delayMinutes)
+            }
         }
-
-        let isDelayed = delay > 0
-
-        return infoCard(
-            String(format: "%+d", delay),
-            background: isDelayed ? TrainWidgetPalette.danger : TrainWidgetPalette.success,
-            foreground: isDelayed ? TrainWidgetPalette.onDanger : TrainWidgetPalette.onSuccess
-        )
+        .foregroundStyle(palette.onPrimary)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
+        .padding(.horizontal, TrainWidgetLayout.compactCardPadding)
+        .background {
+            RoundedRectangle(cornerRadius: TrainWidgetLayout.compactCardRadius)
+                .fill(palette.primary)
+        }
     }
 
-    private func infoCard(
-        _ text: String,
-        background: Color,
-        foreground: Color
-    ) -> some View {
-        Text(text)
-            .font(TrainWidgetTypography.small.weight(.semibold))
-            .monospacedDigit()
-            .foregroundStyle(foreground)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
-            .padding(.horizontal, TrainWidgetLayout.compactCardPadding)
-            .background {
-                RoundedRectangle(cornerRadius: TrainWidgetLayout.compactCardRadius)
-                    .fill(background)
-            }
+    @ViewBuilder
+    private func delayBadge(_ delayMinutes: Int?) -> some View {
+        if let delay = delayMinutes {
+            let isDelayed = delay > 0
+
+            Text(String(format: "%+d", delay))
+                .font(TrainWidgetTypography.small)
+                .monospacedDigit()
+                .foregroundStyle(
+                    isDelayed
+                        ? TrainWidgetPalette.onDanger
+                        : TrainWidgetPalette.onSuccess
+                )
+                .padding(.horizontal, TrainWidgetLayout.inlineGap)
+                .background {
+                    RoundedRectangle(cornerRadius: TrainWidgetLayout.inlineGap)
+                        .fill(
+                            isDelayed
+                                ? TrainWidgetPalette.danger
+                                : TrainWidgetPalette.success
+                        )
+                }
+        } else {
+            Text("—")
+                .font(TrainWidgetTypography.small)
+        }
     }
 
     private var emptyContent: some View {
