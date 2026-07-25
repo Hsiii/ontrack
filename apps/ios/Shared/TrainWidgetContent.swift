@@ -226,9 +226,15 @@ struct RouteCardsWidgetContent: View {
 
     private func trainCard(_ train: WidgetTrainSnapshot) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("\(train.departureTime) - \(train.arrivalTime)")
-                .font(TrainWidgetTypography.small.weight(.bold))
-                .monospacedDigit()
+            HStack(spacing: TrainWidgetLayout.inlineGap) {
+                timeCluster(train)
+
+                Spacer(minLength: TrainWidgetLayout.inlineGap)
+
+                if let delay = train.delayMinutes, delay > 0 {
+                    delayBadge(delay)
+                }
+            }
 
             HStack(spacing: TrainWidgetLayout.inlineGap) {
                 Text(train.trainIdentifier)
@@ -238,7 +244,12 @@ struct RouteCardsWidgetContent: View {
 
                 Spacer(minLength: TrainWidgetLayout.inlineGap)
 
-                delayBadge(train.delayMinutes)
+                if let price = train.price {
+                    Text(price)
+                        .font(TrainWidgetTypography.small)
+                        .monospacedDigit()
+                        .lineLimit(1)
+                }
             }
         }
         .foregroundStyle(palette.onPrimary)
@@ -250,32 +261,36 @@ struct RouteCardsWidgetContent: View {
         }
     }
 
-    @ViewBuilder
-    private func delayBadge(_ delayMinutes: Int?) -> some View {
-        if let delay = delayMinutes {
-            let isDelayed = delay > 0
+    private func timeCluster(_ train: WidgetTrainSnapshot) -> some View {
+        HStack(spacing: TrainWidgetLayout.inlineGap) {
+            Text(train.departureTime)
 
-            Text(String(format: "%+d", delay))
-                .font(TrainWidgetTypography.small)
-                .monospacedDigit()
-                .foregroundStyle(
-                    isDelayed
-                        ? TrainWidgetPalette.onDanger
-                        : TrainWidgetPalette.onSuccess
+            Text(
+                TrainDisplay.tripDuration(
+                    departure: train.departureTime,
+                    arrival: train.arrivalTime
                 )
-                .padding(.horizontal, TrainWidgetLayout.inlineGap)
-                .background {
-                    RoundedRectangle(cornerRadius: TrainWidgetLayout.inlineGap)
-                        .fill(
-                            isDelayed
-                                ? TrainWidgetPalette.danger
-                                : TrainWidgetPalette.success
-                        )
-                }
-        } else {
-            Text("—")
-                .font(TrainWidgetTypography.small)
+            )
+            .font(TrainWidgetTypography.small.weight(.medium))
+
+            Text(train.arrivalTime)
         }
+        .font(TrainWidgetTypography.compactTime.weight(.bold))
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
+    }
+
+    private func delayBadge(_ delay: Int) -> some View {
+        Text(String(format: "%+d", delay))
+            .font(TrainWidgetTypography.small)
+            .monospacedDigit()
+            .foregroundStyle(TrainWidgetPalette.onDanger)
+            .padding(.horizontal, TrainWidgetLayout.inlineGap)
+            .background {
+                RoundedRectangle(cornerRadius: TrainWidgetLayout.inlineGap)
+                    .fill(TrainWidgetPalette.danger)
+            }
     }
 
     private var emptyContent: some View {
@@ -321,6 +336,7 @@ private struct TrainWidgetLogo: View {
 enum TrainWidgetTypography {
     static let large = Font.system(size: 26)
     static let medium = Font.system(size: 16)
+    static let compactTime = Font.system(size: 14)
     static let small = Font.system(size: 12)
 }
 
@@ -484,22 +500,10 @@ struct TrainWidgetPalette {
         blue: 68 / 255,
         alpha: 1
     )
-    private static let successUIColor = UIColor(
-        red: 34 / 255,
-        green: 197 / 255,
-        blue: 94 / 255,
-        alpha: 1
-    )
-
     static let danger = Color(uiColor: dangerUIColor)
-    static let success = Color(uiColor: successUIColor)
     static let onDanger = contrastingText(
         lightBackground: dangerUIColor,
         darkBackground: dangerUIColor
-    )
-    static let onSuccess = contrastingText(
-        lightBackground: successUIColor,
-        darkBackground: successUIColor
     )
 
     private static func adaptive(light: UIColor, dark: UIColor) -> Color {
