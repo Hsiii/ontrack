@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { api, getUserSafeErrorMessage } from '../api/client';
 import { useI18n } from '../i18n/useI18n';
+import { supportsElectronicTicket } from '../trainEligibility';
 import type { TrainInfo } from '../types';
 import type { TimeMode } from './TimeSelector';
 import { TrainListSkeleton } from './TrainListSkeleton';
@@ -123,6 +124,7 @@ interface TrainListProps {
     date: string;
     time: string;
     timeMode: TimeMode;
+    electronicTicketOnly: boolean;
     onSelect: (train: TrainInfo) => void;
     selectedTrainNo: string | null;
     refreshLiveNonce?: number;
@@ -136,6 +138,7 @@ export function TrainList({
     date,
     time,
     timeMode,
+    electronicTicketOnly,
     onSelect,
     selectedTrainNo,
     refreshLiveNonce = 0,
@@ -263,9 +266,16 @@ export function TrainList({
         return () => window.clearTimeout(refreshTimer);
     }, [fetchSchedule, refreshLiveNonce]);
 
+    const eligibleTrains = useMemo(
+        () =>
+            electronicTicketOnly
+                ? allTrains.filter((train) => supportsElectronicTicket(train))
+                : allTrains,
+        [allTrains, electronicTicketOnly]
+    );
     const { displayTrains, recommendedTrain } = useMemo(
-        () => buildDisplayState(allTrains, time, timeMode),
-        [allTrains, time, timeMode]
+        () => buildDisplayState(eligibleTrains, time, timeMode),
+        [eligibleTrains, time, timeMode]
     );
 
     useEffect(() => {

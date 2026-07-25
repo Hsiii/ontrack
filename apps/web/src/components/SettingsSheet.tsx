@@ -17,6 +17,8 @@ interface SettingsSheetProps {
     onAppearanceModeChange: (mode: AppearanceMode) => void;
     messageFormat: ShareMessageFormat;
     onMessageFormatChange: (format: ShareMessageFormat) => void;
+    electronicTicketOnly: boolean;
+    onElectronicTicketOnlyChange: (enabled: boolean) => void;
 }
 
 const APPEARANCE_OPTIONS: {
@@ -51,6 +53,8 @@ export function SettingsSheet({
     onAppearanceModeChange,
     messageFormat,
     onMessageFormatChange,
+    electronicTicketOnly,
+    onElectronicTicketOnlyChange,
 }: SettingsSheetProps) {
     const { language, setLanguage, t } = useI18n();
 
@@ -127,6 +131,16 @@ export function SettingsSheet({
 
                     <div className='settings-divider' />
 
+                    <SettingsOptionGroup title={t('settings.trainFilters')}>
+                        <SettingsToggle
+                            label={t('settings.electronicTicketOnly')}
+                            isEnabled={electronicTicketOnly}
+                            onChange={onElectronicTicketOnlyChange}
+                        />
+                    </SettingsOptionGroup>
+
+                    <div className='settings-divider' />
+
                     <SettingsOptionGroup title={t('settings.links')}>
                         <SettingsLink
                             href={SUPPORT_URL}
@@ -155,6 +169,30 @@ function SettingsOptionGroup({
             <div className='settings-option-title'>{title}</div>
             <div className='settings-option-controls'>{children}</div>
         </div>
+    );
+}
+
+function SettingsToggle({
+    label,
+    isEnabled,
+    onChange,
+}: {
+    label: string;
+    isEnabled: boolean;
+    onChange: (enabled: boolean) => void;
+}) {
+    return (
+        <label className='settings-toggle'>
+            <span>{label}</span>
+            <input
+                type='checkbox'
+                checked={isEnabled}
+                onChange={(event) => onChange(event.target.checked)}
+            />
+            <span className='settings-toggle-track' aria-hidden='true'>
+                <span className='settings-toggle-thumb' />
+            </span>
+        </label>
     );
 }
 

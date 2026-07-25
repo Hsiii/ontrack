@@ -37,6 +37,7 @@ const EMPTY_TIME_SELECTION: TimeSelection = {
 };
 const NATIVE_SPLASH_HIDE_FALLBACK_MS = 240;
 const SHARE_MESSAGE_FORMAT_KEY = 'ontrack_share_message_format';
+const ELECTRONIC_TICKET_ONLY_KEY = 'ontrack_electronic_ticket_only';
 const APPEARANCE_MODE_KEY = 'ontrack_appearance';
 const LEGACY_DARK_MODE_KEY = 'ontrack_dark_mode';
 const THEME_COLOR_BY_MODE = {
@@ -77,6 +78,14 @@ function getStoredAppearanceMode(): AppearanceMode {
     }
 
     return 'light';
+}
+
+function getStoredElectronicTicketOnly(): boolean {
+    if (typeof window === 'undefined') {
+        return false;
+    }
+
+    return window.localStorage.getItem(ELECTRONIC_TICKET_ONLY_KEY) === 'true';
 }
 
 function getResolvedAppearanceMode(mode: AppearanceMode) {
@@ -132,6 +141,7 @@ function App() {
         useState<AppearanceMode>('light');
     const [shareMessageFormat, setShareMessageFormat] =
         useState<ShareMessageFormat>('arrivalOnly');
+    const [electronicTicketOnly, setElectronicTicketOnly] = useState(false);
     const hasAppliedShowcaseRouteRef = useRef(false);
 
     useEffect(() => {
@@ -191,6 +201,7 @@ function App() {
         const timer = window.setTimeout(() => {
             setAppearanceMode(getStoredAppearanceMode());
             setShareMessageFormat(getStoredShareMessageFormat());
+            setElectronicTicketOnly(getStoredElectronicTicketOnly());
         }, 0);
 
         return () => window.clearTimeout(timer);
@@ -292,6 +303,7 @@ function App() {
         scheduleDate,
         scheduleTime,
         timeSelection.mode,
+        electronicTicketOnly,
     ].join('-');
     const selectedTrain =
         selectedTrainState?.scheduleKey === scheduleSelectionKey
@@ -305,6 +317,13 @@ function App() {
         setAppearanceMode(mode);
         window.localStorage.setItem(APPEARANCE_MODE_KEY, mode);
         window.localStorage.removeItem(LEGACY_DARK_MODE_KEY);
+    };
+    const handleSetElectronicTicketOnly = (enabled: boolean) => {
+        setElectronicTicketOnly(enabled);
+        window.localStorage.setItem(
+            ELECTRONIC_TICKET_ONLY_KEY,
+            String(enabled)
+        );
     };
     const handleSelectTrain = (train: TrainInfo) => {
         setSelectedTrainState({
@@ -322,6 +341,8 @@ function App() {
                 onAppearanceModeChange={handleSetAppearanceMode}
                 messageFormat={shareMessageFormat}
                 onMessageFormatChange={handleSetShareMessageFormat}
+                electronicTicketOnly={electronicTicketOnly}
+                onElectronicTicketOnlyChange={handleSetElectronicTicketOnly}
             />
             <div className='app-container'>
                 <main className='app-main'>
@@ -393,6 +414,7 @@ function App() {
                         timeMode={timeSelection.mode}
                         selectedTrain={selectedTrain}
                         messageFormat={shareMessageFormat}
+                        electronicTicketOnly={electronicTicketOnly}
                         onSelectTrain={handleSelectTrain}
                         refreshLiveNonce={liveRefreshNonce}
                         onRefreshingLiveChange={setIsRefreshingLive}

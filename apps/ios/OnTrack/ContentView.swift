@@ -126,12 +126,14 @@ struct ContentView: View {
     @AppStorage(AppPreferenceKey.language) private var languageCode = AppLanguageSetting.system.rawValue
     @AppStorage(AppPreferenceKey.appearance) private var appearanceRaw = AppAppearanceSetting.current.rawValue
     @AppStorage(AppPreferenceKey.messageFormat) private var messageFormatRaw = ShareMessageFormat.arrivalOnly.rawValue
+    @AppStorage(AppPreferenceKey.electronicTicketOnly) private var electronicTicketOnly = false
 
     @StateObject private var locationService = LocationService()
     @StateObject private var supportPurchaseManager = SupportPurchaseManager()
     @State private var stations: [Station] = []
     @State private var timeSelection = TimeSelection.current()
     @State private var trains: [TrainInfo] = []
+    @State private var allScheduleTrains: [TrainInfo] = []
     @State private var selectedTrain: TrainInfo?
     @State private var isLoadingStations = false
     @State private var isLoadingSchedule = false
@@ -391,6 +393,9 @@ struct ContentView: View {
 
                 fallbackToCachedOrigin()
             }
+            .onChange(of: electronicTicketOnly) {
+                applyTrainFilter()
+            }
             .alert("OnTrack", isPresented: hasError) {
                 Button("OK", role: .cancel) {
                     errorMessage = nil
@@ -419,6 +424,7 @@ struct ContentView: View {
             SettingsSheet(
                 appearanceRaw: $appearanceRaw,
                 messageFormatRaw: $messageFormatRaw,
+                electronicTicketOnly: $electronicTicketOnly,
                 originName: originStation?.displayName,
                 destinationName: destinationStation?.displayName,
                 purchaseManager: supportPurchaseManager
@@ -553,6 +559,7 @@ struct ContentView: View {
 
             guard let response, response.meta?.scheduleCacheStatus != .warming else {
                 trains = []
+                allScheduleTrains = []
                 selectedTrain = nil
                 widgetLiveDataIsFresh = false
                 WidgetSnapshotStore.clear()
@@ -562,11 +569,14 @@ struct ContentView: View {
             widgetLiveDataIsFresh = response.meta?.liveDataStatus == .fresh
                 && (response.meta?.liveDataAgeSeconds ?? 0) <= 15 * 60
             let display = TrainDisplay.displaySchedule(
-                trains: response.trains,
+                trains: electronicTicketOnly
+                    ? response.trains.filter(\.supportsElectronicTicket)
+                    : response.trains,
                 targetTime: timeSelection.scheduleTime,
                 timeMode: timeSelection.mode.scheduleMode
             )
             trains = display.trains
+            allScheduleTrains = response.trains
             selectedTrain = display.recommendedTrain
             if let recommendedTrain = display.recommendedTrain {
                 persistWidgetSnapshot(for: recommendedTrain)
@@ -577,9 +587,28 @@ struct ContentView: View {
             return
         } catch {
             trains = []
+            allScheduleTrains = []
             selectedTrain = nil
             widgetLiveDataIsFresh = false
             errorMessage = error.localizedDescription
+        }
+    }
+
+    private func applyTrainFilter() {
+        let display = TrainDisplay.displaySchedule(
+            trains: electronicTicketOnly
+                ? allScheduleTrains.filter(\.supportsElectronicTicket)
+                : allScheduleTrains,
+            targetTime: timeSelection.scheduleTime,
+            timeMode: timeSelection.mode.scheduleMode
+        )
+        trains = display.trains
+        selectedTrain = display.recommendedTrain
+
+        if let recommendedTrain = display.recommendedTrain {
+            persistWidgetSnapshot(for: recommendedTrain)
+        } else {
+            WidgetSnapshotStore.clear()
         }
     }
 
@@ -2171,6 +2200,7 @@ private struct SettingsSheet: View {
 
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
+    @Binding var electronicTicketOnly: Bool
     let originName: String?
     let destinationName: String?
     @ObservedObject var purchaseManager: SupportPurchaseManager
@@ -2237,6 +2267,15 @@ private struct SettingsSheet: View {
                                     messageFormatRaw = format.rawValue
                                 }
                             }
+                        }
+
+                        SettingsDivider()
+
+                        SettingsOptionGroup(title: AppText.trainFilters) {
+                            SettingsToggleRow(
+                                title: AppText.electronicTicketOnly,
+                                isOn: $electronicTicketOnly
+                            )
                         }
 
                         SettingsDivider()
@@ -2621,6 +2660,19 @@ private struct SettingsOptionGroup<Content: View>: View {
             }
         }
         .padding(.vertical, OnTrackTheme.space4)
+    }
+}
+
+private struct SettingsToggleRow: View {
+    let title: String
+    @Binding var isOn: Bool
+
+    var body: some View {
+        Toggle(title, isOn: $isOn)
+            .font(OnTrackFont.control)
+            .foregroundStyle(OnTrackTheme.text)
+            .padding(.horizontal, OnTrackTheme.space4)
+            .frame(minHeight: OnTrackTheme.controlHeight)
     }
 }
 

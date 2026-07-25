@@ -19,6 +19,7 @@ interface TrainBoardingPanelProps {
     timeMode: TimeMode;
     selectedTrain: TrainInfo | null;
     messageFormat: ShareMessageFormat;
+    electronicTicketOnly: boolean;
     onSelectTrain: (train: TrainInfo) => void;
     refreshLiveNonce?: number;
     onRefreshingLiveChange?: (isRefreshing: boolean) => void;
@@ -41,6 +42,7 @@ export function TrainBoardingPanel({
     timeMode,
     selectedTrain,
     messageFormat,
+    electronicTicketOnly,
     onSelectTrain,
     refreshLiveNonce = 0,
     onRefreshingLiveChange,
@@ -135,6 +137,7 @@ export function TrainBoardingPanel({
                         date={date}
                         time={time}
                         timeMode={timeMode}
+                        electronicTicketOnly={electronicTicketOnly}
                         onSelect={onSelectTrain}
                         selectedTrainNo={activeTrain?.trainNo || null}
                         refreshLiveNonce={refreshLiveNonce}

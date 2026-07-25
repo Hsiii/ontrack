@@ -5,6 +5,7 @@ enum AppPreferenceKey {
     static let darkMode = "ontrack_dark_mode"
     static let language = "ontrack_language"
     static let messageFormat = "ontrack_message_format"
+    static let electronicTicketOnly = "ontrack_electronic_ticket_only"
 }
 
 enum AppLanguageSetting: String, CaseIterable, Identifiable {
@@ -100,6 +101,14 @@ struct TrainInfo: Decodable, Identifiable {
     let status: TrainStatus
 
     var id: String { trainNo }
+
+    var supportsElectronicTicket: Bool {
+        let unsupportedMarkers = [
+            "觀光", "團體", "太魯閣", "普悠瑪", "新自強",
+            "3000", "專開", "商務", "親子", "郵輪",
+        ]
+        return !unsupportedMarkers.contains { trainType.contains($0) }
+    }
 }
 
 enum TrainStatus: String, Decodable {
@@ -408,6 +417,12 @@ enum AppText {
     static var amethystTheme: String { isZh ? "紫水晶" : "Amethyst" }
     static var emberTheme: String { isZh ? "餘燼" : "Ember" }
     static var defaultMessageFormat: String { isZh ? "預設訊息格式" : "Default message format" }
+    static var trainFilters: String { isZh ? "列車篩選" : "Train filters" }
+    static var electronicTicketOnly: String {
+        isZh
+            ? "僅顯示電子票證適用列車"
+            : "Only show trains that accept electronic fare cards"
+    }
     static var arrivalOnlyMessageFormat: String { isZh ? "抵達時間" : "Arrival only" }
     static var routeArrivalMessageFormat: String { isZh ? "路線與抵達" : "Route and arrival" }
     static var exampleOriginStation: String { isZh ? "新竹" : "Hsinchu" }
