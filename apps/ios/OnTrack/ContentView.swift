@@ -417,7 +417,6 @@ struct ContentView: View {
 
         case .settings:
             SettingsSheet(
-                languageCode: $languageCode,
                 appearanceRaw: $appearanceRaw,
                 messageFormatRaw: $messageFormatRaw,
                 originName: originStation?.displayName,
@@ -2166,7 +2165,6 @@ private struct SettingsSheet: View {
 
     private let headerHeight = OnTrackTheme.space5 + OnTrackTheme.iconButtonSize + OnTrackTheme.routeDividerHeight
 
-    @Binding var languageCode: String
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
     let originName: String?
@@ -2233,19 +2231,6 @@ private struct SettingsSheet: View {
                                     isSelected: messageFormatRaw == format.rawValue
                                 ) {
                                     messageFormatRaw = format.rawValue
-                                }
-                            }
-                        }
-
-                        SettingsDivider()
-
-                        SettingsOptionGroup(title: AppText.language) {
-                            ForEach(AppLanguageSetting.allCases) { setting in
-                                SettingsOptionButton(
-                                    title: languageTitle(setting),
-                                    isSelected: languageCode == setting.rawValue
-                                ) {
-                                    languageCode = setting.rawValue
                                 }
                             }
                         }
@@ -2347,17 +2332,6 @@ private struct SettingsSheet: View {
 
     private var previewDestinationName: String {
         destinationName ?? AppText.exampleDestinationStation
-    }
-
-    private func languageTitle(_ setting: AppLanguageSetting) -> String {
-        switch setting {
-        case .system:
-            AppText.systemLanguage
-        case .zhTW:
-            AppText.traditionalChinese
-        case .en:
-            AppText.english
-        }
     }
 
     private func appearanceTitle(_ setting: AppAppearanceSetting) -> String {
