@@ -6,6 +6,7 @@ struct WidgetTrainSnapshot: Codable, Equatable {
     let departureTime: String
     let arrivalTime: String
     let delayMinutes: Int?
+    let price: String?
 
     init(train: TrainInfo, liveDataIsFresh: Bool) {
         let delay = liveDataIsFresh ? train.delay : nil
@@ -18,18 +19,21 @@ struct WidgetTrainSnapshot: Codable, Equatable {
         departureTime = TrainDisplay.adjustedTime(train.departureTime, delay: delay)
         arrivalTime = TrainDisplay.adjustedTime(train.arrivalTime, delay: delay)
         delayMinutes = liveDataIsFresh ? max(0, delay ?? 0) : nil
+        price = TrainDisplay.price(train.price)
     }
 
     init(
         trainIdentifier: String,
         departureTime: String,
         arrivalTime: String,
-        delayMinutes: Int?
+        delayMinutes: Int?,
+        price: String? = nil
     ) {
         self.trainIdentifier = trainIdentifier
         self.departureTime = departureTime
         self.arrivalTime = arrivalTime
         self.delayMinutes = delayMinutes
+        self.price = price
     }
 
     func removingLiveStatus() -> WidgetTrainSnapshot {
@@ -37,7 +41,8 @@ struct WidgetTrainSnapshot: Codable, Equatable {
             trainIdentifier: trainIdentifier,
             departureTime: departureTime,
             arrivalTime: arrivalTime,
-            delayMinutes: nil
+            delayMinutes: nil,
+            price: price
         )
     }
 }
@@ -95,7 +100,8 @@ struct WidgetSnapshot: Codable, Equatable {
                 trainIdentifier: trainIdentifier,
                 departureTime: departureTime,
                 arrivalTime: arrivalTime,
-                delayMinutes: delayMinutes
+                delayMinutes: delayMinutes,
+                price: nil
             ),
         ]
     }
@@ -116,19 +122,22 @@ extension WidgetSnapshot {
                 trainIdentifier: "區間快 2005 · 山線",
                 departureTime: "09:42",
                 arrivalTime: "10:58",
-                delayMinutes: 0
+                delayMinutes: 0,
+                price: "NT$163"
             ),
             WidgetTrainSnapshot(
                 trainIdentifier: "區間 1107 · 山線",
                 departureTime: "09:50",
                 arrivalTime: "11:33",
-                delayMinutes: 2
+                delayMinutes: 2,
+                price: "NT$163"
             ),
             WidgetTrainSnapshot(
                 trainIdentifier: "區間 2133 · 山線",
                 departureTime: "10:02",
                 arrivalTime: "11:46",
-                delayMinutes: 12
+                delayMinutes: 12,
+                price: "NT$163"
             ),
         ]
     )
