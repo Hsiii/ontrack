@@ -1641,8 +1641,24 @@ private struct TrainCard: View {
     }
 
     private var trainIdentifier: some View {
-        Text("\(TrainDisplay.trainType(train.trainType)) \(train.trainNo)")
+        HStack(spacing: OnTrackTheme.space1) {
+            Text(TrainDisplay.trainType(train.trainType))
+                .foregroundStyle(trainTypeColor)
+
+            Text(train.trainNo)
+        }
         .minimumScaleFactor(0.85)
+    }
+
+    private var trainTypeColor: Color {
+        switch TrainDisplay.trainTypeEmphasis(train.trainType) {
+        case .neutral:
+            OnTrackTheme.dimText
+        case .mixed:
+            OnTrackTheme.primaryMixed
+        case .primary:
+            OnTrackTheme.primary
+        }
     }
 
     private var accessibilityLabel: String {
@@ -3085,6 +3101,26 @@ private enum OnTrackTheme {
             Color(red: 209 / 255, green: 105 / 255, blue: 35 / 255)
         case .system, .light, .dark:
             Color(red: 53 / 255, green: 125 / 255, blue: 233 / 255)
+        }
+    }
+
+    static var primaryMixed: Color {
+        switch AppAppearanceSetting.current {
+        case .sage:
+            Color(red: 92 / 255, green: 125 / 255, blue: 81 / 255)
+        case .amethyst:
+            Color(red: 181 / 255, green: 164 / 255, blue: 216 / 255)
+        case .ember:
+            Color(red: 207 / 255, green: 145 / 255, blue: 104 / 255)
+        case .light:
+            Color(red: 62 / 255, green: 105 / 255, blue: 169 / 255)
+        case .dark:
+            Color(red: 101 / 255, green: 144 / 255, blue: 209 / 255)
+        case .system:
+            adaptiveColor(
+                light: UIColor(red: 62 / 255, green: 105 / 255, blue: 169 / 255, alpha: 1),
+                dark: UIColor(red: 101 / 255, green: 144 / 255, blue: 209 / 255, alpha: 1)
+            )
         }
     }
 

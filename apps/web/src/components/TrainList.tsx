@@ -26,18 +26,39 @@ const TRAIN_TYPE_EN: Record<string, string> = {
     新自強: 'N.TC', // New Tze-Chiang (EMU3000)
 };
 
+const PRIMARY_TRAIN_TYPES = new Set(['自強', '太魯閣', '普悠瑪', '新自強']);
+
+function getTrainTypeBase(trainType: string): string {
+    return trainType.split('(')[0].replace(/號$/, '');
+}
+
 /**
  * Parse train type to extract simple term, with optional English mapping.
  * Examples (zh-TW): "自強(商務專開列車)" → "自強"
  * Examples (en):    "自強(商務專開列車)" → "TC"
  */
 export function parseTrainType(trainType: string, lang?: string): string {
-    // Remove content in parentheses and any suffix like "號"
-    const base = trainType.split('(')[0].replace(/號$/, '');
+    const base = getTrainTypeBase(trainType);
     if (lang === 'en') {
         return TRAIN_TYPE_EN[base] ?? base;
     }
     return base;
+}
+
+type TrainTypeEmphasis = 'neutral' | 'mixed' | 'primary';
+
+function getTrainTypeEmphasis(trainType: string): TrainTypeEmphasis {
+    const base = getTrainTypeBase(trainType);
+
+    if (PRIMARY_TRAIN_TYPES.has(base)) {
+        return 'primary';
+    }
+
+    if (base === '區間快') {
+        return 'mixed';
+    }
+
+    return 'neutral';
 }
 
 /** Add minutes to a HH:mm time string */
@@ -322,6 +343,9 @@ export function TrainList({
                             trainData.trainType,
                             language
                         );
+                        const trainTypeEmphasis = getTrainTypeEmphasis(
+                            trainData.trainType
+                        );
                         const price = formatPrice(trainData.price);
                         const tripLine =
                             trainData.tripLine === 1
@@ -422,7 +446,12 @@ export function TrainList({
                                 </span>
                                 <div className='train-card-info'>
                                     <span className='train-card-identifier'>
-                                        {trainType} {trainData.trainNo}
+                                        <span
+                                            className={`train-card-type train-card-type-${trainTypeEmphasis}`}
+                                        >
+                                            {trainType}
+                                        </span>{' '}
+                                        {trainData.trainNo}
                                     </span>
                                 </div>
                                 <span className='train-card-route'>

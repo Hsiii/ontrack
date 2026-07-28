@@ -212,6 +212,12 @@ struct DisplaySchedule {
 }
 
 enum TrainDisplay {
+    enum TrainTypeEmphasis {
+        case neutral
+        case mixed
+        case primary
+    }
+
     private static let trainTypeEN: [String: String] = [
         "自強": "TC",
         "莒光": "CK",
@@ -223,17 +229,32 @@ enum TrainDisplay {
     ]
 
     static func trainType(_ trainType: String) -> String {
-        let base = trainType
-            .split(separator: "(", maxSplits: 1)
-            .first
-            .map(String.init)?
-            .replacingOccurrences(of: "號", with: "") ?? trainType
+        let base = trainTypeBase(trainType)
 
         if AppLanguage.isZh {
             return base
         }
 
         return trainTypeEN[base] ?? base
+    }
+
+    static func trainTypeEmphasis(_ trainType: String) -> TrainTypeEmphasis {
+        switch trainTypeBase(trainType) {
+        case "自強", "太魯閣", "普悠瑪", "新自強":
+            .primary
+        case "區間快":
+            .mixed
+        default:
+            .neutral
+        }
+    }
+
+    private static func trainTypeBase(_ trainType: String) -> String {
+        trainType
+            .split(separator: "(", maxSplits: 1)
+            .first
+            .map(String.init)?
+            .replacingOccurrences(of: "號", with: "") ?? trainType
     }
 
     static func trainIdentifier(trainType: String, number: String) -> String {
