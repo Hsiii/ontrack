@@ -422,7 +422,7 @@
                 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
                 CODE_SIGN_ENTITLEMENTS = OnTrack/OnTrack.entitlements;
                 CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = D925G8G7CS;
                 GENERATE_INFOPLIST_FILE = NO;
                 INFOPLIST_FILE = OnTrack/Info.plist;
@@ -431,7 +431,7 @@
                     "$(inherited)",
                     "@executable_path/Frameworks",
                 );
-                MARKETING_VERSION = 0.1.0;
+                MARKETING_VERSION = 0.4.0;
                 ONTRACK_API_ORIGIN = "https://ontrack.hsichen.dev";
                 PRODUCT_BUNDLE_IDENTIFIER = dev.hsichen.ontrack;
                 PRODUCT_NAME = "$(TARGET_NAME)";
@@ -455,7 +455,7 @@
                 ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
                 CODE_SIGN_ENTITLEMENTS = OnTrack/OnTrack.entitlements;
                 CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = D925G8G7CS;
                 GENERATE_INFOPLIST_FILE = NO;
                 INFOPLIST_FILE = OnTrack/Info.plist;
@@ -464,7 +464,7 @@
                     "$(inherited)",
                     "@executable_path/Frameworks",
                 );
-                MARKETING_VERSION = 0.1.0;
+                MARKETING_VERSION = 0.4.0;
                 ONTRACK_API_ORIGIN = "https://ontrack.hsichen.dev";
                 PRODUCT_BUNDLE_IDENTIFIER = dev.hsichen.ontrack;
                 PRODUCT_NAME = "$(TARGET_NAME)";
@@ -487,7 +487,7 @@
                 APPLICATION_EXTENSION_API_ONLY = YES;
                 CODE_SIGN_ENTITLEMENTS = OnTrackWidget/OnTrackWidget.entitlements;
                 CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = D925G8G7CS;
                 GENERATE_INFOPLIST_FILE = NO;
                 INFOPLIST_FILE = OnTrackWidget/Info.plist;
@@ -497,7 +497,7 @@
                     "@executable_path/Frameworks",
                     "@executable_path/../../Frameworks",
                 );
-                MARKETING_VERSION = 0.1.0;
+                MARKETING_VERSION = 0.4.0;
                 PRODUCT_BUNDLE_IDENTIFIER = dev.hsichen.ontrack.widget;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 SKIP_INSTALL = YES;
@@ -517,7 +517,7 @@
                 APPLICATION_EXTENSION_API_ONLY = YES;
                 CODE_SIGN_ENTITLEMENTS = OnTrackWidget/OnTrackWidget.entitlements;
                 CODE_SIGN_STYLE = Automatic;
-                CURRENT_PROJECT_VERSION = 6;
+                CURRENT_PROJECT_VERSION = 10;
                 DEVELOPMENT_TEAM = D925G8G7CS;
                 GENERATE_INFOPLIST_FILE = NO;
                 INFOPLIST_FILE = OnTrackWidget/Info.plist;
@@ -527,7 +527,7 @@
                     "@executable_path/Frameworks",
                     "@executable_path/../../Frameworks",
                 );
-                MARKETING_VERSION = 0.1.0;
+                MARKETING_VERSION = 0.4.0;
                 PRODUCT_BUNDLE_IDENTIFIER = dev.hsichen.ontrack.widget;
                 PRODUCT_NAME = "$(TARGET_NAME)";
                 SKIP_INSTALL = YES;
