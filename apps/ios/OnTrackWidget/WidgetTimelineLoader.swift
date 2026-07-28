@@ -223,20 +223,13 @@ enum WidgetTimelineLoader {
                 liveDataIsFresh: liveDataIsFresh
             )
         }
-        let shareMessage: String
-
-        if context?.messageFormatRaw == "routeArrival" {
-            shareMessage = AppText.routeArrivalMessage(
-                origin: response.origin.displayName,
-                destination: response.destination.displayName,
-                time: primaryTrain.arrivalTime
-            )
-        } else {
-            shareMessage = AppText.arrivalMessage(
-                time: primaryTrain.arrivalTime,
-                station: response.destination.displayName
-            )
-        }
+        let shareMessage = ShareMessageTemplate.message(
+            template: context?.messageTemplate ?? "",
+            legacyFormatRaw: context?.messageFormatRaw ?? "arrivalOnly",
+            train: train,
+            origin: response.origin,
+            destination: response.destination
+        )
 
         return WidgetSnapshot(
             trainIdentifier: primaryTrain.trainIdentifier,

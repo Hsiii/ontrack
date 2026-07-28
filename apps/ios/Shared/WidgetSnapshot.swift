@@ -230,6 +230,7 @@ struct WidgetRouteContext: Codable, Equatable {
     let frequentDestinationRecordsData: String
     let legacyDestinationIDs: [String]
     let messageFormatRaw: String
+    let messageTemplate: String?
 }
 
 enum WidgetRouteContextStore {

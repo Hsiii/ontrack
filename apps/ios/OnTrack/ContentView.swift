@@ -13,40 +13,6 @@ private let stationPickerAnimation = Animation.snappy(duration: 0.28, extraBounc
 private let supportURL = URL(string: "https://ontrack.hsichen.dev/docs/support")!
 private let privacyURL = URL(string: "https://ontrack.hsichen.dev/docs/privacy")!
 
-private enum ShareMessageFormat: String, CaseIterable, Identifiable {
-    case arrivalOnly
-    case routeArrival
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .arrivalOnly:
-            AppText.arrivalOnlyMessageFormat
-        case .routeArrival:
-            AppText.routeArrivalMessageFormat
-        }
-    }
-
-    func message(train: TrainInfo, origin: Station?, destination: Station) -> String {
-        let arrivalTime = TrainDisplay.adjustedTime(
-            train.arrivalTime,
-            delay: train.delay
-        )
-
-        switch self {
-        case .arrivalOnly:
-            return AppText.arrivalMessage(time: arrivalTime, station: destination.displayName)
-        case .routeArrival:
-            return AppText.routeArrivalMessage(
-                origin: origin?.displayName ?? AppText.origin,
-                destination: destination.displayName,
-                time: arrivalTime
-            )
-        }
-    }
-}
-
 private enum ActiveSheet: String, Identifiable {
     case timeEditor
     case settings
@@ -125,8 +91,9 @@ struct ContentView: View {
     @AppStorage("ontrack_recent_destination_ids") private var recentDestinationIDs = ""
     @AppStorage(AppPreferenceKey.language) private var languageCode = AppLanguageSetting.system.rawValue
     @AppStorage(AppPreferenceKey.appearance) private var appearanceRaw = AppAppearanceSetting.current.rawValue
-    @AppStorage(AppPreferenceKey.messageFormat) private var messageFormatRaw = ShareMessageFormat.arrivalOnly.rawValue
+    @AppStorage(AppPreferenceKey.messageFormat) private var messageFormatRaw = "arrivalOnly"
     @AppStorage(AppPreferenceKey.electronicTicketOnly) private var electronicTicketOnly = false
+    @AppStorage(AppPreferenceKey.messageTemplate) private var messageTemplate = ""
 
     @StateObject private var locationService = LocationService()
     @StateObject private var supportPurchaseManager = SupportPurchaseManager()
@@ -196,11 +163,12 @@ struct ContentView: View {
             return nil
         }
 
-        return AppText.plannedBoardingMessage(
-            type: TrainDisplay.trainType(selectedTrain.trainType),
-            number: selectedTrain.trainNo,
-            time: TrainDisplay.adjustedTime(selectedTrain.arrivalTime, delay: selectedTrain.delay),
-            station: destinationStation.displayName
+        return ShareMessageTemplate.message(
+            template: messageTemplate,
+            legacyFormatRaw: messageFormatRaw,
+            train: selectedTrain,
+            origin: originStation,
+            destination: destinationStation
         )
     }
 
@@ -308,7 +276,6 @@ struct ContentView: View {
                             TrainBoardingPanel(
                                 message: shareMessage,
                                 selectedTrain: selectedTrain,
-                                destination: destinationStation,
                                 trains: trains,
                                 isLoading: isLoadingSchedule,
                                 canLoadSchedule: canLoadSchedule,
@@ -425,6 +392,7 @@ struct ContentView: View {
                 appearanceRaw: $appearanceRaw,
                 messageFormatRaw: $messageFormatRaw,
                 electronicTicketOnly: $electronicTicketOnly,
+                messageTemplate: $messageTemplate,
                 originName: originStation?.displayName,
                 destinationName: destinationStation?.displayName,
                 purchaseManager: supportPurchaseManager
@@ -638,7 +606,8 @@ struct ContentView: View {
             cachedOriginID: cachedOriginId,
             frequentDestinationRecordsData: frequentDestinationRecordsData,
             legacyDestinationIDs: legacyRecentDestinationIDs,
-            messageFormatRaw: messageFormatRaw
+            messageFormatRaw: messageFormatRaw,
+            messageTemplate: messageTemplate
         ))
 
         let widgetTrain = TrainInfo(
@@ -672,7 +641,9 @@ struct ContentView: View {
             originName: originStation.displayName,
             destinationName: destinationStation.displayName,
             delayMinutes: primaryTrain.delayMinutes,
-            shareMessage: (ShareMessageFormat(rawValue: messageFormatRaw) ?? .arrivalOnly).message(
+            shareMessage: ShareMessageTemplate.message(
+                template: messageTemplate,
+                legacyFormatRaw: messageFormatRaw,
                 train: widgetTrain,
                 origin: originStation,
                 destination: destinationStation
@@ -2098,7 +2069,6 @@ private enum TrainPanelLayout {
 private struct TrainBoardingPanel: View {
     let message: String?
     let selectedTrain: TrainInfo?
-    let destination: Station?
     let trains: [TrainInfo]
     let isLoading: Bool
     let canLoadSchedule: Bool
@@ -2157,7 +2127,7 @@ private struct TrainBoardingPanel: View {
 
     private var boardingSection: some View {
         VStack(alignment: .leading, spacing: TrainPanelLayout.headerGap) {
-            panelSectionHeader(AppText.expectedBoarding)
+            panelSectionHeader(AppText.shareInfo)
             shareCard
         }
     }
@@ -2195,16 +2165,11 @@ private struct TrainBoardingPanel: View {
     }
 
     private var boardingSummary: String {
-        guard let selectedTrain, let destination else {
-            return canLoadSchedule ? AppText.noTrainsAvailable : AppText.chooseRoute
+        if let message, !message.isEmpty {
+            return message
         }
 
-        return AppText.boardingSummary(
-            type: TrainDisplay.trainType(selectedTrain.trainType),
-            number: selectedTrain.trainNo,
-            time: TrainDisplay.adjustedTime(selectedTrain.arrivalTime, delay: selectedTrain.delay),
-            station: destination.displayName
-        )
+        return canLoadSchedule ? AppText.noTrainsAvailable : AppText.chooseRoute
     }
 
     private func panelSectionHeader(_ title: String) -> some View {
@@ -2223,12 +2188,15 @@ private struct SettingsSheet: View {
     @Binding var appearanceRaw: String
     @Binding var messageFormatRaw: String
     @Binding var electronicTicketOnly: Bool
+    @Binding var messageTemplate: String
     let originName: String?
     let destinationName: String?
     @ObservedObject var purchaseManager: SupportPurchaseManager
 
     @State private var selectedAppIconRaw = AppIconSetting.current.rawValue
     @State private var showsSupportThanks = false
+    @State private var editsMessageTemplate = false
+    @State private var messageSelection = NSRange(location: 0, length: 0)
 
     var body: some View {
         GeometryReader { proxy in
@@ -2255,90 +2223,95 @@ private struct SettingsSheet: View {
 
     private func content(topSafeAreaInset: CGFloat, bottomSafeAreaInset: CGFloat) -> some View {
         ZStack(alignment: .top) {
-            ScrollViewReader { scrollProxy in
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 0) {
-                        if purchaseManager.isSupporter {
-                            SettingsAppIconGroup(
-                                selectedRawValue: $selectedAppIconRaw,
-                                onSelect: setAppIcon
-                            )
+            if editsMessageTemplate {
+                messageEditor(
+                    topSafeAreaInset: topSafeAreaInset,
+                    bottomSafeAreaInset: bottomSafeAreaInset
+                )
+            } else {
+                ScrollViewReader { scrollProxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 0) {
+                            if purchaseManager.isSupporter {
+                                SettingsAppIconGroup(
+                                    selectedRawValue: $selectedAppIconRaw,
+                                    onSelect: setAppIcon
+                                )
 
-                            SettingsDivider()
-                        }
-
-                        SettingsOptionGroup(title: AppText.theme) {
-                            ThemePicker(
-                                settings: visibleAppearanceSettings,
-                                selectedRawValue: appearanceRaw,
-                                title: appearanceTitle
-                            ) { setting in
-                                setAppearance(setting)
+                                SettingsDivider()
                             }
-                        }
 
-                        SettingsDivider()
-
-                        SettingsOptionGroup(title: AppText.defaultMessageFormat) {
-                            ForEach(ShareMessageFormat.allCases) { format in
-                                SettingsOptionButton(
-                                    title: format.title,
-                                    detail: messagePreview(for: format),
-                                    isSelected: messageFormatRaw == format.rawValue
-                                ) {
-                                    messageFormatRaw = format.rawValue
+                            SettingsOptionGroup(title: AppText.theme) {
+                                ThemePicker(
+                                    settings: visibleAppearanceSettings,
+                                    selectedRawValue: appearanceRaw,
+                                    title: appearanceTitle
+                                ) { setting in
+                                    setAppearance(setting)
                                 }
                             }
+
+                            SettingsDivider()
+
+                            SettingsOptionGroup(title: AppText.defaultMessageFormat) {
+                                SettingsNavigationButton(
+                                    title: AppText.customizeShareMessage,
+                                    detail: currentMessagePreview
+                                ) {
+                                    migrateLegacyMessageTemplate()
+                                    editsMessageTemplate = true
+                                }
+                            }
+
+                            SettingsDivider()
+
+                            SettingsOptionGroup(title: AppText.trainFilters) {
+                                SettingsToggleRow(
+                                    title: AppText.electronicTicketOnly,
+                                    isOn: $electronicTicketOnly
+                                )
+                            }
+
+                            SettingsDivider()
+
+                            SettingsSupportGroup(purchaseManager: purchaseManager)
+                                .id(Self.supportScreenshotSectionID)
+
+                            SettingsDivider()
+
+                            SettingsOptionGroup(title: AppText.links) {
+                                SettingsLinkRow(
+                                    title: AppText.support,
+                                    systemName: "questionmark.circle",
+                                    url: supportURL
+                                )
+
+                                SettingsLinkRow(
+                                    title: AppText.privacyPolicy,
+                                    systemName: "hand.raised",
+                                    url: privacyURL
+                                )
+                            }
                         }
-
-                        SettingsDivider()
-
-                        SettingsOptionGroup(title: AppText.trainFilters) {
-                            SettingsToggleRow(
-                                title: AppText.electronicTicketOnly,
-                                isOn: $electronicTicketOnly
-                            )
-                        }
-
-                        SettingsDivider()
-
-                        SettingsSupportGroup(purchaseManager: purchaseManager)
-                            .id(Self.supportScreenshotSectionID)
-
-                        SettingsDivider()
-
-                        SettingsOptionGroup(title: AppText.links) {
-                            SettingsLinkRow(
-                                title: AppText.support,
-                                systemName: "questionmark.circle",
-                                url: supportURL
-                            )
-
-                            SettingsLinkRow(
-                                title: AppText.privacyPolicy,
-                                systemName: "hand.raised",
-                                url: privacyURL
-                            )
-                        }
+                        .padding(.horizontal, OnTrackTheme.space5)
+                        .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
+                        .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+                        .frame(maxWidth: OnTrackTheme.modalContentMaxWidth, alignment: .leading)
+                        .frame(maxWidth: .infinity)
                     }
-                    .padding(.horizontal, OnTrackTheme.space5)
-                    .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
-                    .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
-                    .frame(maxWidth: OnTrackTheme.modalContentMaxWidth, alignment: .leading)
-                    .frame(maxWidth: .infinity)
-                }
-                .scrollIndicators(.hidden)
+                    .scrollIndicators(.hidden)
 #if DEBUG
-                .onAppear {
-                    guard scrollsToSupportScreenshotSection else {
-                        return
-                    }
+                    .onAppear {
+                        guard scrollsToSupportScreenshotSection else {
+                            return
+                        }
 
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                        scrollProxy.scrollTo(Self.supportScreenshotSectionID, anchor: .center)
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                            scrollProxy.scrollTo(Self.supportScreenshotSectionID, anchor: .center)
+                        }
                     }
-                }
 #endif
+                }
             }
 
             settingsHeader(topSafeAreaInset: topSafeAreaInset)
@@ -2348,11 +2321,200 @@ private struct SettingsSheet: View {
 
     private static let supportScreenshotSectionID = "support-ontrack-screenshot-section"
 
+    private func messageEditor(
+        topSafeAreaInset: CGFloat,
+        bottomSafeAreaInset: CGFloat
+    ) -> some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: OnTrackTheme.space5) {
+                Text(AppText.shareMessageEditorIntro)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.dimText)
+
+                VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
+                    Text(AppText.preview)
+                        .font(OnTrackFont.label)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .tracking(0.4)
+
+                    Text(currentMessagePreview.isEmpty ? AppText.messageEmptyPreview : currentMessagePreview)
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(OnTrackTheme.text)
+                        .frame(maxWidth: .infinity, minHeight: OnTrackTheme.controlHeight, alignment: .leading)
+                        .padding(OnTrackTheme.space4)
+                        .background(
+                            OnTrackTheme.primarySubtle,
+                            in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
+                        )
+                        .monospacedDigit()
+                }
+
+                VStack(alignment: .leading, spacing: OnTrackTheme.space3) {
+                    Text(AppText.message)
+                        .font(OnTrackFont.label)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .tracking(0.4)
+
+                    MessageTemplateTextEditor(
+                        text: editableMessageTemplate,
+                        selectedRange: $messageSelection,
+                        textColor: UIColor(OnTrackTheme.text),
+                        tokenTextColor: UIColor(OnTrackTheme.primary),
+                        tokenBackgroundColor: UIColor(OnTrackTheme.primarySubtle)
+                    )
+                    .frame(minHeight: 128)
+                    .padding(OnTrackTheme.space1)
+                    .background(
+                        OnTrackTheme.background,
+                        in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
+                    )
+
+                    LazyVGrid(
+                        columns: [
+                            GridItem(
+                                .adaptive(minimum: 92),
+                                spacing: OnTrackTheme.space2
+                            ),
+                        ],
+                        alignment: .leading,
+                        spacing: OnTrackTheme.space2
+                    ) {
+                        ForEach(ShareMessageTemplate.fields) { field in
+                            Button {
+                                insertMessageField(field)
+                            } label: {
+                                Text(field.title)
+                                    .font(OnTrackFont.label)
+                                    .foregroundStyle(OnTrackTheme.primary)
+                                    .lineLimit(1)
+                                    .minimumScaleFactor(0.8)
+                                    .padding(.horizontal, OnTrackTheme.space3)
+                                    .frame(minHeight: OnTrackTheme.controlHeight)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        OnTrackTheme.primarySubtle,
+                                        in: Capsule()
+                                    )
+                            }
+                            .buttonStyle(OnTrackPressButtonStyle())
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: OnTrackTheme.space2) {
+                    Text(AppText.presets)
+                        .font(OnTrackFont.label)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .tracking(0.4)
+
+                    VStack(spacing: OnTrackTheme.space2) {
+                        ForEach(ShareMessageTemplate.presets) { preset in
+                            messagePresetButton(preset)
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, OnTrackTheme.space5)
+            .padding(.top, topSafeAreaInset + headerHeight + OnTrackTheme.space4)
+            .padding(.bottom, OnTrackTheme.space5 + bottomSafeAreaInset)
+            .frame(maxWidth: OnTrackTheme.modalContentMaxWidth, alignment: .leading)
+            .frame(maxWidth: .infinity)
+        }
+        .scrollIndicators(.hidden)
+    }
+
+    private var editableMessageTemplate: Binding<String> {
+        Binding(
+            get: { currentMessageTemplate },
+            set: { template in
+                messageTemplate = template
+                messageFormatRaw = "custom"
+            }
+        )
+    }
+
+    private func insertMessageField(_ field: ShareMessageTemplate.Field) {
+        let source = currentMessageTemplate as NSString
+        let range = ShareMessageTemplate.templateRange(
+            forDisplayRange: messageSelection,
+            in: currentMessageTemplate
+        )
+        let nextTemplate = source.replacingCharacters(in: range, with: field.token)
+
+        editableMessageTemplate.wrappedValue = nextTemplate
+        messageSelection = NSRange(
+            location: messageSelection.location + 1,
+            length: 0
+        )
+    }
+
+    @ViewBuilder
+    private func messagePresetButton(_ preset: ShareMessageTemplate.Preset) -> some View {
+        let isSelected = currentMessageTemplate == preset.template
+        let preview = ShareMessageTemplate.render(
+            preset.template,
+            values: ShareMessageTemplate.sampleValues
+        )
+
+        Button {
+            editableMessageTemplate.wrappedValue = preset.template
+            messageSelection = NSRange(
+                location: ShareMessageTemplate.displayLength(preset.template),
+                length: 0
+            )
+        } label: {
+            HStack(spacing: OnTrackTheme.space3) {
+                VStack(alignment: .leading, spacing: OnTrackTheme.space1) {
+                    Text(preset.title)
+                        .font(OnTrackFont.control)
+                        .foregroundStyle(isSelected ? OnTrackTheme.primary : OnTrackTheme.text)
+
+                    Text(preview)
+                        .font(OnTrackFont.label)
+                        .foregroundStyle(OnTrackTheme.dimText)
+                        .lineLimit(1)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                Image(systemName: "checkmark")
+                    .font(OnTrackFont.symbol)
+                    .foregroundStyle(OnTrackTheme.primary)
+                    .frame(width: OnTrackTheme.space5)
+                    .opacity(isSelected ? 1 : 0)
+                    .accessibilityHidden(!isSelected)
+            }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .padding(.vertical, OnTrackTheme.space3)
+            .frame(minHeight: OnTrackTheme.controlHeight)
+            .background(
+                isSelected ? OnTrackTheme.primarySubtle : OnTrackTheme.background,
+                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusPanel))
+        }
+        .buttonStyle(OnTrackPressButtonStyle())
+        .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+
     private func settingsHeader(topSafeAreaInset: CGFloat) -> some View {
         VStack(spacing: 0) {
             HStack {
-                Text(AppText.settings)
-                    .font(OnTrackFont.title)
+                if editsMessageTemplate {
+                    Button {
+                        editsMessageTemplate = false
+                    } label: {
+                        Image(systemName: "arrow.left")
+                            .font(OnTrackFont.symbol)
+                            .foregroundStyle(OnTrackTheme.dimText)
+                            .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(OnTrackPressButtonStyle())
+                    .accessibilityLabel(AppText.back)
+                }
+
+                Text(editsMessageTemplate ? AppText.shareMessageEditor : AppText.settings)
+                    .font(OnTrackFont.control)
                     .foregroundStyle(OnTrackTheme.text)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -2399,6 +2561,20 @@ private struct SettingsSheet: View {
         destinationName ?? AppText.exampleDestinationStation
     }
 
+    private var currentMessageTemplate: String {
+        ShareMessageTemplate.resolved(
+            messageTemplate,
+            legacyFormatRaw: messageFormatRaw
+        )
+    }
+
+    private var currentMessagePreview: String {
+        var values = ShareMessageTemplate.sampleValues
+        values["origin"] = previewOriginName
+        values["destination"] = previewDestinationName
+        return ShareMessageTemplate.render(currentMessageTemplate, values: values)
+    }
+
     private func appearanceTitle(_ setting: AppAppearanceSetting) -> String {
         switch setting {
         case .system:
@@ -2421,19 +2597,18 @@ private struct SettingsSheet: View {
         appearanceRaw = setting.rawValue
     }
 
-    private func messagePreview(for format: ShareMessageFormat) -> String {
-        let time = "09:41"
+    private func migrateLegacyMessageTemplate() {
+        let resolvedTemplate = currentMessageTemplate
 
-        switch format {
-        case .arrivalOnly:
-            return AppText.arrivalMessage(time: time, station: previewDestinationName)
-        case .routeArrival:
-            return AppText.routeArrivalMessage(
-                origin: previewOriginName,
-                destination: previewDestinationName,
-                time: time
-            )
+        if messageTemplate.isEmpty {
+            messageTemplate = resolvedTemplate
+            messageFormatRaw = "custom"
         }
+
+        messageSelection = NSRange(
+            location: ShareMessageTemplate.displayLength(resolvedTemplate),
+            length: 0
+        )
     }
 
     private func setAppIcon(_ setting: AppIconSetting) {
@@ -2743,6 +2918,248 @@ private struct SettingsOptionButton: View {
         }
         .buttonStyle(OnTrackPressButtonStyle())
         .accessibilityAddTraits(isSelected ? [.isSelected] : [])
+    }
+}
+
+private struct SettingsNavigationButton: View {
+    let title: String
+    let detail: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: OnTrackTheme.space3) {
+                Text(title)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.text)
+                    .lineLimit(1)
+
+                Spacer()
+
+                Text(detail)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.72)
+                    .multilineTextAlignment(.trailing)
+                    .layoutPriority(1)
+
+                Image(systemName: "chevron.right")
+                    .font(OnTrackFont.symbol)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .frame(width: OnTrackTheme.space5)
+            }
+            .padding(.horizontal, OnTrackTheme.space4)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(minHeight: OnTrackTheme.controlHeight)
+            .background(
+                OnTrackTheme.background,
+                in: RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl)
+            )
+            .contentShape(RoundedRectangle(cornerRadius: OnTrackTheme.radiusControl))
+        }
+        .buttonStyle(OnTrackPressButtonStyle())
+    }
+}
+
+private struct MessageTemplateTextEditor: UIViewRepresentable {
+    @Binding var text: String
+    @Binding var selectedRange: NSRange
+    let textColor: UIColor
+    let tokenTextColor: UIColor
+    let tokenBackgroundColor: UIColor
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(parent: self)
+    }
+
+    func makeUIView(context: Context) -> UITextView {
+        let textView = UITextView()
+        textView.delegate = context.coordinator
+        textView.backgroundColor = .clear
+        textView.adjustsFontForContentSizeCategory = true
+        textView.allowsEditingTextAttributes = true
+        textView.accessibilityLabel = AppText.message
+        textView.textContainerInset = UIEdgeInsets(
+            top: OnTrackTheme.space2,
+            left: OnTrackTheme.space2,
+            bottom: OnTrackTheme.space2,
+            right: OnTrackTheme.space2
+        )
+        textView.textContainer.lineFragmentPadding = 0
+        textView.keyboardDismissMode = .interactive
+        textView.typingAttributes = baseAttributes
+        return textView
+    }
+
+    func updateUIView(_ textView: UITextView, context: Context) {
+        context.coordinator.parent = self
+        context.coordinator.isUpdating = true
+
+        if Self.template(from: textView.attributedText) != text {
+            textView.attributedText = attributedText
+            textView.typingAttributes = baseAttributes
+        }
+
+        let displayLength = textView.attributedText.length
+        let location = min(selectedRange.location, displayLength)
+        let length = min(
+            selectedRange.length,
+            displayLength - location
+        )
+        let nextRange = NSRange(location: location, length: length)
+        if textView.selectedRange != nextRange {
+            textView.selectedRange = nextRange
+        }
+
+        context.coordinator.isUpdating = false
+    }
+
+    private var baseAttributes: [NSAttributedString.Key: Any] {
+        [
+            .font: UIFont.preferredFont(forTextStyle: .body),
+            .foregroundColor: textColor,
+        ]
+    }
+
+    private var attributedText: NSAttributedString {
+        let result = NSMutableAttributedString()
+        let source = text as NSString
+        var cursor = 0
+
+        while cursor < source.length {
+            let searchRange = NSRange(
+                location: cursor,
+                length: source.length - cursor
+            )
+            let nextField = ShareMessageTemplate.fields
+                .compactMap { field -> (NSRange, ShareMessageTemplate.Field)? in
+                    let range = source.range(of: field.token, range: searchRange)
+                    return range.location == NSNotFound ? nil : (range, field)
+                }
+                .min { $0.0.location < $1.0.location }
+
+            guard let (range, field) = nextField else {
+                result.append(NSAttributedString(
+                    string: source.substring(from: cursor),
+                    attributes: baseAttributes
+                ))
+                break
+            }
+
+            if range.location > cursor {
+                result.append(NSAttributedString(
+                    string: source.substring(
+                        with: NSRange(
+                            location: cursor,
+                            length: range.location - cursor
+                        )
+                    ),
+                    attributes: baseAttributes
+                ))
+            }
+
+            result.append(NSAttributedString(
+                attachment: MessageTemplateFieldAttachment(
+                    field: field,
+                    textColor: tokenTextColor,
+                    backgroundColor: tokenBackgroundColor
+                )
+            ))
+            cursor = NSMaxRange(range)
+        }
+
+        return result
+    }
+
+    private static func template(from attributedText: NSAttributedString?) -> String {
+        guard let attributedText else { return "" }
+
+        var template = ""
+        attributedText.enumerateAttribute(
+            .attachment,
+            in: NSRange(location: 0, length: attributedText.length)
+        ) { value, range, _ in
+            if let attachment = value as? MessageTemplateFieldAttachment {
+                template += attachment.templateToken
+            } else {
+                template += attributedText.attributedSubstring(from: range).string
+            }
+        }
+        return template
+    }
+
+    final class Coordinator: NSObject, UITextViewDelegate {
+        var parent: MessageTemplateTextEditor
+        var isUpdating = false
+
+        init(parent: MessageTemplateTextEditor) {
+            self.parent = parent
+        }
+
+        func textViewDidChange(_ textView: UITextView) {
+            guard !isUpdating else { return }
+            parent.text = MessageTemplateTextEditor.template(
+                from: textView.attributedText
+            )
+            textView.typingAttributes = parent.baseAttributes
+        }
+
+        func textViewDidChangeSelection(_ textView: UITextView) {
+            guard !isUpdating else { return }
+            parent.selectedRange = textView.selectedRange
+            textView.typingAttributes = parent.baseAttributes
+        }
+    }
+}
+
+private final class MessageTemplateFieldAttachment: NSTextAttachment {
+    let templateToken: String
+
+    init(
+        field: ShareMessageTemplate.Field,
+        textColor: UIColor,
+        backgroundColor: UIColor
+    ) {
+        templateToken = field.token
+        super.init(data: nil, ofType: nil)
+
+        let font = UIFont.preferredFont(forTextStyle: .caption1)
+        let attributes: [NSAttributedString.Key: Any] = [
+            .font: font,
+            .foregroundColor: textColor,
+        ]
+        let textSize = (field.title as NSString).size(withAttributes: attributes)
+        let size = CGSize(
+            width: ceil(textSize.width) + OnTrackTheme.space4,
+            height: OnTrackTheme.space6 + OnTrackTheme.space1
+        )
+        let renderer = UIGraphicsImageRenderer(size: size)
+        image = renderer.image { _ in
+            backgroundColor.setFill()
+            UIBezierPath(
+                roundedRect: CGRect(origin: .zero, size: size),
+                cornerRadius: size.height / 2
+            ).fill()
+
+            (field.title as NSString).draw(
+                at: CGPoint(
+                    x: OnTrackTheme.space2,
+                    y: (size.height - textSize.height) / 2
+                ),
+                withAttributes: attributes
+            )
+        }
+        bounds = CGRect(
+            x: 0,
+            y: -OnTrackTheme.space2,
+            width: size.width,
+            height: size.height
+        )
+    }
+
+    required init?(coder: NSCoder) {
+        nil
     }
 }
 
