@@ -6,11 +6,7 @@ import { RefreshCw, Settings } from 'lucide-react';
 import './App.css';
 
 import { api, getUserSafeErrorMessage, isShowcaseMode } from './api/client';
-import {
-    SettingsSheet,
-    type AppearanceMode,
-    type ShareMessageFormat,
-} from './components/SettingsSheet';
+import { SettingsSheet, type AppearanceMode } from './components/SettingsSheet';
 import { StationSelector } from './components/StationSelector';
 import { StationSelectorSkeleton } from './components/StationSelectorSkeleton';
 import {
@@ -24,6 +20,10 @@ import { TrainBoardingPanel } from './components/TrainBoardingPanel';
 import { storyStations } from './fixtures/storyFixtures';
 import { usePersistence } from './hooks/usePersistence';
 import { useI18n } from './i18n/useI18n';
+import {
+    getDefaultShareMessageTemplate,
+    resolveStoredShareMessageTemplate,
+} from './shareMessage';
 import type { Station, TrainInfo } from './types';
 
 function formatEnglishStationName(name?: string) {
@@ -50,14 +50,14 @@ type SelectedTrainState = {
     train: TrainInfo;
 };
 
-function getStoredShareMessageFormat(): ShareMessageFormat {
+function getStoredShareMessageTemplate(language: 'zh-TW' | 'en'): string {
     if (typeof window === 'undefined') {
-        return 'arrivalOnly';
+        return getDefaultShareMessageTemplate(language);
     }
 
     const stored = window.localStorage.getItem(SHARE_MESSAGE_FORMAT_KEY);
 
-    return stored === 'routeArrival' ? 'routeArrival' : 'arrivalOnly';
+    return resolveStoredShareMessageTemplate(stored, language);
 }
 
 function getStoredAppearanceMode(): AppearanceMode {
@@ -139,9 +139,10 @@ function App() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [appearanceMode, setAppearanceMode] =
         useState<AppearanceMode>('light');
-    const [shareMessageFormat, setShareMessageFormat] =
-        useState<ShareMessageFormat>('arrivalOnly');
     const [electronicTicketOnly, setElectronicTicketOnly] = useState(false);
+    const [shareMessageTemplate, setShareMessageTemplate] = useState(
+        getDefaultShareMessageTemplate('zh-TW')
+    );
     const hasAppliedShowcaseRouteRef = useRef(false);
 
     useEffect(() => {
@@ -200,12 +201,12 @@ function App() {
     useEffect(() => {
         const timer = window.setTimeout(() => {
             setAppearanceMode(getStoredAppearanceMode());
-            setShareMessageFormat(getStoredShareMessageFormat());
             setElectronicTicketOnly(getStoredElectronicTicketOnly());
+            setShareMessageTemplate(getStoredShareMessageTemplate(language));
         }, 0);
 
         return () => window.clearTimeout(timer);
-    }, []);
+    }, [language]);
 
     useEffect(() => {
         const colorSchemeQuery = window.matchMedia(
@@ -309,9 +310,9 @@ function App() {
         selectedTrainState?.scheduleKey === scheduleSelectionKey
             ? selectedTrainState.train
             : null;
-    const handleSetShareMessageFormat = (format: ShareMessageFormat) => {
-        setShareMessageFormat(format);
-        window.localStorage.setItem(SHARE_MESSAGE_FORMAT_KEY, format);
+    const handleSetShareMessageTemplate = (template: string) => {
+        setShareMessageTemplate(template);
+        window.localStorage.setItem(SHARE_MESSAGE_FORMAT_KEY, template);
     };
     const handleSetAppearanceMode = (mode: AppearanceMode) => {
         setAppearanceMode(mode);
@@ -339,10 +340,10 @@ function App() {
                 onClose={() => setIsSettingsOpen(false)}
                 appearanceMode={appearanceMode}
                 onAppearanceModeChange={handleSetAppearanceMode}
-                messageFormat={shareMessageFormat}
-                onMessageFormatChange={handleSetShareMessageFormat}
                 electronicTicketOnly={electronicTicketOnly}
                 onElectronicTicketOnlyChange={handleSetElectronicTicketOnly}
+                messageTemplate={shareMessageTemplate}
+                onMessageTemplateChange={handleSetShareMessageTemplate}
             />
             <div className='app-container'>
                 <main className='app-main'>
@@ -413,8 +414,8 @@ function App() {
                         time={scheduleTime}
                         timeMode={timeSelection.mode}
                         selectedTrain={selectedTrain}
-                        messageFormat={shareMessageFormat}
                         electronicTicketOnly={electronicTicketOnly}
+                        messageTemplate={shareMessageTemplate}
                         onSelectTrain={handleSelectTrain}
                         refreshLiveNonce={liveRefreshNonce}
                         onRefreshingLiveChange={setIsRefreshingLive}
