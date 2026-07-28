@@ -1,6 +1,6 @@
 # App Store listing copy
 
-Manual snapshot of App Store Connect, last synced on 2026-07-26
+Manual snapshot of App Store Connect, last synced on 2026-07-29
 (Asia/Taipei).
 
 ## App 資訊
@@ -13,9 +13,9 @@ OnTrack
 
 > 台鐵搭哪班，打開就知道
 
-## iOS 0.3.0 已可發佈
+## iOS 0.4.0
 
-Build: `9`
+Build: `10`
 
 ### 描述
 
@@ -31,7 +31,7 @@ Build: `9`
 
 ### 此版本的新增功能
 
-> 全新桌面小工具：不用打開 App，也能查看下一班列車、抵達時間與即時誤點。這次更新也改善了推薦班次與分享體驗。
+> 全新路線小工具：不用打開 App，也能查看路線上的近期列車、抵達時間與即時誤點。現在還能篩選電子票證適用列車、快速辨識適用車種，並自訂分享訊息。
 
 ### 關鍵字
 
@@ -47,7 +47,7 @@ https://ontrack.hsichen.dev
 
 ### 版本
 
-`0.3.0`
+`0.4.0`
 
 ### 版權
 
