@@ -305,6 +305,10 @@ struct ContentView: View {
                     ))
                 }
             }
+            // Theme colors are read from preferences throughout the view tree. Give
+            // descendants a new identity so SwiftUI cannot reuse colors from the
+            // previously selected palette.
+            .id(appearanceRaw)
             .toolbar(.hidden, for: .navigationBar)
             .task {
                 await loadStations()
@@ -397,6 +401,7 @@ struct ContentView: View {
                 destinationName: destinationStation?.displayName,
                 purchaseManager: supportPurchaseManager
             )
+            .id(appearanceRaw)
         }
     }
 
