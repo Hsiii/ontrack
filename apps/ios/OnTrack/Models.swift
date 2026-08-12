@@ -88,6 +88,13 @@ struct Station: Decodable, Identifiable, Hashable {
     }
 }
 
+func isTaipeiCircularStation(_ station: Station) -> Bool {
+    station.name
+        .replacingOccurrences(of: "台", with: "臺")
+        .replacingOccurrences(of: #"[\s()（）-]"#, with: "", options: .regularExpression)
+        == "臺北環島"
+}
+
 struct TrainInfo: Decodable, Identifiable {
     let trainNo: String
     let trainType: String

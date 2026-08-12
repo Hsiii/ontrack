@@ -143,7 +143,7 @@ enum WidgetTimelineLoader {
         for station: Station?,
         stations: [Station]
     ) -> Station? {
-        guard station?.name == "臺北(環島)" else {
+        guard let station, isTaipeiCircularStation(station) else {
             return station
         }
 
