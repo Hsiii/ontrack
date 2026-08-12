@@ -16,8 +16,8 @@ struct WidgetTrainSnapshot: Codable, Equatable {
         ]
         .compactMap { $0 }
         .joined(separator: " · ")
-        departureTime = TrainDisplay.adjustedTime(train.departureTime, delay: delay)
-        arrivalTime = TrainDisplay.adjustedTime(train.arrivalTime, delay: delay)
+        departureTime = train.departureTime
+        arrivalTime = train.arrivalTime
         delayMinutes = liveDataIsFresh ? max(0, delay ?? 0) : nil
         price = TrainDisplay.price(train.price)
     }
