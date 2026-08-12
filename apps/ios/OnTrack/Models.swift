@@ -681,6 +681,19 @@ enum AppText {
     static var time: String { isZh ? "時間" : "Time" }
     static var timeMode: String { isZh ? "時間類型" : "Time mode" }
     static var settings: String { isZh ? "設定" : "Settings" }
+    static var settingsUpdateAvailable: String {
+        isZh ? "設定，有可用更新" : "Settings, update available"
+    }
+    static var updateAvailable: String { isZh ? "新版本！" : "Update available" }
+    static func updateToVersion(_ version: String) -> String {
+        isZh ? "更新至 \(version)" : "Update to \(version)"
+    }
+    static var ignoreThisVersion: String { isZh ? "忽略此版本" : "Ignore this version" }
+    static var updatePreviewReleaseNotes: String {
+        isZh
+            ? "讓即時列車資訊更新更快，並提升小工具的穩定性。"
+            : "Faster live-train updates and a more reliable widget."
+    }
     static var language: String { isZh ? "語言" : "Language" }
     static var systemLanguage: String { isZh ? "系統" : "System" }
     static var traditionalChinese: String { "繁體中文" }

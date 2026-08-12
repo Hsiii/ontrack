@@ -17,6 +17,7 @@
         A10000000000000000000027 /* SupportPurchaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000018 /* SupportPurchaseManager.swift */; };
         A10000000000000000000028 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* WidgetSnapshot.swift */; };
         A10000000000000000000029 /* TrainWidgetContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* TrainWidgetContent.swift */; };
+        A1000000000000000000002A /* UpdateAvailabilityManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A1000000000000000000001B /* UpdateAvailabilityManager.swift */; };
         A20000000000000000000020 /* OnTrackWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000010 /* OnTrackWidget.swift */; };
         A20000000000000000000021 /* WidgetSnapshot.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* WidgetSnapshot.swift */; };
         A20000000000000000000022 /* OnTrackWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A20000000000000000000003 /* OnTrackWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
@@ -68,6 +69,7 @@
         A10000000000000000000018 /* SupportPurchaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportPurchaseManager.swift; sourceTree = "<group>"; };
         A10000000000000000000019 /* OnTrack.storekit */ = {isa = PBXFileReference; lastKnownFileType = text; path = OnTrack.storekit; sourceTree = "<group>"; };
         A1000000000000000000001A /* OnTrack.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = OnTrack.entitlements; sourceTree = "<group>"; };
+        A1000000000000000000001B /* UpdateAvailabilityManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateAvailabilityManager.swift; sourceTree = "<group>"; };
         A20000000000000000000003 /* OnTrackWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = OnTrackWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
         A20000000000000000000010 /* OnTrackWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnTrackWidget.swift; sourceTree = "<group>"; };
         A20000000000000000000011 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -117,6 +119,7 @@
                 A10000000000000000000012 /* Models.swift */,
                 A10000000000000000000013 /* APIClient.swift */,
                 A10000000000000000000018 /* SupportPurchaseManager.swift */,
+                A1000000000000000000001B /* UpdateAvailabilityManager.swift */,
                 A10000000000000000000014 /* Info.plist */,
                 A10000000000000000000019 /* OnTrack.storekit */,
                 A1000000000000000000001A /* OnTrack.entitlements */,
@@ -270,6 +273,7 @@
                 A10000000000000000000027 /* SupportPurchaseManager.swift in Sources */,
                 A10000000000000000000028 /* WidgetSnapshot.swift in Sources */,
                 A10000000000000000000029 /* TrainWidgetContent.swift in Sources */,
+                A1000000000000000000002A /* UpdateAvailabilityManager.swift in Sources */,
             );
             runOnlyForDeploymentPostprocessing = 0;
         };

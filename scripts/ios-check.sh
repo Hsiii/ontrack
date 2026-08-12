@@ -26,6 +26,7 @@ xcrun swiftc \
     "$IOS_ROOT_DIR/apps/ios/OnTrack/ContentView.swift" \
     "$IOS_ROOT_DIR/apps/ios/OnTrack/DestinationAutofill.swift" \
     "$IOS_ROOT_DIR/apps/ios/OnTrack/Models.swift" \
-    "$IOS_ROOT_DIR/apps/ios/OnTrack/OnTrackApp.swift"
+    "$IOS_ROOT_DIR/apps/ios/OnTrack/OnTrackApp.swift" \
+    "$IOS_ROOT_DIR/apps/ios/OnTrack/UpdateAvailabilityManager.swift"
 
 echo "iOS project and Swift parse checks passed for scheme $IOS_SCHEME_NAME."
