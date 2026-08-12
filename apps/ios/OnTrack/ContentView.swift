@@ -98,6 +98,7 @@ struct ContentView: View {
 
     @StateObject private var locationService = LocationService()
     @StateObject private var supportPurchaseManager = SupportPurchaseManager()
+    @StateObject private var updateAvailabilityManager = UpdateAvailabilityManager()
     @State private var stations: [Station] = []
     @State private var timeSelection = TimeSelection.current()
     @State private var trains: [TrainInfo] = []
@@ -235,9 +236,12 @@ struct ContentView: View {
             || ProcessInfo.processInfo.arguments.contains("--showcase-data")
     }
 
-    private var opensSupportScreenshot: Bool {
-        ProcessInfo.processInfo.environment["ONTRACK_SCREENSHOT_TARGET"] == "support"
+    private var opensSettingsScreenshot: Bool {
+        let target = ProcessInfo.processInfo.environment["ONTRACK_SCREENSHOT_TARGET"]
+        return target == "support"
+            || target == "update"
             || ProcessInfo.processInfo.arguments.contains("--screenshot-support")
+            || ProcessInfo.processInfo.arguments.contains("--screenshot-update")
     }
 #endif
 
@@ -277,9 +281,14 @@ struct ContentView: View {
 
                                     IconPlainButton(
                                         systemName: "gearshape",
+                                        showsIndicator: updateAvailabilityManager.isUpdateAvailable,
                                         action: presentSettings
                                     )
-                                    .accessibilityLabel(AppText.settings)
+                                    .accessibilityLabel(
+                                        updateAvailabilityManager.isUpdateAvailable
+                                            ? AppText.settingsUpdateAvailable
+                                            : AppText.settings
+                                    )
                                 }
                                 .padding(.horizontal, OnTrackTheme.space2)
 
@@ -358,6 +367,9 @@ struct ContentView: View {
             .task {
                 await supportPurchaseManager.start()
             }
+            .task {
+                await updateAvailabilityManager.checkIfNeeded()
+            }
             .onAppear {
 #if DEBUG
                 guard !isShowcaseMode else {
@@ -391,6 +403,9 @@ struct ContentView: View {
                 }
 
                 refreshAutoDetectedOrigin()
+                Task {
+                    await updateAvailabilityManager.checkIfNeeded()
+                }
             }
             .onChange(of: locationService.coordinate) { _, coordinate in
                 guard let coordinate else {
@@ -441,7 +456,8 @@ struct ContentView: View {
                 messageTemplate: $messageTemplate,
                 originName: originStation?.displayName,
                 destinationName: destinationStation?.displayName,
-                purchaseManager: supportPurchaseManager
+                purchaseManager: supportPurchaseManager,
+                updateAvailabilityManager: updateAvailabilityManager
             )
             .id(appearanceRaw)
         }
@@ -519,7 +535,7 @@ struct ContentView: View {
         destinationSource = .cached
         languageCode = AppLanguageSetting.zhTW.rawValue
         appearanceRaw = AppAppearanceSetting.light.rawValue
-        activeSheet = opensSupportScreenshot ? .settings : nil
+        activeSheet = opensSettingsScreenshot ? .settings : nil
 
         var components = Formatters.taipeiCalendar.dateComponents(
             [.year, .month, .day],
@@ -2323,6 +2339,7 @@ private struct SettingsSheet: View {
     let originName: String?
     let destinationName: String?
     @ObservedObject var purchaseManager: SupportPurchaseManager
+    @ObservedObject var updateAvailabilityManager: UpdateAvailabilityManager
 
     @State private var selectedAppIconRaw = AppIconSetting.current.rawValue
     @State private var showsSupportThanks = false
@@ -2363,6 +2380,15 @@ private struct SettingsSheet: View {
                 ScrollViewReader { scrollProxy in
                     ScrollView {
                         VStack(alignment: .leading, spacing: 0) {
+                            if let availableUpdate = updateAvailabilityManager.availableUpdate {
+                                SettingsUpdateGroup(
+                                    update: availableUpdate,
+                                    onIgnore: updateAvailabilityManager.ignoreAvailableUpdate
+                                )
+
+                                SettingsDivider()
+                            }
+
                             if purchaseManager.isSupporter {
                                 SettingsAppIconGroup(
                                     selectedRawValue: $selectedAppIconRaw,
@@ -2872,6 +2898,48 @@ private struct ThemeSwatch: View {
     }
 }
 
+private struct SettingsUpdateGroup: View {
+    @Environment(\.openURL) private var openURL
+
+    let update: AppUpdate
+    let onIgnore: () -> Void
+
+    var body: some View {
+        SettingsOptionGroup(title: AppText.updateAvailable) {
+            VStack(alignment: .leading, spacing: OnTrackTheme.space3) {
+                if let releaseNotes = update.releaseNotes {
+                    Text(releaseNotes)
+                        .font(OnTrackFont.body)
+                        .foregroundStyle(OnTrackTheme.text)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Button {
+                    openURL(update.storeURL)
+                } label: {
+                    Label(
+                        AppText.updateToVersion(update.version),
+                        systemImage: "arrow.down.circle"
+                    )
+                    .font(OnTrackFont.action)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: OnTrackTheme.controlHeight)
+                }
+                .buttonStyle(.borderedProminent)
+                .buttonBorderShape(.roundedRectangle(radius: OnTrackTheme.radiusControl))
+
+                Button(AppText.ignoreThisVersion, action: onIgnore)
+                    .font(OnTrackFont.control)
+                    .foregroundStyle(OnTrackTheme.dimText)
+                    .frame(maxWidth: .infinity)
+                    .frame(minHeight: OnTrackTheme.controlHeight)
+                    .buttonStyle(OnTrackPressButtonStyle())
+            }
+            .padding(.vertical, OnTrackTheme.space2)
+        }
+    }
+}
+
 private struct SettingsSupportGroup: View {
     @ObservedObject var purchaseManager: SupportPurchaseManager
 
@@ -3345,6 +3413,7 @@ private struct IconPlainButton: View {
     let systemName: String
     var isLoading = false
     var color = OnTrackTheme.dimText
+    var showsIndicator = false
     let action: () -> Void
 
     var body: some View {
@@ -3361,6 +3430,15 @@ private struct IconPlainButton: View {
                 }
             }
             .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)
+            .overlay(alignment: .topTrailing) {
+                if showsIndicator {
+                    Circle()
+                        .fill(OnTrackTheme.primary)
+                        .frame(width: OnTrackTheme.space2, height: OnTrackTheme.space2)
+                        .padding(OnTrackTheme.space2)
+                        .accessibilityHidden(true)
+                }
+            }
         }
         .buttonStyle(OnTrackPressButtonStyle())
     }
