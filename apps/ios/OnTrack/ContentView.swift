@@ -110,6 +110,7 @@ struct ContentView: View {
     @State private var errorMessage: String?
     @State private var stationPicker: StationPickerRole?
     @State private var originSource: OriginSelectionSource = .manual
+    @State private var locatedOriginId = ""
     @State private var destinationSource: DestinationSelectionSource = .cached
     @State private var activeSheet: ActiveSheet?
 
@@ -287,6 +288,8 @@ struct ContentView: View {
                                     destination: destinationStation,
                                     isLoading: isLoadingStations,
                                     locationAuthorizationStatus: locationService.authorizationStatus,
+                                    isLocationRequesting: locationService.isRequesting,
+                                    locatedOriginId: locatedOriginId,
                                     originGlyphColor: OnTrackTheme.routeDot(for: appearanceSetting),
                                     destinationGlyphColor: OnTrackTheme.routeFlag(for: appearanceSetting),
                                     onPickOrigin: { openStationPicker(.origin) },
@@ -772,7 +775,7 @@ struct ContentView: View {
     }
 
     private func selectNearestOrigin(to coordinate: UserCoordinate) {
-        guard !stations.isEmpty, !isManualOriginProtected else {
+        guard !stations.isEmpty else {
             return
         }
 
@@ -794,7 +797,14 @@ struct ContentView: View {
             return
         }
 
-        setOrigin(resolvePreferredStationId(nearestStation.id), source: .geo)
+        let preferredStationId = resolvePreferredStationId(nearestStation.id)
+        locatedOriginId = preferredStationId
+
+        guard !isManualOriginProtected else {
+            return
+        }
+
+        setOrigin(preferredStationId, source: .geo)
         autoFillDestinationIfNeeded()
     }
 
@@ -928,6 +938,7 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
     @Published var coordinate: UserCoordinate?
     @Published var locationErrorID: UUID?
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published private(set) var isRequesting = false
 
     private let manager = CLLocationManager()
 
@@ -940,16 +951,21 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
 
     func requestLocation() {
         locationErrorID = nil
+        coordinate = nil
         authorizationStatus = manager.authorizationStatus
 
         switch manager.authorizationStatus {
         case .notDetermined:
+            isRequesting = true
             manager.requestWhenInUseAuthorization()
         case .authorizedAlways, .authorizedWhenInUse:
+            isRequesting = true
             manager.requestLocation()
         case .denied, .restricted:
+            isRequesting = false
             locationErrorID = UUID()
         @unknown default:
+            isRequesting = false
             locationErrorID = UUID()
         }
     }
@@ -966,8 +982,10 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
 
             switch status {
             case .authorizedAlways, .authorizedWhenInUse:
+                isRequesting = true
                 self.manager.requestLocation()
             case .denied, .restricted:
+                isRequesting = false
                 locationErrorID = UUID()
             case .notDetermined:
                 break
@@ -988,12 +1006,14 @@ private final class LocationService: NSObject, ObservableObject, CLLocationManag
         )
 
         Task { @MainActor [weak self] in
+            self?.isRequesting = false
             self?.coordinate = updatedCoordinate
         }
     }
 
     nonisolated func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         Task { @MainActor [weak self] in
+            self?.isRequesting = false
             self?.locationErrorID = UUID()
         }
     }
@@ -1295,6 +1315,8 @@ private struct RouteSelectorView: View {
     let destination: Station?
     let isLoading: Bool
     let locationAuthorizationStatus: CLAuthorizationStatus
+    let isLocationRequesting: Bool
+    let locatedOriginId: String
     let originGlyphColor: Color
     let destinationGlyphColor: Color
     let onPickOrigin: () -> Void
@@ -1311,12 +1333,14 @@ private struct RouteSelectorView: View {
                 isLoading: isLoading,
                 glyph: .origin,
                 glyphColor: originGlyphColor,
-                trailingAction: hasLocationAuthorization ? nil : AnyView(
+                trailingAction: AnyView(
                     IconPlainButton(
-                        systemName: "location.slash",
+                        systemName: locationSystemName,
+                        isLoading: isLocationRequesting,
+                        color: isLocatedOrigin ? OnTrackTheme.primary : OnTrackTheme.dimText,
                         action: onRequestLocationAccess
                     )
-                    .accessibilityLabel(AppText.enableLocationAccess)
+                    .accessibilityLabel(locationActionLabel)
                 ),
                 onTap: onPickOrigin
             )
@@ -1359,6 +1383,28 @@ private struct RouteSelectorView: View {
     private var hasLocationAuthorization: Bool {
         locationAuthorizationStatus == .authorizedAlways
             || locationAuthorizationStatus == .authorizedWhenInUse
+    }
+
+    private var isLocatedOrigin: Bool {
+        hasLocationAuthorization
+            && !locatedOriginId.isEmpty
+            && origin?.id == locatedOriginId
+    }
+
+    private var locationSystemName: String {
+        guard hasLocationAuthorization else {
+            return "location.slash"
+        }
+
+        return isLocatedOrigin ? "location.fill" : "location"
+    }
+
+    private var locationActionLabel: String {
+        guard hasLocationAuthorization else {
+            return AppText.enableLocationAccess
+        }
+
+        return isLocatedOrigin ? AppText.refreshLocatedOrigin : AppText.useCurrentLocation
     }
 }
 
@@ -3298,6 +3344,7 @@ private struct IconSquareButton: View {
 private struct IconPlainButton: View {
     let systemName: String
     var isLoading = false
+    var color = OnTrackTheme.dimText
     let action: () -> Void
 
     var body: some View {
@@ -3306,11 +3353,11 @@ private struct IconPlainButton: View {
                 if isLoading {
                     ProgressView()
                         .controlSize(.small)
-                        .tint(OnTrackTheme.dimText)
+                        .tint(color)
                 } else {
                     Image(systemName: systemName)
                         .font(OnTrackFont.icon)
-                        .foregroundStyle(OnTrackTheme.dimText)
+                        .foregroundStyle(color)
                 }
             }
             .frame(width: OnTrackTheme.iconButtonSize, height: OnTrackTheme.iconButtonSize)

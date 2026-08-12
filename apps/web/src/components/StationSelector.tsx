@@ -1,5 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ArrowUpDown, Circle, Flag, MapPinOff } from 'lucide-react';
+import {
+    ArrowUpDown,
+    Circle,
+    Flag,
+    LoaderCircle,
+    MapPin,
+    MapPinCheck,
+    MapPinOff,
+} from 'lucide-react';
 
 import { useI18n } from '../i18n/useI18n';
 import type { Station } from '../types';
@@ -61,6 +69,8 @@ export function StationSelector({
     const [geolocationGranted, setGeolocationGranted] = useState(false);
     const [geolocationStatus, setGeolocationStatus] =
         useState<GeolocationStatus>('idle');
+    const [geolocationPending, setGeolocationPending] = useState(false);
+    const [locatedOriginId, setLocatedOriginId] = useState<string | null>(null);
     const [geolocationRequestVersion, setGeolocationRequestVersion] =
         useState(0);
     const hasAutoSelected = useRef(false);
@@ -207,6 +217,7 @@ export function StationSelector({
 
         const fallbackToCached = (status: GeolocationStatus = 'idle') => {
             isGeolocationPending.current = false;
+            setGeolocationPending(false);
             setGeolocationStatus(status);
             const cachedOriginId = localStorage.getItem(CACHED_ORIGIN_KEY);
             if (
@@ -223,18 +234,16 @@ export function StationSelector({
 
         const requestGeolocation = () => {
             isGeolocationPending.current = true;
+            setGeolocationPending(true);
             if (isExplicitRequest) {
                 setGeolocationStatus('requesting');
             }
             navigator.geolocation.getCurrentPosition(
                 (position) => {
                     isGeolocationPending.current = false;
+                    setGeolocationPending(false);
                     setGeolocationGranted(true);
                     setGeolocationStatus('idle');
-                    if (isManualOriginProtected()) {
-                        hasAutoSelected.current = true;
-                        return;
-                    }
 
                     const { latitude, longitude } = position.coords;
                     let nearestStation = stations[0];
@@ -259,11 +268,19 @@ export function StationSelector({
                             stations
                         );
 
-                        setOriginWithSource(preferredStationId, 'geo');
+                        setLocatedOriginId(preferredStationId);
+
+                        if (!isManualOriginProtected()) {
+                            setOriginWithSource(preferredStationId, 'geo');
+                        }
                     }
                     hasAutoSelected.current = true;
                 },
                 (error) => {
+                    if (error.code === error.PERMISSION_DENIED) {
+                        setGeolocationGranted(false);
+                        setLocatedOriginId(null);
+                    }
                     fallbackToCached(
                         isExplicitRequest && error.code === 3
                             ? 'timeout'
@@ -317,6 +334,10 @@ export function StationSelector({
 
     const originStation = stations.find((s) => s.id === originId);
     const destStation = stations.find((s) => s.id === destId);
+    const isLocatedOrigin =
+        geolocationGranted &&
+        locatedOriginId !== null &&
+        originId === locatedOriginId;
 
     const handleOriginSelect = (id: string) => {
         setOriginWithSource(id, 'manual');
@@ -358,6 +379,14 @@ export function StationSelector({
                 : geolocationStatus === 'unavailable'
                   ? t('app.locationUnavailable')
                   : null;
+
+    const geolocationActionLabel = geolocationPending
+        ? t('app.locationRequesting')
+        : !geolocationGranted
+          ? t('app.enableAutoDetectOrigin')
+          : isLocatedOrigin
+            ? t('app.refreshLocatedOrigin')
+            : t('app.useCurrentLocation');
 
     const handleDestDropdownOpen = (isOpen: boolean) => {
         setDestDropdownOpen(isOpen);
@@ -401,25 +430,31 @@ export function StationSelector({
                             selectedStation={originStation}
                             TriggerIcon={Circle}
                             triggerAction={
-                                geolocationGranted ? null : (
-                                    <button
-                                        type='button'
-                                        className='station-action-btn'
-                                        onClick={handleRequestGeolocation}
-                                        disabled={
-                                            geolocationStatus === 'requesting'
-                                        }
-                                        aria-busy={
-                                            geolocationStatus === 'requesting'
-                                        }
-                                        aria-label={t(
-                                            'app.enableAutoDetectOrigin'
-                                        )}
-                                        title={t('app.enableAutoDetectOrigin')}
-                                    >
+                                <button
+                                    type='button'
+                                    className={`station-action-btn ${isLocatedOrigin ? 'active' : ''}`}
+                                    onClick={handleRequestGeolocation}
+                                    disabled={
+                                        geolocationPending ||
+                                        geolocationStatus === 'unavailable'
+                                    }
+                                    aria-busy={geolocationPending}
+                                    aria-label={geolocationActionLabel}
+                                    title={geolocationActionLabel}
+                                >
+                                    {geolocationPending ? (
+                                        <LoaderCircle
+                                            className='station-location-spinner'
+                                            aria-hidden='true'
+                                        />
+                                    ) : !geolocationGranted ? (
                                         <MapPinOff aria-hidden='true' />
-                                    </button>
-                                )
+                                    ) : isLocatedOrigin ? (
+                                        <MapPinCheck aria-hidden='true' />
+                                    ) : (
+                                        <MapPin aria-hidden='true' />
+                                    )}
+                                </button>
                             }
                         />
                     </div>

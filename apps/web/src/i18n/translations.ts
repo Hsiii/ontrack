@@ -15,7 +15,9 @@ export const translations = {
         'app.switchToChinese': '切換成中文',
         'app.enableAutoDetectOrigin': '開啟定位起點',
         'app.disableAutoDetectOrigin': '關閉定位起點',
-        'app.locationRequesting': '正在請求定位權限…',
+        'app.useCurrentLocation': '使用目前位置',
+        'app.refreshLocatedOrigin': '重新定位出發站',
+        'app.locationRequesting': '正在取得目前位置…',
         'app.locationDenied':
             '定位權限未開啟，請在瀏覽器設定中允許後再試一次。',
         'app.locationTimedOut': '無法取得目前位置，請再試一次。',
@@ -231,7 +233,9 @@ export const translations = {
         'app.switchToChinese': 'Switch to Chinese',
         'app.enableAutoDetectOrigin': 'Enable origin auto-detect',
         'app.disableAutoDetectOrigin': 'Disable origin auto-detect',
-        'app.locationRequesting': 'Requesting location access…',
+        'app.useCurrentLocation': 'Use current location',
+        'app.refreshLocatedOrigin': 'Refresh located origin',
+        'app.locationRequesting': 'Finding current location…',
         'app.locationDenied':
             'Location access is blocked. Allow it in browser settings, then try again.',
         'app.locationTimedOut':
