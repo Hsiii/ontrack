@@ -48,11 +48,17 @@ struct TrainWidgetContent: View {
             .lineLimit(1)
 
             HStack(spacing: TrainWidgetLayout.inlineGap) {
-                scheduleTime(snapshot.departureTime)
+                scheduleTime(
+                    snapshot.departureTime,
+                    delayMinutes: snapshot.delayMinutes
+                )
 
                 tripSeparator(for: snapshot)
 
-                scheduleTime(snapshot.arrivalTime)
+                scheduleTime(
+                    snapshot.arrivalTime,
+                    delayMinutes: snapshot.delayMinutes
+                )
             }
             .padding(.top, TrainWidgetLayout.firstRowGapIncrease)
 
@@ -92,13 +98,23 @@ struct TrainWidgetContent: View {
         }
     }
 
-    private func scheduleTime(_ time: String) -> some View {
-        Text(time)
-            .font(TrainWidgetTypography.large.weight(.bold))
-            .monospacedDigit()
-            .foregroundStyle(palette.text)
-            .lineLimit(1)
-            .minimumScaleFactor(0.85)
+    private func scheduleTime(_ time: String, delayMinutes: Int?) -> some View {
+        ZStack {
+            Text(time)
+                .font(TrainWidgetTypography.large.weight(.bold))
+                .foregroundStyle(palette.text)
+
+            if let delayMinutes, delayMinutes > 0 {
+                Text(TrainDisplay.adjustedTime(time, delay: delayMinutes))
+                    .font(TrainWidgetTypography.small.weight(.semibold))
+                    .foregroundStyle(TrainWidgetPalette.danger)
+                    .offset(y: -TrainWidgetLayout.delayTimeOffset)
+            }
+        }
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.85)
+        .frame(height: TrainWidgetLayout.timeRowHeight)
     }
 
     private func tripSeparator(for snapshot: WidgetSnapshot) -> some View {
@@ -327,6 +343,8 @@ enum TrainWidgetLayout {
     static let rowGap: CGFloat = 4
     static let firstRowGapIncrease: CGFloat = 4
     static let inlineGap: CGFloat = 4
+    static let delayTimeOffset: CGFloat = 16
+    static let timeRowHeight: CGFloat = 44
     static let logoSize: CGFloat = 20
     static let minimumLineWidth: CGFloat = 4
     static let minimumTapTarget: CGFloat = 44
