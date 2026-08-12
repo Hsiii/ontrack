@@ -74,7 +74,7 @@ struct TrainWidgetContent: View {
                 if let statusText = statusText(for: snapshot) {
                     Text(statusText)
                         .font(TrainWidgetTypography.medium.weight(.semibold))
-                        .foregroundStyle(statusColor(for: snapshot))
+                        .foregroundStyle(palette.secondaryText)
                 }
 
                 Spacer()
@@ -164,11 +164,7 @@ struct TrainWidgetContent: View {
             return nil
         }
 
-        return delayMinutes > 0 ? "延誤 \(delayMinutes) 分" : "準點"
-    }
-
-    private func statusColor(for snapshot: WidgetSnapshot) -> Color {
-        (snapshot.delayMinutes ?? 0) > 0 ? TrainWidgetPalette.danger : palette.secondaryText
+        return delayMinutes > 0 ? nil : "準點"
     }
 }
 
@@ -343,7 +339,7 @@ enum TrainWidgetLayout {
     static let rowGap: CGFloat = 4
     static let firstRowGapIncrease: CGFloat = 4
     static let inlineGap: CGFloat = 4
-    static let delayTimeOffset: CGFloat = 16
+    static let delayTimeOffset: CGFloat = 20
     static let timeRowHeight: CGFloat = 44
     static let logoSize: CGFloat = 20
     static let minimumLineWidth: CGFloat = 4
