@@ -176,7 +176,9 @@ export function StationSelector({
                     cachedOriginId &&
                     stations.find((s) => s.id === cachedOriginId)
                 ) {
-                    setOriginId(cachedOriginId);
+                    setOriginId(
+                        resolvePreferredStationId(cachedOriginId, stations)
+                    );
                 }
             }
             return;
@@ -195,7 +197,9 @@ export function StationSelector({
                 cachedOriginId &&
                 stations.find((s) => s.id === cachedOriginId)
             ) {
-                setOriginId(cachedOriginId);
+                setOriginId(
+                    resolvePreferredStationId(cachedOriginId, stations)
+                );
             }
             hasAutoSelected.current = true;
             return;
@@ -209,7 +213,10 @@ export function StationSelector({
                 cachedOriginId &&
                 stations.find((s) => s.id === cachedOriginId)
             ) {
-                setOriginWithSource(cachedOriginId, 'cached');
+                setOriginWithSource(
+                    resolvePreferredStationId(cachedOriginId, stations),
+                    'cached'
+                );
             }
             hasAutoSelected.current = true;
         };

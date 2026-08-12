@@ -3,7 +3,6 @@ import SwiftUI
 import UIKit
 
 private let taipeiMainStationName = "臺北"
-private let taipeiCircularStationName = "臺北(環島)"
 private let scheduleRefreshInterval: TimeInterval = 5 * 60
 private let scheduleWarmupRetryDelayNanos: UInt64 = 4_000_000_000
 private let locationRefreshInterval: TimeInterval = 2 * 60
@@ -686,7 +685,7 @@ struct ContentView: View {
 
     private func resolveInitialStations(_ loadedStations: [Station]) {
         if originId.isEmpty, isKnownStation(cachedOriginId, in: loadedStations) {
-            setOrigin(cachedOriginId, source: .cached)
+            setOrigin(resolvePreferredStationId(cachedOriginId, in: loadedStations), source: .cached)
         }
 
         if originId.isEmpty {
@@ -764,7 +763,7 @@ struct ContentView: View {
             return
         }
 
-        setOrigin(cachedOriginId, source: .cached)
+        setOrigin(resolvePreferredStationId(cachedOriginId), source: .cached)
     }
 
     private func setOrigin(_ id: String, source: OriginSelectionSource, selectedAt: Date? = nil) {
@@ -816,12 +815,15 @@ struct ContentView: View {
         destinationSource = .auto
     }
 
-    private func resolvePreferredStationId(_ stationId: String) -> String {
-        guard stationMap[stationId]?.name == taipeiCircularStationName else {
+    private func resolvePreferredStationId(_ stationId: String, in candidateStations: [Station]? = nil) -> String {
+        let availableStations = candidateStations ?? stations
+        guard let station = availableStations.first(where: { $0.id == stationId }),
+              isTaipeiCircularStation(station)
+        else {
             return stationId
         }
 
-        return stations.first(where: { $0.name == taipeiMainStationName })?.id ?? stationId
+        return availableStations.first(where: { $0.name == taipeiMainStationName })?.id ?? stationId
     }
 
     private func isKnownStation(_ id: String, in stations: [Station]) -> Bool {
@@ -1751,7 +1753,7 @@ private struct StationSearchView: View {
                     || normalizedStationName.contains(normalizedEnglishSearch)
                     || station.id.localizedCaseInsensitiveContains(trimmedSearch)
 
-                guard matches, allowsCircularStation || station.name != taipeiCircularStationName else {
+                guard matches, allowsCircularStation || !isTaipeiCircularStation(station) else {
                     return nil
                 }
 
@@ -1777,12 +1779,14 @@ private struct StationSearchView: View {
 
     private var restStations: [Station] {
         stations.filter { station in
-            !hiddenStationIDs.contains(station.id) && station.name != taipeiCircularStationName
+            !hiddenStationIDs.contains(station.id) && !isTaipeiCircularStation(station)
         }
     }
 
     private var visibleSuggestions: [Station] {
-        suggestedStations.filter { $0.id != selectedStation?.id }
+        suggestedStations.filter {
+            $0.id != selectedStation?.id && !isTaipeiCircularStation($0)
+        }
     }
 
     private var resultRows: [StationSearchResult] {
@@ -1804,7 +1808,7 @@ private struct StationSearchView: View {
     }
 
     private func selectedStation(_ station: Station) -> Station {
-        guard station.name == taipeiCircularStationName, !isCircularSearch(searchText) else {
+        guard isTaipeiCircularStation(station), !isCircularSearch(searchText) else {
             return station
         }
 
@@ -1829,6 +1833,7 @@ private struct StationSearchView: View {
             || normalizedValue.contains("loop")
             || normalizedValue.contains("round island")
             || normalizedValue.contains("around island")
+            || normalizedValue.contains("surround island")
     }
 
     private func dismissSearch() {
