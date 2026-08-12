@@ -81,13 +81,12 @@
 }
 
 .station-action-btn.active {
+    background: var(--color-primary-subtle);
     color: var(--color-primary);
 }
 
 .station-action-btn[aria-busy='true'] {
-    color: var(--color-primary);
-    animation: stationLocationPulse var(--motion-panel) ease-in-out infinite
-        alternate;
+    color: var(--color-text-dim);
 }
 
 .station-location-status {
@@ -105,14 +104,18 @@
     color: var(--color-danger);
 }
 
-@keyframes stationLocationPulse {
+.station-location-spinner {
+    animation: stationLocationSpin 0.8s linear infinite;
+}
+
+@keyframes stationLocationSpin {
     to {
-        opacity: 0.48;
+        transform: rotate(360deg);
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .station-action-btn[aria-busy='true'] {
+    .station-location-spinner {
         animation: none;
     }
 }
