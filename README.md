@@ -4,7 +4,7 @@
   <h1>OnTrack</h1>
   <p>Check train status with zero taps.</p>
   <p>
-    <img alt="demo" src="https://raw.githubusercontent.com/orangesago/ontrack/main/apps/web/public/demo.png" width="280" />
+    <img alt="demo" src="https://raw.githubusercontent.com/sago-cream/ontrack/main/apps/web/public/demo.png" width="280" />
   </p>
   <a href="./README.zh.md">繁體中文</a>  
 </div>
